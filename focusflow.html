@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="FocusFlow">
+<meta name="theme-color" content="#7c6af7">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FocusFlow</title>
@@ -1271,5 +1278,147 @@ function setAnP(p,btn){anP=p;document.querySelectorAll('#anTabs .ptab').forEach(
 function inRange(dk){if(!dk)return false;const now=new Date(),today=todayKey();if(anP==='day')return dk===today;if(anP==='week'){const d=new Date(dk+'T12:00:00');return(now-d)/(864e5)<7&&d<=now;}if(anP==='month'){const d=new Date(dk+'T12:00:00');return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();}const d=new Date(dk+'T12:00:00');return d.getFullYear()===now.getFullYear();}
 function renderAnalysis(){const layout=document.getElementById('anLayout');layout.innerHTML='';const taskMap={};cycles.filter(c=>c.taskTimes&&inRange(c.dayKey)).forEach(c=>Object.entries(c.taskTimes).forEach(([tid,sec])=>{const t=tasks.find(t=>t.id===tid);const nm=t?t.name:tid.slice(0,12);if(!taskMap[nm])taskMap[nm]=0;taskMap[nm]+=sec;}));history.filter(h=>inRange(h.dayKey)).forEach(h=>{if(h.timeSpent>0){if(!taskMap[h.name])taskMap[h.name]=0;taskMap[h.name]+=h.timeSpent;}});const tE=Object.entries(taskMap).sort((a,b)=>b[1]-a[1]).slice(0,10),maxT=tE[0]?.[1]||1;const c1=document.createElement('div');c1.className='an-card card';c1.innerHTML='<h3>📋 Görev Bazlı Süre</h3>';if(!tE.length)c1.innerHTML+='<div style="color:var(--text-muted);font-size:.8rem">Kayıt yok</div>';else tE.forEach(([n,s])=>{const r=document.createElement('div');r.className='bar-row';r.innerHTML=`<div class="bar-lbl">${n}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(s/maxT*100)}%;background:var(--accent)"></div></div><div class="bar-val">${fmtS(s)}</div>`;c1.appendChild(r);});layout.appendChild(c1);const catMap={};cycles.filter(c=>inRange(c.dayKey)).forEach(c=>{const cat=c.category||'Kategorisiz';if(!catMap[cat])catMap[cat]={f:0,p:0};if(c.type==='completed')catMap[cat].f+=(c.focusDuration||0);if(c.type==='cancelled')catMap[cat].f+=(c.workedSec||0);catMap[cat].p+=(c.pauseTotal||0);});history.filter(h=>inRange(h.dayKey)).forEach(h=>{const cat=h.category||'Kategorisiz';if(!catMap[cat])catMap[cat]={f:0,p:0};if(h.timeSpent>0)catMap[cat].f+=h.timeSpent;});const cE=Object.entries(catMap).map(([n,v])=>([n,{...v,total:v.f+v.p}])).sort((a,b)=>b[1].f-a[1].f).slice(0,7),maxF=cE[0]?.[1].f||1;const c2=document.createElement('div');c2.className='an-card card';c2.innerHTML='<h3>🏷 Etiket Analizi</h3>';if(!cE.length)c2.innerHTML+='<div style="color:var(--text-muted);font-size:.8rem">Kayıt yok</div>';else cE.forEach(([n,v])=>{const g=document.createElement('div');g.className='cat-group';g.innerHTML=`<div class="cat-name">${n}</div><div class="cat-bars"><div class="cat-bar-row"><div class="cat-bar-lbl" style="color:var(--green)">⏱ Çalışılan</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v.f/maxF*100)}%;background:var(--green);height:10px"></div></div><div class="bar-val">${fmtS(v.f)}</div></div>${v.p>0?`<div class="cat-bar-row"><div class="cat-bar-lbl" style="color:var(--red)">⏸ Duraklatılan</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v.p/maxF*100)}%;background:var(--red);height:6px"></div></div><div class="bar-val">${fmtS(v.p)}</div></div>`:''}<div class="cat-bar-row"><div class="cat-bar-lbl">∑ Toplam</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v.total/maxF*100)}%;background:var(--accent);height:8px;opacity:.5"></div></div><div class="bar-val">${fmtS(v.total)}</div></div></div>`;c2.appendChild(g);});layout.appendChild(c2);const byDay={};cycles.filter(c=>c.type==='completed'&&c.mode==='focus'&&inRange(c.dayKey)).forEach(c=>{if(!byDay[c.dayKey])byDay[c.dayKey]=0;byDay[c.dayKey]++;});const dE=Object.entries(byDay).sort((a,b)=>a[0].localeCompare(b[0])),maxD=dE.reduce((m,[,v])=>Math.max(m,v),1);const c3=document.createElement('div');c3.className='an-card card';c3.innerHTML='<h3>🍅 Günlük Pomodoro</h3>';if(!dE.length)c3.innerHTML+='<div style="color:var(--text-muted);font-size:.8rem">Kayıt yok</div>';else dE.forEach(([dk,cnt])=>{const d=new Date(dk+'T12:00:00'),lbl=d.toLocaleDateString('tr-TR',{weekday:'short',day:'numeric'});const r=document.createElement('div');r.className='bar-row';r.innerHTML=`<div class="bar-lbl">${lbl}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(cnt/maxD*100)}%;background:var(--orange)"></div></div><div class="bar-val">${cnt}🍅</div>`;c3.appendChild(r);});layout.appendChild(c3);const totCyc=cycles.filter(c=>(c.type==='completed'||c.type==='cancelled')&&c.mode==='focus'&&inRange(c.dayKey)).length;const sucCyc=cycles.filter(c=>c.type==='completed'&&c.mode==='focus'&&inRange(c.dayKey)).length;const rate=totCyc?Math.round(sucCyc/totCyc*100):0;const totPause=cycles.filter(c=>inRange(c.dayKey)).reduce((a,c)=>a+(c.pauseTotal||0),0);const totWorked=cycles.filter(c=>inRange(c.dayKey)).reduce((a,c)=>a+(c.focusDuration||c.workedSec||0),0);const c4=document.createElement('div');c4.className='an-card card';c4.innerHTML=`<h3>📊 Özet</h3><div class="summary-grid"><div class="stat-item"><div class="stat-val" style="color:var(--green)">${rate}%</div><div class="stat-lbl">Başarı ${sucCyc}/${totCyc}</div></div><div class="stat-item"><div class="stat-val">${sucCyc}</div><div class="stat-lbl">Tamamlanan</div></div><div class="stat-item"><div class="stat-val" style="color:var(--red)">${totCyc-sucCyc}</div><div class="stat-lbl">İptal</div></div><div class="stat-item"><div class="stat-val" style="color:var(--orange)">${fmtS(totPause)}</div><div class="stat-lbl">Duraklama</div></div><div class="stat-item" style="grid-column:span 2"><div class="stat-val" style="font-size:1.2rem;color:var(--accent)">${fmtS(totWorked)}</div><div class="stat-lbl">Toplam çalışılan</div></div></div>`;layout.appendChild(c4);}
 </script>
+
+<!-- PWA Install Banner -->
+<div id="installBanner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:500;background:var(--surface);border-top:1px solid var(--border);padding:14px 18px;display:none;align-items:center;gap:12px;box-shadow:0 -4px 20px rgba(0,0,0,.12)">
+  <div style="width:40px;height:40px;border-radius:10px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">🍅</div>
+  <div style="flex:1;min-width:0">
+    <div style="font-size:.85rem;font-weight:600;color:var(--text)">FocusFlow'u Yükle</div>
+    <div style="font-size:.72rem;color:var(--text-muted);margin-top:1px">Ana ekrana ekle, uygulama gibi kullan</div>
+  </div>
+  <button onclick="installPWA()" style="padding:8px 14px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-family:'Outfit',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;white-space:nowrap">Yükle</button>
+  <button onclick="dismissInstall()" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);cursor:pointer;font-size:.8rem;flex-shrink:0">✕</button>
+</div>
+
+<!-- iOS Install Tip (Safari specific) -->
+<div id="iosTip" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:500;background:var(--surface);border-top:1px solid var(--border);padding:16px 18px;box-shadow:0 -4px 20px rgba(0,0,0,.12);animation:slideUp .3s ease">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <div style="font-size:.88rem;font-weight:600;color:var(--text)">📱 Ana Ekrana Ekle</div>
+    <button onclick="dismissIosTip()" style="width:26px;height:26px;border-radius:50%;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);cursor:pointer;font-size:.8rem">✕</button>
+  </div>
+  <div style="display:flex;align-items:flex-start;gap:12px">
+    <div style="flex:1;font-size:.8rem;color:var(--text-muted);line-height:1.6">
+      Safari'de aşağıdaki <strong style="color:var(--text)">Paylaş</strong> butonuna (<span style="font-size:1rem">⬆️</span>) tıkla, ardından <strong style="color:var(--text)">"Ana Ekrana Ekle"</strong>'yi seç. Uygulama gibi açılır!
+    </div>
+  </div>
+  <!-- Arrow pointing down for Safari share button -->
+  <div style="text-align:center;margin-top:8px;font-size:.72rem;color:var(--text-dim)">↓ Alttaki menüden</div>
+</div>
+
+<style>
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+/* Safe area for iPhone notch/home bar */
+.app{padding-bottom:max(24px, env(safe-area-inset-bottom));}
+header{padding-top:max(0px, env(safe-area-inset-top));}
+/* Bigger touch targets on mobile */
+@media(max-width:600px){
+  .nav-tab{padding:8px 12px;font-size:.8rem}
+  .btn-main{width:68px;height:68px;font-size:1.5rem}
+  .btn-icon{width:44px;height:44px;font-size:1rem}
+  .timer-display{font-size:3rem}
+  .ring-wrap{width:240px;height:240px}
+  .task-item{padding:11px 13px}
+  .tchk{width:22px;height:22px}
+  .add-btn{padding:9px 16px}
+  .auth-card{padding:22px 18px}
+  .auth-input{padding:13px 14px;font-size:1rem}
+  .auth-btn{padding:15px}
+  .todo-layout{grid-template-columns:1fr}
+  .pomo-layout{grid-template-columns:1fr}
+  .an-layout{grid-template-columns:1fr}
+  .week-nav{display:none} /* hide on mobile, show current week only */
+  /* Bottom nav on mobile */
+  .nav-tabs{position:fixed;bottom:env(safe-area-inset-bottom,0);left:0;right:0;width:100%;border-radius:0;border-left:none;border-right:none;border-bottom:none;padding:8px 4px;justify-content:space-around;z-index:90;background:var(--surface);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+  .nav-tab{flex:1;padding:8px 4px;border-radius:10px;font-size:.72rem;display:flex;flex-direction:column;align-items:center;gap:2px}
+  .app{padding-bottom:calc(70px + env(safe-area-inset-bottom,0px))}
+}
+/* Prevent text selection on tap */
+button,a{-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
+/* Smooth momentum scroll */
+.task-list,.task-pick-list,.week-days,.hdg,.back-content{-webkit-overflow-scrolling:touch}
+</style>
+
+<script>
+// ══ PWA / SERVICE WORKER ══
+let deferredPrompt = null;
+
+// Register service worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+
+// Android/Chrome install prompt
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const dismissed = localStorage.getItem('ff_install_dismissed');
+  if (!dismissed) {
+    setTimeout(() => {
+      const banner = document.getElementById('installBanner');
+      if (banner) { banner.style.display = 'flex'; }
+    }, 3000);
+  }
+});
+
+function installPWA() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
+  }
+  dismissInstall();
+}
+function dismissInstall() {
+  const b = document.getElementById('installBanner');
+  if (b) b.style.display = 'none';
+  localStorage.setItem('ff_install_dismissed', '1');
+}
+
+// iOS Safari tip
+function checkIosTip() {
+  const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone = window.navigator.standalone;
+  const dismissed = localStorage.getItem('ff_ios_tip_dismissed');
+  if (isIos && !isStandalone && !dismissed) {
+    setTimeout(() => {
+      const tip = document.getElementById('iosTip');
+      if (tip) tip.style.display = 'block';
+    }, 4000);
+  }
+}
+function dismissIosTip() {
+  const t = document.getElementById('iosTip');
+  if (t) t.style.display = 'none';
+  localStorage.setItem('ff_ios_tip_dismissed', '1');
+}
+checkIosTip();
+
+// Mobile nav tab icons
+document.addEventListener('DOMContentLoaded', () => {
+  const tabs = document.querySelectorAll('.nav-tab');
+  const icons = ['⏱', '📋', '📊', '📈'];
+  const labels = ['Pomodoro', 'Görevler', 'Geçmiş', 'Analiz'];
+  if (window.innerWidth <= 600) {
+    tabs.forEach((tab, i) => {
+      tab.innerHTML = `<span style="font-size:1.2rem">${icons[i]}</span><span>${labels[i]}</span>`;
+    });
+  }
+});
+
+// Prevent double-tap zoom
+let lastTap = 0;
+document.addEventListener('touchend', (e) => {
+  const now = Date.now();
+  if (now - lastTap < 300) e.preventDefault();
+  lastTap = now;
+}, { passive: false });
+
+// Pull to refresh prevention
+document.addEventListener('touchstart', (e) => {
+  if (e.touches.length > 1) e.preventDefault();
+}, { passive: false });
+</script>
+
 </body>
 </html>
