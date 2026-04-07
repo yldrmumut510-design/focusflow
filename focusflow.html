@@ -12,34 +12,34 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#f5f0e8;
-  --surface:#faf7f2;
+  --bg:#ede8de;
+  --surface:#faf6ef;
   --surface2:#f0ebe0;
-  --surface3:#e8e0d0;
-  --border:#ddd5c0;
+  --surface3:#e0d8c8;
+  --border:#c8bea8;
   --text:#2a2018;
-  --text-muted:#8a7a62;
-  --text-dim:#bfb09a;
+  --text-muted:#7a6a52;
+  --text-dim:#b0a088;
   --accent:#c8775a;
   --accent2:#b5956a;
   --accent-glow:rgba(200,119,90,0.18);
   --accent2-glow:rgba(181,149,106,0.18);
   --green:#5a9a6a;
-  --green-bg:rgba(90,154,106,0.12);
+  --green-bg:rgba(90,154,106,0.14);
   --red:#c0211e;
   --red-bg:rgba(192,33,30,0.13);
   --orange:#c8855a;
-  --orange-bg:rgba(200,133,90,0.12);
+  --orange-bg:rgba(200,133,90,0.13);
   --radius:18px;
-  --shadow:0 2px 16px rgba(80,50,20,.08);
-  --shadow-lg:0 8px 32px rgba(80,50,20,.14);
+  --shadow:0 3px 18px rgba(80,50,20,.13);
+  --shadow-lg:0 8px 32px rgba(80,50,20,.18);
 }
 .dark{
-  --bg:#1c1812;
-  --surface:#252018;
-  --surface2:#2e2820;
-  --surface3:#38302a;
-  --border:#4a4035;
+  --bg:#181510;
+  --surface:#23201a;
+  --surface2:#2c2820;
+  --surface3:#38322a;
+  --border:#524840;
   --text:#f0ebe0;
   --text-muted:#a09080;
   --text-dim:#6a5a48;
@@ -811,6 +811,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:max
       <div class="srow"><div class="sr-left"><div class="sr-label">Timer Sesi</div><div class="sr-sub">Pomodoro bitişinde bip</div></div><label class="toggle"><input type="checkbox" id="soundToggle" checked><span class="tslider"></span></label></div>
     </div></div>
     <div class="sps"><div class="sps-title">🎵 Ortam Sesi</div><div class="sblock">
+      <div style="padding:10px 16px 4px;font-size:.72rem;color:var(--text-muted)">Ses seçince 3 saniyelik önizleme çalar. Timer başlayınca aktif olur.</div>
       <div class="sound-grid" id="soundGrid">
         <button class="sound-btn active" id="snd_none" onclick="selectSound('none')"><span class="snd-icon">🔇</span><span class="snd-label">Sessiz</span></button>
         <button class="sound-btn" id="snd_rain" onclick="selectSound('rain')"><span class="snd-icon">🌧</span><span class="snd-label">Yağmur</span></button>
@@ -819,6 +820,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:max
         <button class="sound-btn" id="snd_forest" onclick="selectSound('forest')"><span class="snd-icon">🌲</span><span class="snd-label">Orman</span></button>
         <button class="sound-btn" id="snd_whitenoise" onclick="selectSound('whitenoise')"><span class="snd-icon">〰</span><span class="snd-label">Beyaz Gürültü</span></button>
         <button class="sound-btn" id="snd_fireplace" onclick="selectSound('fireplace')"><span class="snd-icon">🔥</span><span class="snd-label">Şömine</span></button>
+        <button class="sound-btn" id="snd_brownnoise" onclick="selectSound('brownnoise')"><span class="snd-icon">🟤</span><span class="snd-label">Brown Gürültü</span></button>
       </div>
       <div class="vol-row">
         <label>🔉 Ses</label>
@@ -1357,11 +1359,16 @@ function setMode(mode){if(tRunning)return;tMode=mode;document.querySelectorAll('
 function toggleTimer(){
   if(tRunning){
     clearInterval(tIv);tRunning=false;document.getElementById('playBtn').textContent='BAŞLAT';
-    commitSeg();pauseMs=Date.now();startPauseCounter();nudgePresence();
+    commitSeg();pauseMs=Date.now();startPauseCounter();
+    pauseAmbient(); // Ambient sesi duraklat
+    nudgePresence();
   }else{
     if(pauseMs!==null){const dur=Math.round((Date.now()-pauseMs)/1000);sessP.push({duration:dur,at:new Date(pauseMs).toISOString()});cumulPause+=dur;pauseMs=null;freezePauseCounter();}
     tRunning=true;document.getElementById('playBtn').textContent='DURDUR';
     segStart=Date.now();
+    // Ambient sesi başlat/devam et
+    const selSound=settings.ambientSound||'none';
+    if(selSound!=='none'){ if(!ambientActive){startAmbient(selSound);}else{resumeAmbient();} }
     tIv=setInterval(()=>{tSec--;updateTDisplay();if(tSec<=0){clearInterval(tIv);tRunning=false;document.getElementById('playBtn').textContent='BAŞLAT';commitSeg();onTimerEnd();}},1000);
     nudgePresence();
   }
@@ -1407,7 +1414,7 @@ function doResetCycle(){
   const m=document.getElementById('resetMenu');if(m)m.remove();
   resetDots();toast('🔄 Döngü sıfırlandı');
 }
-function cancelPomodoro(){if(!tRunning&&tSec===totSec&&pauseMs===null&&cumulPause===0)return;clearInterval(tIv);tRunning=false;document.getElementById('playBtn').textContent='BAŞLAT';commitSeg();if(pauseMs!==null){const dur=Math.round((Date.now()-pauseMs)/1000);sessP.push({duration:dur,at:new Date(pauseMs).toISOString()});cumulPause+=dur;pauseMs=null;}clearPauseRing();const totalP=sessP.reduce((a,p)=>a+p.duration,0),worked=Object.values(sessTT).reduce((a,v)=>a+v,0);dotCancel();stats.cancel++;const rec={type:'cancelled',mode:tMode,taskId:selId,taskName:selId?(tasks.find(t=>t.id===selId)?.name||''):'',category:selId?(tasks.find(t=>t.id===selId)?.category||''):(selCat||''),taskTimes:{...sessTT},pauseTotal:totalP,workedSec:worked,totalSec:worked+totalP,pauses:[...sessP],dayKey:todayKey(),at:new Date().toISOString()};cycles.push(rec);failed.unshift({...rec});sessP=[];sessTT={};cumulPause=0;pauseDispSec=0;pauseCount=0;save();renderDots();updateStats();renderDailyGoal();nudgePresence();const s=getAS();const mins={focus:s.focus,short:s.short,long:s.long}[tMode];tSec=mins*60;totSec=mins*60;updateTDisplay();toast('❌ İptal edildi');}
+function cancelPomodoro(){if(!tRunning&&tSec===totSec&&pauseMs===null&&cumulPause===0)return;clearInterval(tIv);tRunning=false;document.getElementById('playBtn').textContent='BAŞLAT';commitSeg();if(pauseMs!==null){const dur=Math.round((Date.now()-pauseMs)/1000);sessP.push({duration:dur,at:new Date(pauseMs).toISOString()});cumulPause+=dur;pauseMs=null;}clearPauseRing();const totalP=sessP.reduce((a,p)=>a+p.duration,0),worked=Object.values(sessTT).reduce((a,v)=>a+v,0);dotCancel();stats.cancel++;const rec={type:'cancelled',mode:tMode,taskId:selId,taskName:selId?(tasks.find(t=>t.id===selId)?.name||''):'',category:selId?(tasks.find(t=>t.id===selId)?.category||''):(selCat||''),taskTimes:{...sessTT},pauseTotal:totalP,workedSec:worked,totalSec:worked+totalP,pauses:[...sessP],dayKey:todayKey(),at:new Date().toISOString()};cycles.push(rec);failed.unshift({...rec});sessP=[];sessTT={};cumulPause=0;pauseDispSec=0;pauseCount=0;save();renderDots();updateStats();renderDailyGoal();nudgePresence();const s=getAS();const mins={focus:s.focus,short:s.short,long:s.long}[tMode];tSec=mins*60;totSec=mins*60;updateTDisplay();pauseAmbient();toast('❌ İptal edildi');}
 function skipForward(){clearInterval(tIv);tRunning=false;document.getElementById('playBtn').textContent='BAŞLAT';commitSeg();if(pauseMs!==null){const dur=Math.round((Date.now()-pauseMs)/1000);sessP.push({duration:dur,at:new Date(pauseMs).toISOString()});cumulPause+=dur;pauseMs=null;}clearPauseRing();const worked=Object.values(sessTT).reduce((a,v)=>a+v,0),totalP=sessP.reduce((a,p)=>a+p.duration,0);if(tMode==='focus'){stats.pomo++;stats.min+=Math.round(worked/60);if(selId){const t=tasks.find(t=>t.id===selId);if(t)t.pomodoros=(t.pomodoros||0)+1;}dotDone();cycles.push({type:'completed',mode:'focus',skipped:true,taskId:selId,taskName:selId?(tasks.find(t=>t.id===selId)?.name||''):'',category:selId?(tasks.find(t=>t.id===selId)?.category||''):(selCat||''),taskTimes:{...sessTT},pauseTotal:totalP,focusDuration:worked,totalDuration:worked+totalP,pauses:[...sessP],dayKey:todayKey(),at:new Date().toISOString()});sessP=[];sessTT={};cumulPause=0;pauseDispSec=0;pauseCount=0;save();updateStats();renderDots();renderDailyGoal();nudgePresence();const gc=dots.filter(s=>s.t==='g').length;if(gc>=4){toast('⏭ Uzun molaya');setMode('long');}else{toast('⏭ Kısa molaya');setMode('short');}}else if(tMode==='long'){sessP=[];sessTT={};cumulPause=0;pauseDispSec=0;pauseCount=0;resetDots();save();toast('⏭ Yeni döngü');setMode('focus');nudgePresence();}else{sessP=[];sessTT={};cumulPause=0;pauseDispSec=0;pauseCount=0;save();toast('⏭ Odağa');setMode('focus');nudgePresence();}}
 function onTimerEnd(){const s=getAS();if(tMode==='focus'){stats.pomo++;stats.min+=s.focus;if(selId){const t=tasks.find(t=>t.id===selId);if(t)t.pomodoros=(t.pomodoros||0)+1;}const totalP=sessP.reduce((a,p)=>a+p.duration,0);dotDone();cycles.push({type:'completed',mode:'focus',taskId:selId,taskName:selId?(tasks.find(t=>t.id===selId)?.name||''):'',category:selId?(tasks.find(t=>t.id===selId)?.category||''):(selCat||''),taskTimes:{...sessTT},pauseTotal:totalP,focusDuration:s.focus*60,totalDuration:s.focus*60+totalP,pauses:[...sessP],dayKey:todayKey(),at:new Date().toISOString()});sessP=[];sessTT={};cumulPause=0;pauseDispSec=0;pauseCount=0;clearPauseRing();save();updateStats();renderDailyGoal();renderFlow();const gc=dots.filter(x=>x.t==='g').length;if(gc>=4){playBeep();toast('🎉 4 Pomodoro! Uzun mola.');setTimeout(()=>{setMode('long');toggleTimer();},600);}else{playBeep();toast('🍅 Tamamlandı! Kısa mola.');setTimeout(()=>setMode('short'),500);}renderDots();nudgePresence();}else if(tMode==='long'){playBeep();toast('☀️ Uzun mola bitti!');resetDots();save();setTimeout(()=>setMode('focus'),500);nudgePresence();}else{playBeep();toast('⏰ Mola bitti!');setTimeout(()=>setMode('focus'),500);nudgePresence();}}
 function playBeep(){if(settings.sound===false||!document.getElementById('soundToggle').checked)return;try{const ctx=new(window.AudioContext||window.webkitAudioContext)();[0,.15,.3].forEach((t,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=i===2?880:660;g.gain.setValueAtTime(.25,ctx.currentTime+t);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+t+.25);o.start(ctx.currentTime+t);o.stop(ctx.currentTime+t+.25);});}catch(e){}}
@@ -1854,6 +1861,28 @@ function getAudioCtx(){
   return ambientCtx;
 }
 
+function pauseAmbient(){
+  // Fade out ama node'ları koru (resume için)
+  if(ambientGain && ambientActive){
+    const ctx = ambientCtx;
+    if(ctx){
+      ambientGain.gain.cancelScheduledValues(ctx.currentTime);
+      ambientGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.8);
+    }
+  }
+}
+
+function resumeAmbient(){
+  if(ambientGain && ambientActive){
+    const ctx = ambientCtx;
+    if(ctx){
+      const vol = settings.ambientVol ?? 0.55;
+      ambientGain.gain.cancelScheduledValues(ctx.currentTime);
+      ambientGain.gain.linearRampToValueAtTime(vol, ctx.currentTime + 0.8);
+    }
+  }
+}
+
 function stopAmbient(){
   ambientNodes.forEach(n => { try{ n.stop && n.stop(); n.disconnect && n.disconnect(); }catch(e){} });
   ambientNodes = [];
@@ -1877,6 +1906,7 @@ function startAmbient(type){
     if(type === 'cafe')      buildCafe(ctx, ambientGain);
     if(type === 'forest')    buildForest(ctx, ambientGain);
     if(type === 'whitenoise')buildWhiteNoise(ctx, ambientGain);
+    if(type === 'brownnoise')buildBrownNoise(ctx, ambientGain);
     if(type === 'fireplace') buildFireplace(ctx, ambientGain);
 
     ambientActive = true;
@@ -2080,6 +2110,25 @@ function buildForest(ctx, master){
   setTimeout(rustle, 500);
 }
 
+// ── Brown (Kahverengi) Gürültü ─────────────────────────────
+function buildBrownNoise(ctx, master){
+  // Brown noise: her sample öncekinin ağırlıklı ortalaması (1/f² spectrum)
+  const buf = ctx.createBuffer(1, ctx.sampleRate * 4, ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  let lastOut = 0;
+  for(let i=0;i<d.length;i++){
+    const white = Math.random()*2-1;
+    d[i] = (lastOut + (0.02 * white)) / 1.02;
+    lastOut = d[i];
+    d[i] *= 3.5; // amplify
+  }
+  const src = ctx.createBufferSource();
+  src.buffer = buf; src.loop = true;
+  const g = ctx.createGain(); g.gain.value = 0.7;
+  src.connect(g); g.connect(master);
+  src.start(); ambientNodes.push(src);
+}
+
 // ── Beyaz Gürültü ──────────────────────────────────────────
 function buildWhiteNoise(ctx, master){
   const buf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
@@ -2133,8 +2182,19 @@ function selectSound(type){
   if(btn) btn.classList.add('active');
   settings.ambientSound = type;
   save();
-  if(type === 'none'){ stopAmbient(); }
-  else { startAmbient(type); }
+  if(type === 'none'){
+    stopAmbient();
+    toast('🔇 Ses kapatıldı');
+  } else {
+    stopAmbient();
+    // Preview: kısa süre çal sonra duraklat (timer çalışmıyorsa preview)
+    startAmbient(type);
+    if(!tRunning){
+      setTimeout(()=>{ if(!tRunning) pauseAmbient(); }, 3000);
+    }
+    const names={rain:'🌧 Yağmur',ocean:'🌊 Okyanus',cafe:'☕ Kafe',forest:'🌲 Orman',whitenoise:'〰 Beyaz Gürültü',fireplace:'🔥 Şömine'};
+    toast((names[type]||type)+' seçildi — timer başlayınca aktif olur');
+  }
 }
 
 function syncSoundUI(){
