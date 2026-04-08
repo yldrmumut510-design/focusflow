@@ -26,8 +26,8 @@
   --accent2-glow:rgba(181,149,106,0.18);
   --green:#5a9a6a;
   --green-bg:rgba(90,154,106,0.14);
-  --red:#c0211e;
-  --red-bg:rgba(192,33,30,0.13);
+  --red:#d42b2b;
+  --red-bg:rgba(212,43,43,0.12);
   --orange:#c8855a;
   --orange-bg:rgba(200,133,90,0.13);
   --radius:18px;
@@ -49,8 +49,8 @@
   --accent2-glow:rgba(196,165,120,0.18);
   --green:#6aaa7a;
   --green-bg:rgba(106,170,122,0.15);
-  --red:#e82020;
-  --red-bg:rgba(220,32,32,0.18);
+  --red:#ff3d3d;
+  --red-bg:rgba(255,61,61,0.16);
   --orange:#e09050;
   --orange-bg:rgba(224,144,80,0.15);
   --radius:18px;
@@ -162,7 +162,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:max
 .pomo-dot{width:14px;height:14px;border-radius:4px;border:1.5px solid var(–border);background:var(–surface2);transition:all .3s}
 .pomo-dot.done{background:var(–accent);border-color:var(–accent)}
 .pomo-dot.cancelled{background:var(–red);border-color:var(–red)}
-.pomo-dot-frame{display:flex;gap:3px;align-items:center;border:1.5px solid rgba(184,90,74,.35);border-radius:6px;padding:2px 4px;background:var(–red-bg)}
+.pomo-dot-frame{display:flex;gap:3px;align-items:center;border:1.5px solid rgba(212,43,43,.4);border-radius:6px;padding:2px 4px;background:var(–red-bg)}
 .pomo-counter{font-family:‘DM Mono’,monospace;font-size:.78rem;color:var(–text-muted);padding:3px 9px;background:var(–surface2);border:1px solid var(–border);border-radius:99px}
 
 /* Task selector */
@@ -1845,336 +1845,6 @@ function makeRingChart(items, total, unit){
 // ══ CATEGORY SAVE ON TASK SAVE ══
 
 
-// ══ AMBIENT SOUND ENGINE ══════════════════════════════
-// Pure Web Audio API - telif hakkı yok, kayıt yok
-let ambientCtx = null;
-let ambientNodes = [];
-let ambientType = 'none';
-let ambientGain = null;
-let ambientActive = false;
-
-function getAudioCtx(){
-  if(!ambientCtx || ambientCtx.state === 'closed'){
-    ambientCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  if(ambientCtx.state === 'suspended') ambientCtx.resume();
-  return ambientCtx;
-}
-
-function pauseAmbient(){
-  // Fade out ama node'ları koru (resume için)
-  if(ambientGain && ambientActive){
-    const ctx = ambientCtx;
-    if(ctx){
-      ambientGain.gain.cancelScheduledValues(ctx.currentTime);
-      ambientGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.8);
-    }
-  }
-}
-
-function resumeAmbient(){
-  if(ambientGain && ambientActive){
-    const ctx = ambientCtx;
-    if(ctx){
-      const vol = settings.ambientVol ?? 0.55;
-      ambientGain.gain.cancelScheduledValues(ctx.currentTime);
-      ambientGain.gain.linearRampToValueAtTime(vol, ctx.currentTime + 0.8);
-    }
-  }
-}
-
-function stopAmbient(){
-  ambientNodes.forEach(n => { try{ n.stop && n.stop(); n.disconnect && n.disconnect(); }catch(e){} });
-  ambientNodes = [];
-  if(ambientGain){ try{ ambientGain.disconnect(); }catch(e){} ambientGain = null; }
-  ambientActive = false;
-}
-
-function startAmbient(type){
-  stopAmbient();
-  if(type === 'none') return;
-  try{
-    const ctx = getAudioCtx();
-    ambientGain = ctx.createGain();
-    ambientGain.gain.value = 0.0;
-    ambientGain.connect(ctx.destination);
-    // Fade in
-    ambientGain.gain.linearRampToValueAtTime(0.55, ctx.currentTime + 1.5);
-
-    if(type === 'rain')      buildRain(ctx, ambientGain);
-    if(type === 'ocean')     buildOcean(ctx, ambientGain);
-    if(type === 'cafe')      buildCafe(ctx, ambientGain);
-    if(type === 'forest')    buildForest(ctx, ambientGain);
-    if(type === 'whitenoise')buildWhiteNoise(ctx, ambientGain);
-    if(type === 'brownnoise')buildBrownNoise(ctx, ambientGain);
-    if(type === 'fireplace') buildFireplace(ctx, ambientGain);
-
-    ambientActive = true;
-    ambientType = type;
-  }catch(e){ console.warn('Ambient sound error:', e); }
-}
-
-// ── Yağmur ──────────────────────────────────────────────
-function buildRain(ctx, master){
-  // Heavy noise + low rumble
-  const buf = ctx.createBuffer(1, ctx.sampleRate * 4, ctx.sampleRate);
-  const d = buf.getChannelData(0);
-  for(let i=0;i<d.length;i++) d[i] = (Math.random()*2-1);
-  
-  const src = ctx.createBufferSource();
-  src.buffer = buf; src.loop = true;
-  
-  const hipass = ctx.createBiquadFilter();
-  hipass.type = 'highpass'; hipass.frequency.value = 1200;
-  
-  const g = ctx.createGain(); g.gain.value = 0.7;
-  src.connect(hipass); hipass.connect(g); g.connect(master);
-  src.start(); ambientNodes.push(src);
-
-  // Low rumble
-  const rumbleBuf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
-  const rd = rumbleBuf.getChannelData(0);
-  for(let i=0;i<rd.length;i++) rd[i] = (Math.random()*2-1);
-  const rumbleSrc = ctx.createBufferSource();
-  rumbleSrc.buffer = rumbleBuf; rumbleSrc.loop = true;
-  const lp = ctx.createBiquadFilter();
-  lp.type = 'lowpass'; lp.frequency.value = 80;
-  const rg = ctx.createGain(); rg.gain.value = 0.3;
-  rumbleSrc.connect(lp); lp.connect(rg); rg.connect(master);
-  rumbleSrc.start(); ambientNodes.push(rumbleSrc);
-
-  // Random drips
-  function drip(){
-    if(!ambientActive) return;
-    const osc = ctx.createOscillator();
-    const dg = ctx.createGain();
-    osc.frequency.value = 800 + Math.random()*400;
-    osc.type = 'sine';
-    dg.gain.setValueAtTime(0.08, ctx.currentTime);
-    dg.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
-    osc.connect(dg); dg.connect(master);
-    osc.start(); osc.stop(ctx.currentTime + 0.18);
-    ambientNodes.push(osc);
-    setTimeout(drip, 300 + Math.random()*1200);
-  }
-  drip();
-}
-
-// ── Okyanus ──────────────────────────────────────────────
-function buildOcean(ctx, master){
-  function makeWave(freq, gainVal, delay){
-    const buf = ctx.createBuffer(1, ctx.sampleRate * 4, ctx.sampleRate);
-    const d = buf.getChannelData(0);
-    for(let i=0;i<d.length;i++) d[i] = Math.random()*2-1;
-    const src = ctx.createBufferSource();
-    src.buffer = buf; src.loop = true; src.playbackRate.value = 0.5;
-    
-    const lp = ctx.createBiquadFilter();
-    lp.type = 'bandpass'; lp.frequency.value = freq; lp.Q.value = 0.7;
-    
-    const g = ctx.createGain(); g.gain.value = 0;
-    // LFO for wave rhythm
-    const lfo = ctx.createOscillator();
-    lfo.frequency.value = 0.12 + Math.random()*0.06;
-    const lfoG = ctx.createGain(); lfoG.gain.value = gainVal * 0.6;
-    lfo.connect(lfoG); lfoG.connect(g.gain);
-    g.gain.value = gainVal * 0.4;
-    
-    src.connect(lp); lp.connect(g); g.connect(master);
-    src.start(ctx.currentTime + delay);
-    lfo.start(); 
-    ambientNodes.push(src, lfo);
-  }
-  makeWave(300, 0.5, 0);
-  makeWave(500, 0.35, 2);
-  makeWave(180, 0.25, 4);
-  
-  // Shore noise
-  const sbuf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
-  const sd = sbuf.getChannelData(0);
-  for(let i=0;i<sd.length;i++) sd[i] = Math.random()*2-1;
-  const ssrc = ctx.createBufferSource();
-  ssrc.buffer = sbuf; ssrc.loop = true;
-  const shp = ctx.createBiquadFilter(); shp.type='highpass'; shp.frequency.value=3000;
-  const sg = ctx.createGain(); sg.gain.value=0.1;
-  ssrc.connect(shp); shp.connect(sg); sg.connect(master);
-  ssrc.start(); ambientNodes.push(ssrc);
-}
-
-// ── Kafe ──────────────────────────────────────────────────
-function buildCafe(ctx, master){
-  // Background chatter - layered noise filtered to voice frequencies
-  const buf = ctx.createBuffer(1, ctx.sampleRate * 3, ctx.sampleRate);
-  const d = buf.getChannelData(0);
-  for(let i=0;i<d.length;i++) d[i] = Math.random()*2-1;
-  
-  const src = ctx.createBufferSource();
-  src.buffer = buf; src.loop = true;
-  const bp = ctx.createBiquadFilter();
-  bp.type = 'bandpass'; bp.frequency.value = 800; bp.Q.value = 0.4;
-  const g = ctx.createGain(); g.gain.value = 0.22;
-  src.connect(bp); bp.connect(g); g.connect(master);
-  src.start(); ambientNodes.push(src);
-
-  // Cup clinks and subtle activity
-  function clink(){
-    if(!ambientActive) return;
-    const o = ctx.createOscillator();
-    const cg = ctx.createGain();
-    o.frequency.value = 1200 + Math.random()*600;
-    o.type = 'triangle';
-    cg.gain.setValueAtTime(0.06, ctx.currentTime);
-    cg.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
-    o.connect(cg); cg.connect(master);
-    o.start(); o.stop(ctx.currentTime + 0.4);
-    ambientNodes.push(o);
-    setTimeout(clink, 2000 + Math.random()*5000);
-  }
-  clink();
-
-  // Gentle music hum (distant)
-  function hum(){
-    if(!ambientActive) return;
-    const o = ctx.createOscillator();
-    const hg = ctx.createGain();
-    const freqs = [261, 294, 329, 349, 392];
-    o.frequency.value = freqs[Math.floor(Math.random()*freqs.length)];
-    o.type = 'sine';
-    const dur = 0.8 + Math.random()*1.2;
-    hg.gain.setValueAtTime(0, ctx.currentTime);
-    hg.gain.linearRampToValueAtTime(0.025, ctx.currentTime + 0.15);
-    hg.gain.linearRampToValueAtTime(0, ctx.currentTime + dur);
-    o.connect(hg); hg.connect(master);
-    o.start(); o.stop(ctx.currentTime + dur + 0.1);
-    ambientNodes.push(o);
-    setTimeout(hum, 600 + Math.random()*2000);
-  }
-  setTimeout(hum, 1000);
-}
-
-// ── Orman ──────────────────────────────────────────────────
-function buildForest(ctx, master){
-  // Wind through trees
-  const buf = ctx.createBuffer(1, ctx.sampleRate * 4, ctx.sampleRate);
-  const d = buf.getChannelData(0);
-  for(let i=0;i<d.length;i++) d[i] = Math.random()*2-1;
-  const src = ctx.createBufferSource();
-  src.buffer = buf; src.loop = true;
-  const lp = ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=600;
-  const lfo = ctx.createOscillator(); lfo.frequency.value = 0.08;
-  const lfoG = ctx.createGain(); lfoG.gain.value = 0.15;
-  const g = ctx.createGain(); g.gain.value = 0.2;
-  lfo.connect(lfoG); lfoG.connect(g.gain);
-  src.connect(lp); lp.connect(g); g.connect(master);
-  src.start(); lfo.start(); ambientNodes.push(src, lfo);
-
-  // Bird chirps
-  function chirp(){
-    if(!ambientActive) return;
-    const count = 2 + Math.floor(Math.random()*3);
-    for(let i=0;i<count;i++){
-      setTimeout(()=>{
-        const o = ctx.createOscillator();
-        const bg = ctx.createGain();
-        const baseFreq = 1800 + Math.random()*1400;
-        o.frequency.setValueAtTime(baseFreq, ctx.currentTime);
-        o.frequency.linearRampToValueAtTime(baseFreq * (0.85 + Math.random()*0.3), ctx.currentTime + 0.12);
-        o.type = 'sine';
-        bg.gain.setValueAtTime(0, ctx.currentTime);
-        bg.gain.linearRampToValueAtTime(0.07, ctx.currentTime + 0.02);
-        bg.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
-        o.connect(bg); bg.connect(master);
-        o.start(); o.stop(ctx.currentTime + 0.16);
-        ambientNodes.push(o);
-      }, i * (80 + Math.random()*120));
-    }
-    setTimeout(chirp, 3000 + Math.random()*8000);
-  }
-  chirp();
-  
-  // Leaves rustle
-  function rustle(){
-    if(!ambientActive) return;
-    const rb = ctx.createBuffer(1, ctx.sampleRate*0.3, ctx.sampleRate);
-    const rd = rb.getChannelData(0);
-    for(let i=0;i<rd.length;i++) rd[i] = Math.random()*2-1;
-    const rs = ctx.createBufferSource(); rs.buffer = rb;
-    const rhp = ctx.createBiquadFilter(); rhp.type='highpass'; rhp.frequency.value=3000;
-    const rg = ctx.createGain(); 
-    rg.gain.setValueAtTime(0.12, ctx.currentTime);
-    rg.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.3);
-    rs.connect(rhp); rhp.connect(rg); rg.connect(master);
-    rs.start(); ambientNodes.push(rs);
-    setTimeout(rustle, 800 + Math.random()*3000);
-  }
-  setTimeout(rustle, 500);
-}
-
-// ── Brown (Kahverengi) Gürültü ─────────────────────────────
-function buildBrownNoise(ctx, master){
-  // Brown noise: her sample öncekinin ağırlıklı ortalaması (1/f² spectrum)
-  const buf = ctx.createBuffer(1, ctx.sampleRate * 4, ctx.sampleRate);
-  const d = buf.getChannelData(0);
-  let lastOut = 0;
-  for(let i=0;i<d.length;i++){
-    const white = Math.random()*2-1;
-    d[i] = (lastOut + (0.02 * white)) / 1.02;
-    lastOut = d[i];
-    d[i] *= 3.5; // amplify
-  }
-  const src = ctx.createBufferSource();
-  src.buffer = buf; src.loop = true;
-  const g = ctx.createGain(); g.gain.value = 0.7;
-  src.connect(g); g.connect(master);
-  src.start(); ambientNodes.push(src);
-}
-
-// ── Beyaz Gürültü ──────────────────────────────────────────
-function buildWhiteNoise(ctx, master){
-  const buf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
-  const d = buf.getChannelData(0);
-  for(let i=0;i<d.length;i++) d[i] = Math.random()*2-1;
-  const src = ctx.createBufferSource();
-  src.buffer = buf; src.loop = true;
-  const g = ctx.createGain(); g.gain.value = 0.6;
-  src.connect(g); g.connect(master);
-  src.start(); ambientNodes.push(src);
-}
-
-// ── Şömine ──────────────────────────────────────────────────
-function buildFireplace(ctx, master){
-  // Fire crackling - filtered noise + pops
-  const buf = ctx.createBuffer(1, ctx.sampleRate * 3, ctx.sampleRate);
-  const d = buf.getChannelData(0);
-  for(let i=0;i<d.length;i++) d[i] = Math.random()*2-1;
-  const src = ctx.createBufferSource();
-  src.buffer = buf; src.loop = true;
-  const bp = ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=400; bp.Q.value=0.5;
-  const lfo = ctx.createOscillator(); lfo.frequency.value=0.15;
-  const lfoG = ctx.createGain(); lfoG.gain.value=0.12;
-  const g = ctx.createGain(); g.gain.value=0.28;
-  lfo.connect(lfoG); lfoG.connect(g.gain);
-  src.connect(bp); bp.connect(g); g.connect(master);
-  src.start(); lfo.start(); ambientNodes.push(src, lfo);
-
-  // Wood pops/snaps
-  function pop(){
-    if(!ambientActive) return;
-    const pb = ctx.createBuffer(1, ctx.sampleRate*0.05, ctx.sampleRate);
-    const pd = pb.getChannelData(0);
-    for(let i=0;i<pd.length;i++) pd[i] = Math.random()*2-1;
-    const ps = ctx.createBufferSource(); ps.buffer = pb;
-    const pg = ctx.createGain();
-    pg.gain.setValueAtTime(0.25, ctx.currentTime);
-    pg.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.05);
-    ps.connect(pg); pg.connect(master);
-    ps.start(); ambientNodes.push(ps);
-    setTimeout(pop, 400 + Math.random()*2000);
-  }
-  pop();
-}
-
-// ── UI Helpers ──────────────────────────────────────────────
 
 function selectSound(type){
   document.querySelectorAll('.sound-btn').forEach(b=>b.classList.remove('active'));
@@ -2209,14 +1879,200 @@ function syncSoundUI(){
   if(type !== 'none' && !ambientActive) startAmbient(type);
 }
 
-function setAmbientVolume(val){
-  if(ambientGain){
-    ambientGain.gain.cancelScheduledValues(0);
-    ambientGain.gain.linearRampToValueAtTime(parseFloat(val), (ambientCtx?.currentTime||0) + 0.1);
+
+
+
+// ══ AUDIO SYSTEM ══════════════════════════════════════════
+// 1. GitHub repo'daki sounds/ klasöründen yükler
+// 2. Dosya yoksa Web Audio API ile algoritmik ses üretir
+
+const SOUND_FILES = {
+  rain:       'sounds/rain.mp3',
+  ocean:      'sounds/ocean.mp3',
+  cafe:       'sounds/cafe.mp3',
+  forest:     'sounds/forest.mp3',
+  library:    'sounds/library.mp3',
+  fireplace:  'sounds/fireplace.mp3',
+  brownnoise: 'sounds/brownnoise.mp3',
+  whitenoise: null  // sadece algoritmik
+};
+
+let audioEl = null;      // HTML Audio element
+let ambientCtx = null;   // Web Audio context (fallback)
+let ambientNodes = [];
+let ambientGain = null;
+let ambientActive = false;
+let ambientType = 'none';
+let usingHtmlAudio = false;
+
+function getAudioCtx(){
+  if(!ambientCtx || ambientCtx.state==='closed'){
+    ambientCtx = new(window.AudioContext||window.webkitAudioContext)();
   }
-  settings.ambientVol = parseFloat(val);
-  const p=document.getElementById('volPct');if(p)p.textContent=Math.round(parseFloat(val)*100)+'%';
+  if(ambientCtx.state==='suspended') ambientCtx.resume();
+  return ambientCtx;
+}
+
+function stopAmbient(){
+  // HTML Audio
+  if(audioEl){ audioEl.pause(); audioEl.currentTime=0; }
+  // Web Audio
+  ambientNodes.forEach(n=>{try{n.stop&&n.stop();n.disconnect&&n.disconnect();}catch(e){}});
+  ambientNodes=[];
+  if(ambientGain){try{ambientGain.disconnect();}catch(e){}ambientGain=null;}
+  ambientActive=false;
+  usingHtmlAudio=false;
+}
+
+function pauseAmbient(){
+  if(usingHtmlAudio && audioEl){
+    audioEl.pause();
+  } else if(ambientGain && ambientActive){
+    const ctx=getAudioCtx();
+    ambientGain.gain.cancelScheduledValues(ctx.currentTime);
+    ambientGain.gain.linearRampToValueAtTime(0, ctx.currentTime+0.8);
+  }
+}
+
+function resumeAmbient(){
+  if(usingHtmlAudio && audioEl){
+    audioEl.play().catch(()=>{});
+    const vol=settings.ambientVol??0.55;
+    audioEl.volume=vol;
+  } else if(ambientGain && ambientActive){
+    const ctx=getAudioCtx();
+    const vol=settings.ambientVol??0.55;
+    ambientGain.gain.cancelScheduledValues(ctx.currentTime);
+    ambientGain.gain.linearRampToValueAtTime(vol, ctx.currentTime+0.8);
+  }
+}
+
+function startAmbient(type){
+  stopAmbient();
+  if(type==='none') return;
+  ambientType=type;
+
+  const filePath = SOUND_FILES[type];
+  if(filePath){
+    // HTML Audio dene
+    if(!audioEl) audioEl = new Audio();
+    audioEl.src = filePath;
+    audioEl.loop = true;
+    audioEl.volume = settings.ambientVol??0.55;
+    const playPromise = audioEl.play();
+    if(playPromise){
+      playPromise.then(()=>{
+        usingHtmlAudio=true;
+        ambientActive=true;
+      }).catch(()=>{
+        // Dosya yok → Web Audio fallback
+        usingHtmlAudio=false;
+        startWebAudio(type);
+      });
+    }
+  } else {
+    startWebAudio(type);
+  }
+}
+
+function setAmbientVolume(val){
+  const v=parseFloat(val);
+  settings.ambientVol=v;
+  if(usingHtmlAudio && audioEl) audioEl.volume=v;
+  else if(ambientGain){
+    ambientGain.gain.cancelScheduledValues(0);
+    ambientGain.gain.value=v;
+  }
+  const p=document.getElementById('volPct');if(p)p.textContent=Math.round(v*100)+'%';
   save();
+}
+
+// ── Web Audio Fallback Engine ────────────────────────────
+function startWebAudio(type){
+  try{
+    const ctx=getAudioCtx();
+    ambientGain=ctx.createGain();
+    ambientGain.gain.value=0;
+    ambientGain.connect(ctx.destination);
+    const vol=settings.ambientVol??0.55;
+    ambientGain.gain.linearRampToValueAtTime(vol, ctx.currentTime+1.5);
+
+    if(type==='rain')       buildRain(ctx, ambientGain);
+    else if(type==='ocean') buildOcean(ctx, ambientGain);
+    else if(type==='cafe')  buildCafe(ctx, ambientGain);
+    else if(type==='forest'||type==='library') buildForest(ctx, ambientGain);
+    else if(type==='whitenoise')  buildWhiteNoise(ctx, ambientGain);
+    else if(type==='brownnoise')  buildBrownNoise(ctx, ambientGain);
+    else if(type==='fireplace')   buildFireplace(ctx, ambientGain);
+
+    ambientActive=true;
+  }catch(e){ console.warn('Web Audio error:', e); }
+}
+
+// ── Procedural engines (fallback) ───────────────────────
+function mkNoiseBuf(ctx, secs=4){
+  const b=ctx.createBuffer(1,ctx.sampleRate*secs,ctx.sampleRate);
+  const d=b.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+  return b;
+}
+function mkNoiseSrc(ctx, buf){ const s=ctx.createBufferSource();s.buffer=buf;s.loop=true;return s; }
+
+function buildRain(ctx,master){
+  const src=mkNoiseSrc(ctx,mkNoiseBuf(ctx,4));
+  const hp=ctx.createBiquadFilter();hp.type='highpass';hp.frequency.value=1200;
+  const g=ctx.createGain();g.gain.value=0.65;
+  src.connect(hp);hp.connect(g);g.connect(master);src.start();ambientNodes.push(src);
+  const rsrc=mkNoiseSrc(ctx,mkNoiseBuf(ctx,2));
+  const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=80;
+  const rg=ctx.createGain();rg.gain.value=0.25;
+  rsrc.connect(lp);lp.connect(rg);rg.connect(master);rsrc.start();ambientNodes.push(rsrc);
+  function drip(){if(!ambientActive)return;const o=ctx.createOscillator();const dg=ctx.createGain();o.frequency.value=800+Math.random()*400;o.type='sine';dg.gain.setValueAtTime(0.07,ctx.currentTime);dg.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.18);o.connect(dg);dg.connect(master);o.start();o.stop(ctx.currentTime+0.18);ambientNodes.push(o);setTimeout(drip,400+Math.random()*1200);}
+  drip();
+}
+function buildOcean(ctx,master){
+  for(let i=0;i<3;i++){
+    const src=mkNoiseSrc(ctx,mkNoiseBuf(ctx,4));src.playbackRate.value=0.5;
+    const bp=ctx.createBiquadFilter();bp.type='bandpass';bp.frequency.value=200+i*150;bp.Q.value=0.6;
+    const lfo=ctx.createOscillator();lfo.frequency.value=0.1+i*0.04;
+    const lg=ctx.createGain();lg.gain.value=0.2;const g=ctx.createGain();g.gain.value=0.15;
+    lfo.connect(lg);lg.connect(g.gain);src.connect(bp);bp.connect(g);g.connect(master);
+    src.start();lfo.start();ambientNodes.push(src,lfo);
+  }
+}
+function buildCafe(ctx,master){
+  const src=mkNoiseSrc(ctx,mkNoiseBuf(ctx,3));
+  const bp=ctx.createBiquadFilter();bp.type='bandpass';bp.frequency.value=800;bp.Q.value=0.4;
+  const g=ctx.createGain();g.gain.value=0.2;
+  src.connect(bp);bp.connect(g);g.connect(master);src.start();ambientNodes.push(src);
+  function clink(){if(!ambientActive)return;const o=ctx.createOscillator();const cg=ctx.createGain();o.frequency.value=1200+Math.random()*600;o.type='triangle';cg.gain.setValueAtTime(0.05,ctx.currentTime);cg.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.4);o.connect(cg);cg.connect(master);o.start();o.stop(ctx.currentTime+0.4);ambientNodes.push(o);setTimeout(clink,2000+Math.random()*5000);}
+  clink();
+}
+function buildForest(ctx,master){
+  const src=mkNoiseSrc(ctx,mkNoiseBuf(ctx,4));
+  const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=600;
+  const g=ctx.createGain();g.gain.value=0.18;
+  src.connect(lp);lp.connect(g);g.connect(master);src.start();ambientNodes.push(src);
+  function chirp(){if(!ambientActive)return;const o=ctx.createOscillator();const bg=ctx.createGain();const f=1800+Math.random()*1400;o.frequency.setValueAtTime(f,ctx.currentTime);o.frequency.linearRampToValueAtTime(f*(0.85+Math.random()*0.3),ctx.currentTime+0.12);o.type='sine';bg.gain.setValueAtTime(0,ctx.currentTime);bg.gain.linearRampToValueAtTime(0.06,ctx.currentTime+0.02);bg.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.15);o.connect(bg);bg.connect(master);o.start();o.stop(ctx.currentTime+0.16);ambientNodes.push(o);setTimeout(chirp,3000+Math.random()*8000);}
+  chirp();
+}
+function buildWhiteNoise(ctx,master){
+  const src=mkNoiseSrc(ctx,mkNoiseBuf(ctx,2));
+  const g=ctx.createGain();g.gain.value=0.55;src.connect(g);g.connect(master);src.start();ambientNodes.push(src);
+}
+function buildBrownNoise(ctx,master){
+  const buf=ctx.createBuffer(1,ctx.sampleRate*4,ctx.sampleRate);
+  const d=buf.getChannelData(0);let last=0;
+  for(let i=0;i<d.length;i++){const w=Math.random()*2-1;d[i]=(last+(0.02*w))/1.02;last=d[i];d[i]*=3.5;}
+  const src=ctx.createBufferSource();src.buffer=buf;src.loop=true;
+  const g=ctx.createGain();g.gain.value=0.65;src.connect(g);g.connect(master);src.start();ambientNodes.push(src);
+}
+function buildFireplace(ctx,master){
+  const src=mkNoiseSrc(ctx,mkNoiseBuf(ctx,3));
+  const bp=ctx.createBiquadFilter();bp.type='bandpass';bp.frequency.value=400;bp.Q.value=0.5;
+  const g=ctx.createGain();g.gain.value=0.25;src.connect(bp);bp.connect(g);g.connect(master);src.start();ambientNodes.push(src);
+  function pop(){if(!ambientActive)return;const pb=ctx.createBuffer(1,ctx.sampleRate*0.05,ctx.sampleRate);const pd=pb.getChannelData(0);for(let i=0;i<pd.length;i++)pd[i]=Math.random()*2-1;const ps=ctx.createBufferSource();ps.buffer=pb;const pg=ctx.createGain();pg.gain.setValueAtTime(0.2,ctx.currentTime);pg.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.05);ps.connect(pg);pg.connect(master);ps.start();ambientNodes.push(ps);setTimeout(pop,400+Math.random()*2000);}
+  pop();
 }
 
 // ══ BOOT ══
