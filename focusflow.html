@@ -496,7 +496,78 @@ header{display:flex;align-items:center;justify-content:space-between;padding:max
 .swipe-dot.active{background:var(--accent);width:16px;border-radius:3px}
 
 
-/* ── Ambient Sound UI ── */
+/* ── Pomo goal badge ── */
+.pomo-goal-badge{background:rgba(90,120,184,0.15)!important;color:#5a78b8!important;border:1px solid rgba(90,120,184,0.3)!important;border-radius:6px!important;padding:1px 6px!important;font-weight:600}
+.dark .pomo-goal-badge{background:rgba(120,150,220,0.18)!important;color:#8aabdc!important;border-color:rgba(120,150,220,0.3)!important}
+
+/* ── Group goto button ── */
+.gp-goto-btn{width:26px;height:26px;border-radius:7px;border:1.5px solid var(--border);background:var(--surface2);color:var(--accent);font-size:.85rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .18s;margin-right:4px}
+.gp-goto-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* ── Group Page (full screen) ── */
+.group-page{position:fixed;inset:0;z-index:200;background:var(--bg);display:none;flex-direction:column;max-width:500px;margin:0 auto}
+.group-page.active{display:flex}
+.gpage-header{display:flex;align-items:center;justify-content:space-between;padding:max(16px,env(safe-area-inset-top)) 20px 14px;background:var(--surface);border-bottom:1px solid var(--border)}
+.gpage-back{padding:7px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:.82rem;cursor:pointer;transition:all .18s}
+.gpage-back:hover{border-color:var(--text-muted);color:var(--text)}
+.gpage-title{font-family:'DM Serif Display',serif;font-size:1.15rem;color:var(--text)}
+.gpage-tabs{display:flex;border-bottom:1px solid var(--border);background:var(--surface)}
+.gptab{flex:1;padding:11px;border:none;background:transparent;color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:.82rem;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;transition:all .18s}
+.gptab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.gpage-content{flex:1;overflow-y:auto;padding-bottom:env(safe-area-inset-bottom)}
+
+/* ── Desk scene ── */
+.desk-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:16px}
+.desk-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;position:relative;cursor:pointer;transition:background .15s}
+.desk-card:hover{background:var(--surface2)}
+.desk-card.me-desk{border-color:var(--accent);background:var(--accent-glow)}
+.desk-status-dot{position:absolute;top:10px;right:10px;width:9px;height:9px;border-radius:50%;border:2px solid var(--surface)}
+.desk-card.sw .desk-status-dot{background:var(--green);animation:breathe 2s infinite}
+.desk-card.sb .desk-status-dot{background:var(--orange)}
+.desk-card.si .desk-status-dot{background:var(--border)}
+.desk-card.so .desk-status-dot{background:var(--text-dim);opacity:.5}
+
+/* Desk SVG figures */
+.desk-figure{width:80px;height:70px}
+
+.desk-name{font-size:.82rem;font-weight:600;color:var(--text);text-align:center;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.desk-task{font-size:.68rem;color:var(--text-muted);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.desk-stat{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--accent);font-weight:500}
+.desk-time{font-family:'DM Mono',monospace;font-size:.68rem;color:var(--text-muted)}
+
+/* Mood row on desk */
+.desk-mood-row{display:flex;align-items:center;gap:4px;margin-top:2px}
+.mood-slot{width:22px;height:22px;border-radius:6px;border:1.5px solid var(--border);background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:.75rem;cursor:pointer;transition:all .18s}
+.mood-slot:hover{border-color:var(--accent)}
+.mood-slot.empty{color:var(--text-dim);font-size:.65rem}
+.mood-me-btn{font-size:.7rem;background:var(--surface3);border:1.5px solid var(--border);border-radius:8px;padding:3px 8px;cursor:pointer;color:var(--text-muted);transition:all .18s;font-family:'Outfit',sans-serif}
+.mood-me-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* Mood picker popup */
+.mood-picker{position:fixed;z-index:350;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:10px;box-shadow:var(--shadow-lg);display:flex;flex-wrap:wrap;gap:6px;max-width:200px}
+.mood-option{width:34px;height:34px;border-radius:9px;border:1.5px solid var(--border);background:var(--surface2);font-size:1.1rem;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .13s}
+.mood-option:hover{border-color:var(--accent);background:var(--accent-glow);transform:scale(1.1)}
+
+/* ── Ranking Page ── */
+.ranking-list{padding:12px 16px;display:flex;flex-direction:column;gap:8px}
+.ranking-period-tabs{display:flex;gap:5px;padding:12px 16px 4px;background:var(--surface);border-bottom:1px solid var(--border)}
+.rptab{flex:1;padding:7px;border-radius:9px;border:none;background:transparent;color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:.78rem;font-weight:500;cursor:pointer;transition:all .18s;text-align:center}
+.rptab.active{background:var(--accent);color:#fff}
+.rank-row{display:flex;align-items:center;gap:11px;padding:11px 14px;background:var(--surface);border:1px solid var(--border);border-radius:13px;transition:background .15s}
+.rank-row.me-rank{border-color:var(--accent);background:var(--accent-glow)}
+.rank-num{font-family:'DM Mono',monospace;font-size:1rem;font-weight:700;color:var(--text-muted);width:28px;flex-shrink:0;text-align:center}
+.rank-num.top1{color:#f5c842}
+.rank-num.top2{color:#b0b8c8}
+.rank-num.top3{color:#c89060}
+.rank-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.88rem;font-weight:700;color:#fff;flex-shrink:0}
+.rank-info{flex:1;min-width:0}
+.rank-name{font-size:.84rem;font-weight:600;color:var(--text);display:flex;align-items:center;gap:5px}
+.rank-time{font-family:'DM Mono',monospace;font-size:.78rem;color:var(--accent);font-weight:500}
+.rank-sub{font-size:.65rem;color:var(--text-muted);margin-top:1px}
+.rank-me-tag{font-size:.55rem;background:var(--accent-glow);color:var(--accent);padding:1px 5px;border-radius:4px;font-weight:700}
+.rank-empty{padding:30px 20px;text-align:center;color:var(--text-dim);font-size:.85rem}
+
+
 .sound-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:13px 16px}
 .sound-btn{display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 6px;border-radius:12px;border:1.5px solid var(--border);background:var(--surface2);cursor:pointer;transition:all .18s;font-family:'Outfit',sans-serif}
 .sound-btn:hover{border-color:var(--accent)}
@@ -573,16 +644,16 @@ header{display:flex;align-items:center;justify-content:space-between;padding:max
       <div class="group-panel" id="groupPanel" style="display:none">
         <div class="gp-header expanded" id="gpHeader" onclick="toggleGP()">
           <div class="gph-left"><span>👥</span><span class="gph-title">Çalışma Grubu</span><span class="gph-badge" id="gphBadge"></span></div>
-          <div class="gph-right"><span class="gph-online" id="gphOnline"></span><span class="gph-arrow open" id="gphArrow">▾</span></div>
+          <div class="gph-right"><span class="gph-online" id="gphOnline"></span><button class="gp-goto-btn" onclick="event.stopPropagation();openGroupPage()" title="Çalışma Grubu Sayfası">→</button><span class="gph-arrow open" id="gphArrow">▾</span></div>
         </div>
         <div class="gp-body" id="gpBody"></div>
       </div>
       <!-- Timer -->
       <div class="timer-card">
         <div class="mode-row">
-          <button class="mode-pill active" onclick="setMode('focus')">Odak</button>
-          <button class="mode-pill" onclick="setMode('short')">Kısa Mola</button>
-          <button class="mode-pill" onclick="setMode('long')">Uzun Mola</button>
+          <div class="mode-pill active" id="modePillFocus">Odak</div>
+          <div class="mode-pill" id="modePillShort">Kısa Mola</div>
+          <div class="mode-pill" id="modePillLong">Uzun Mola</div>
         </div>
         <div class="ring-wrap">
           <svg class="ring-svg" viewBox="0 0 200 200">
@@ -763,6 +834,34 @@ header{display:flex;align-items:center;justify-content:space-between;padding:max
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeTaskModal()">İptal</button>
       <button class="btn-save" onclick="saveTask()" id="saveTaskBtn">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ GROUP FULL PAGE ══ -->
+<div class="group-page" id="groupFullPage">
+  <div class="gpage-header">
+    <button class="gpage-back" onclick="closeGroupPage()">← Geri</button>
+    <div class="gpage-title">Çalışma Grubu</div>
+    <div style="width:60px"></div>
+  </div>
+  <div class="gpage-tabs">
+    <button class="gptab active" id="gptab_desk" onclick="setGroupTab('desk',this)">🏠 Odalar</button>
+    <button class="gptab" id="gptab_rank" onclick="setGroupTab('rank',this)">🏆 Sıralama</button>
+  </div>
+  <div class="gpage-content">
+    <!-- Desk view -->
+    <div id="gpDesk">
+      <div class="desk-grid" id="deskGrid"></div>
+    </div>
+    <!-- Ranking view -->
+    <div id="gpRank" style="display:none">
+      <div class="ranking-period-tabs">
+        <button class="rptab active" id="rptab_day" onclick="setRankPeriod('day',this)">Bugün</button>
+        <button class="rptab" id="rptab_week" onclick="setRankPeriod('week',this)">Bu Hafta</button>
+        <button class="rptab" id="rptab_year" onclick="setRankPeriod('year',this)">Bu Yıl</button>
+      </div>
+      <div class="ranking-list" id="rankingList"></div>
     </div>
   </div>
 </div>
@@ -1089,8 +1188,10 @@ function gs_leaveGroup(){if(!confirm('Gruptan ayrılmak istediğine emin misin?'
 function copyGroupCode(){if(!currentGroupCode)return;navigator.clipboard?.writeText(currentGroupCode).then(()=>toast('📋 Kopyalandı: '+currentGroupCode)).catch(()=>toast('Kod: '+currentGroupCode));}
 
 // ══ GROUP PANEL ══
-window.myPresencePayload=function(){const u=window._currentUser||{};const s=tRunning?'working':(pauseMs!==null?'break':'idle');const tn=selId?(tasks.find(t=>t.id===selId)?.name||''):'';return{id:u.uid||'g',name:u.name||'?',color:u.color||'#c8775a',status:s,taskName:tn,totalFocusSec:myTotalFocus(),todayPomos:myTodayPomos(),lastSeen:Date.now()};};
+window.myPresencePayload=function(){const u=window._currentUser||{};const s=tRunning?'working':(pauseMs!==null?'break':'idle');const tn=selId?(tasks.find(t=>t.id===selId)?.name||''):'';return{id:u.uid||'g',name:u.name||'?',color:u.color||'#c8775a',status:s,taskName:tn,mood:u.mood||'',totalFocusSec:myTotalFocus(),todayPomos:myTodayPomos(),lastSeen:Date.now()};};
+window._lastGroupMembers=[];
 window.renderGroupPanel=function(members){
+  window._lastGroupMembers=members;
   const body=document.getElementById('gpBody');body.innerHTML='';
   const u=window._currentUser||{};
   if(!members.find(m=>m.id===u.uid))members.unshift(window.myPresencePayload());
@@ -1098,89 +1199,246 @@ window.renderGroupPanel=function(members){
   document.getElementById('gphOnline').textContent=`${online} çevrimiçi`;
   document.getElementById('agr_members').textContent=`${online} çevrimiçi`;
   const ord={working:0,break:1,idle:2,offline:3};
-  members.sort((a,b)=>(ord[a.status]??3)-(ord[b.status]??3)||a.name.localeCompare(b.name));
+  members.sort((a,b)=>(ord[a.status]??3)-(ord[b.status]??3)||(b.totalFocusSec||0)-(a.totalFocusSec||0));
+  // Show max 3 (top workers) on home panel
+  const toShow=members.slice(0,3);
   const SI={working:{cls:'sw',text:'🟢 Çalışıyor'},break:{cls:'sb',text:'🟡 Mola'},idle:{cls:'si',text:'⚫ Boşta'},offline:{cls:'so',text:'○ Çevrimdışı'}};
-  members.forEach(m=>{const si=SI[m.status]||SI.offline,isMe=m.id===u.uid;const row=document.createElement('div');row.className=`member-row ${si.cls}`;row.innerHTML=`<div class="mavatar" style="background:${m.color||'#c8775a'}">${aLetter(m.name)}<div class="msd"></div></div><div class="minfo"><div class="mname">${m.name}${isMe?'<span class="me-tag">sen</span>':''}</div><div class="mstxt">${si.text}</div>${m.taskName&&m.status==='working'?`<div class="mtask">📌 ${m.taskName}</div>`:''}</div><div class="mstats"><div class="mstat"><div class="mstat-val" style="color:var(--accent)">${m.todayPomos||0}🍅</div><div class="mstat-lbl">bugün</div></div><div class="mstat"><div class="mstat-val">${fmtH(m.totalFocusSec||0)}</div><div class="mstat-lbl">toplam</div></div></div>`;body.appendChild(row);});
+  toShow.forEach(m=>{const si=SI[m.status]||SI.offline,isMe=m.id===u.uid;const row=document.createElement('div');row.className=`member-row ${si.cls}`;row.innerHTML=`<div class="mavatar" style="background:${m.color||'#c8775a'}">${aLetter(m.name)}<div class="msd"></div></div><div class="minfo"><div class="mname">${m.name}${isMe?'<span class="me-tag">sen</span>':''}</div><div class="mstxt">${si.text}</div>${m.taskName&&m.status==='working'?`<div class="mtask">📌 ${m.taskName}</div>`:''}</div><div class="mstats"><div class="mstat"><div class="mstat-val" style="color:var(--accent)">${m.todayPomos||0}🍅</div><div class="mstat-lbl">bugün</div></div><div class="mstat"><div class="mstat-val">${fmtH(m.totalFocusSec||0)}</div><div class="mstat-lbl">toplam</div></div></div>`;body.appendChild(row);});
+  if(members.length>3){const more=document.createElement('div');more.style.cssText='text-align:center;font-size:.7rem;color:var(--text-muted);padding:6px 0 10px';more.textContent=`+${members.length-3} kişi daha → Tümünü gör`;body.appendChild(more);}
+  // Also refresh desk if group page is open
+  if(document.getElementById('groupFullPage').classList.contains('active'))renderDeskView();
 };
+
 function toggleGP(){gpOpen=!gpOpen;document.getElementById('gpBody').style.display=gpOpen?'':'none';document.getElementById('gphArrow').classList.toggle('open',gpOpen);document.getElementById('gpHeader').classList.toggle('expanded',gpOpen);}
 function nudgePresence(){if(!isGuest&&currentGroupCode&&window._pushPresence&&window._currentUser)window._pushPresence(currentGroupCode,window._currentUser.uid,window.myPresencePayload());}
 
-// ══ DAILY GOAL CARD ══
+// ══ GROUP FULL PAGE ══
+let rankPeriod='day';
+function openGroupPage(){
+  document.getElementById('groupFullPage').classList.add('active');
+  document.body.style.overflow='hidden';
+  setGroupTab('desk',document.getElementById('gptab_desk'));
+}
+function closeGroupPage(){
+  document.getElementById('groupFullPage').classList.remove('active');
+  document.body.style.overflow='';
+}
+function setGroupTab(tab,btn){
+  document.querySelectorAll('.gptab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('gpDesk').style.display=tab==='desk'?'':'none';
+  document.getElementById('gpRank').style.display=tab==='rank'?'':'none';
+  if(tab==='desk')renderDeskView();
+  if(tab==='rank')renderRanking();
+}
+function setRankPeriod(p,btn){
+  rankPeriod=p;
+  document.querySelectorAll('.rptab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderRanking();
+}
 
-function renderFlow(){
-  const today=todayKey();
-  const todayTasks=tasks.filter(t=>t.dayKey===today);
-  const timeline=document.getElementById('flowTimeline');
-  if(!todayTasks.length){timeline.innerHTML=`<div class="flow-empty">Bugün için görev yok.<br>Görevler sekmesinden ekleyebilirsin.</div>`;return;}
+function deskFigureWorking(color){
+  return `<svg class="desk-figure" viewBox="0 0 80 70" xmlns="http://www.w3.org/2000/svg">
+    <!-- Desk surface -->
+    <rect x="8" y="48" width="64" height="6" rx="3" fill="${color}" opacity="0.25"/>
+    <rect x="14" y="54" width="4" height="12" rx="2" fill="${color}" opacity="0.2"/>
+    <rect x="62" y="54" width="4" height="12" rx="2" fill="${color}" opacity="0.2"/>
+    <!-- Book open -->
+    <rect x="22" y="36" width="17" height="13" rx="2" fill="#e8d8c0" stroke="${color}" stroke-width="1.2"/>
+    <line x1="30.5" y1="37" x2="30.5" y2="48" stroke="${color}" stroke-width="0.8" opacity="0.5"/>
+    <line x1="24" y1="40" x2="30" y2="40" stroke="${color}" stroke-width="0.6" opacity="0.4"/>
+    <line x1="24" y1="43" x2="30" y2="43" stroke="${color}" stroke-width="0.6" opacity="0.4"/>
+    <line x1="31" y1="40" x2="37" y2="40" stroke="${color}" stroke-width="0.6" opacity="0.4"/>
+    <line x1="31" y1="43" x2="37" y2="43" stroke="${color}" stroke-width="0.6" opacity="0.4"/>
+    <!-- Body sitting -->
+    <ellipse cx="46" cy="43" rx="9" ry="7" fill="${color}" opacity="0.7"/>
+    <!-- Head -->
+    <circle cx="46" cy="28" r="9" fill="${color}" opacity="0.85"/>
+    <!-- Eyes focused down -->
+    <ellipse cx="42.5" cy="30" rx="1.5" ry="1.8" fill="white"/>
+    <circle cx="42.8" cy="30.5" r="1" fill="#333"/>
+    <ellipse cx="49.5" cy="30" rx="1.5" ry="1.8" fill="white"/>
+    <circle cx="49.8" cy="30.5" r="1" fill="#333"/>
+    <!-- Small smile -->
+    <path d="M43.5 33.5 Q46 35 48.5 33.5" stroke="#fff" stroke-width="1" fill="none" stroke-linecap="round"/>
+    <!-- Arms on desk -->
+    <path d="M37 44 Q30 46 28 46" stroke="${color}" stroke-width="3.5" fill="none" stroke-linecap="round" opacity="0.7"/>
+    <path d="M55 44 Q58 46 42 47" stroke="${color}" stroke-width="3.5" fill="none" stroke-linecap="round" opacity="0.7"/>
+  </svg>`;
+}
 
-  // Separate timed vs untimed
-  const timed=todayTasks.filter(t=>t.timeType==='range'&&t.timeStart).sort((a,b)=>a.timeStart.localeCompare(b.timeStart));
-  const untimed=todayTasks.filter(t=>t.timeType!=='range'||!t.timeStart);
+function deskFigureBreak(color){
+  return `<svg class="desk-figure" viewBox="0 0 80 70" xmlns="http://www.w3.org/2000/svg">
+    <!-- Desk surface -->
+    <rect x="8" y="48" width="64" height="6" rx="3" fill="${color}" opacity="0.25"/>
+    <rect x="14" y="54" width="4" height="12" rx="2" fill="${color}" opacity="0.2"/>
+    <rect x="62" y="54" width="4" height="12" rx="2" fill="${color}" opacity="0.2"/>
+    <!-- Coffee mug -->
+    <rect x="33" y="34" width="16" height="14" rx="3" fill="#faf0e0" stroke="${color}" stroke-width="1.5" opacity="0.9"/>
+    <path d="M49 38 Q55 38 55 43 Q55 48 49 48" stroke="${color}" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    <!-- Steam -->
+    <path d="M38 32 Q40 28 38 24" stroke="${color}" stroke-width="1.2" fill="none" stroke-linecap="round" opacity="0.5"/>
+    <path d="M43 31 Q45 27 43 23" stroke="${color}" stroke-width="1.2" fill="none" stroke-linecap="round" opacity="0.5"/>
+    <!-- Body relaxed -->
+    <ellipse cx="46" cy="44" rx="9" ry="6" fill="${color}" opacity="0.6"/>
+    <!-- Head tilted -->
+    <circle cx="48" cy="28" r="9" fill="${color}" opacity="0.85"/>
+    <!-- Eyes relaxed/happy -->
+    <path d="M43.5 27.5 Q45 26 46.5 27.5" stroke="white" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+    <path d="M49.5 27.5 Q51 26 52.5 27.5" stroke="white" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+    <!-- Big smile -->
+    <path d="M44 31 Q48 35 52 31" stroke="#fff" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+  </svg>`;
+}
 
-  // Find last timed end to place untimed after
-  let freeStart='00:00';
-  if(timed.length>0){
-    const lastEnd=timed[timed.length-1].timeEnd||'23:59';
-    freeStart=lastEnd;
-  }
+function deskFigureEmpty(){
+  return `<svg class="desk-figure" viewBox="0 0 80 70" xmlns="http://www.w3.org/2000/svg">
+    <!-- Desk surface -->
+    <rect x="8" y="48" width="64" height="6" rx="3" fill="#b0a088" opacity="0.2"/>
+    <rect x="14" y="54" width="4" height="12" rx="2" fill="#b0a088" opacity="0.15"/>
+    <rect x="62" y="54" width="4" height="12" rx="2" fill="#b0a088" opacity="0.15"/>
+    <!-- Empty chair outline -->
+    <rect x="28" y="36" width="24" height="16" rx="4" fill="none" stroke="#c8bea8" stroke-width="1.5" stroke-dasharray="4 2"/>
+    <!-- Empty chair legs -->
+    <line x1="33" y1="52" x2="33" y2="62" stroke="#c8bea8" stroke-width="1.5" opacity="0.5"/>
+    <line x1="47" y1="52" x2="47" y2="62" stroke="#c8bea8" stroke-width="1.5" opacity="0.5"/>
+    <!-- ? mark -->
+    <text x="40" y="47" text-anchor="middle" font-size="14" fill="#b0a088" opacity="0.6" font-family="Outfit,sans-serif">?</text>
+  </svg>`;
+}
 
-  // Distribute untimed into remaining day slots
-  const freeStartMin=timeToMin(freeStart);
-  const freeEndMin=24*60;
-  const freeRange=Math.max(60,freeEndMin-freeStartMin);
-  const slotSize=untimed.length>0?Math.floor(freeRange/untimed.length):60;
-
-  // Build items list
-  const items=[];
-  timed.forEach(t=>{items.push({task:t,startMin:timeToMin(t.timeStart),endMin:timeToMin(t.timeEnd||'23:59'),isTimed:true});});
-  untimed.forEach((t,i)=>{
-    const s=freeStartMin+i*slotSize;
-    items.push({task:t,startMin:s,endMin:s+slotSize,isTimed:false,slotStart:minToTime(s),slotEnd:minToTime(Math.min(24*60-1,s+slotSize))});
-  });
-  items.sort((a,b)=>a.startMin-b.startMin);
-
-  // Current time
-  const now=new Date();
-  const nowMin=now.getHours()*60+now.getMinutes();
-
-  timeline.innerHTML='';
-  items.forEach((item,idx)=>{
-    const t=item.task;
-    const isLast=idx===items.length-1;
-    const startLabel=item.isTimed?t.timeStart:item.slotStart;
-    const isCurrent=nowMin>=item.startMin&&nowMin<item.endMin;
-    const isPast=nowMin>=item.endMin;
-    const dotCls=t.completed?'done':isCurrent?'current':isPast?'accent':'';
-    const contentCls=isCurrent?'current-item':'';
-    const durationMin=item.endMin-item.startMin;
-
-    let chips='';
-    if(t.category)chips+=`<span class="flow-chip cat">${t.category}</span>`;
-    if(t.priority==='high')chips+=`<span class="flow-chip prio-h">Yüksek</span>`;
-    else if(t.priority==='mid')chips+=`<span class="flow-chip prio-m">Orta</span>`;
-    if(durationMin>0&&durationMin<24*60)chips+=`<span class="flow-chip dur">${durationMin>=60?Math.floor(durationMin/60)+'sa '+(durationMin%60?durationMin%60+'dk':''):durationMin+'dk'}</span>`;
-    if(t.pomodoros>0)chips+=`<span class="flow-chip dur">🍅×${t.pomodoros}</span>`;
-
-    const row=document.createElement('div');
-    row.className='flow-item';
-    row.innerHTML=`
-      <div class="flow-time-col"><div class="flow-time">${startLabel}</div></div>
-      <div class="flow-dot-col">
-        <div class="flow-dot ${dotCls}"></div>
-        ${!isLast?'<div class="flow-line"></div>':''}
+function renderDeskView(){
+  const grid=document.getElementById('deskGrid');
+  if(!grid)return;
+  grid.innerHTML='';
+  const members=window._lastGroupMembers||[];
+  const u=window._currentUser||{};
+  const allMembers=[...members];
+  if(!allMembers.find(m=>m.id===u.uid))allMembers.unshift(window.myPresencePayload());
+  
+  allMembers.forEach(m=>{
+    const isMe=m.id===u.uid;
+    const statusCls={working:'sw',break:'sb',idle:'si',offline:'so'}[m.status]||'so';
+    const card=document.createElement('div');
+    card.className=`desk-card ${statusCls}${isMe?' me-desk':''}`;
+    
+    let figure='';
+    if(m.status==='offline'||m.status==='idle')figure=deskFigureEmpty();
+    else if(m.status==='break')figure=deskFigureBreak(m.color||'#c8775a');
+    else figure=deskFigureWorking(m.color||'#c8775a');
+    
+    const mood=m.mood||'';
+    const moodDisplay=mood?`<span style="font-size:1rem">${mood}</span>`:`<span class="mood-slot empty">?</span>`;
+    
+    let moodBtn='';
+    if(isMe){
+      moodBtn=`<button class="mood-me-btn" onclick="openMoodPicker(event,'${m.id}')">mood ${mood||'?'}</button>`;
+    }
+    
+    card.innerHTML=`
+      <div class="desk-status-dot"></div>
+      ${figure}
+      <div class="desk-name">${m.name}${isMe?' 👤':''}</div>
+      ${m.taskName&&m.status==='working'?`<div class="desk-task">📌 ${m.taskName.slice(0,20)}</div>`:''}
+      <div style="display:flex;align-items:center;gap:6px;margin-top:2px">
+        ${moodDisplay}
+        ${moodBtn}
       </div>
-      <div class="flow-content ${contentCls}" onclick="openTaskModal('${t.id}')">
-        ${isCurrent?'<div class="flow-glow"></div>':''}
-        <div class="flow-task-name">
-          ${t.completed?'<span class="done-check">✓</span>':''}
-          ${t.name}
-          ${!item.isTimed?'<span class="untimed-label">esnek</span>':''}
-        </div>
-        ${chips?`<div class="flow-task-meta">${chips}</div>`:''}
-      </div>`;
-    timeline.appendChild(row);
+      <div class="desk-stat">${m.todayPomos||0}🍅 <span class="desk-time">${fmtH(m.totalFocusSec||0)}</span></div>
+    `;
+    grid.appendChild(card);
+  });
+  
+  if(!allMembers.length){
+    grid.innerHTML='<div style="grid-column:span 2;text-align:center;color:var(--text-muted);font-size:.85rem;padding:30px">Henüz kimse yok</div>';
+  }
+}
+
+function openMoodPicker(e,uid){
+  e.stopPropagation();
+  // Remove existing picker
+  const existing=document.getElementById('moodPickerPop');
+  if(existing){existing.remove();return;}
+  
+  const picker=document.createElement('div');
+  picker.className='mood-picker';
+  picker.id='moodPickerPop';
+  
+  const moods=['😊','😄','😎','🤩','😌','😔','😤','😴','🤔','😰','💪','🧠'];
+  moods.forEach(em=>{
+    const btn=document.createElement('div');
+    btn.className='mood-option';
+    btn.textContent=em;
+    btn.onclick=()=>{setMyMood(em);picker.remove();};
+    picker.appendChild(btn);
+  });
+  
+  const rect=e.currentTarget.getBoundingClientRect();
+  picker.style.cssText+=`top:${rect.bottom+6}px;left:${Math.min(rect.left,window.innerWidth-210)}px`;
+  document.body.appendChild(picker);
+  setTimeout(()=>document.addEventListener('click',function h(){picker.remove();document.removeEventListener('click',h);}),100);
+}
+
+function setMyMood(emoji){
+  if(!window._currentUser||isGuest)return;
+  window._currentUser.mood=emoji;
+  nudgePresence();
+  renderDeskView();
+  toast('Mood güncellendi: '+emoji);
+}
+
+function renderRanking(){
+  const list=document.getElementById('rankingList');
+  if(!list)return;
+  list.innerHTML='';
+  
+  const members=window._lastGroupMembers||[];
+  const u=window._currentUser||{};
+  const allMembers=[...members];
+  if(!allMembers.find(m=>m.id===u.uid))allMembers.unshift(window.myPresencePayload());
+  
+  // Get focus seconds per member based on period
+  // For now use totalFocusSec (all time) for year, todayPomos proxy for day
+  // Firebase stores totalFocusSec as cumulative, todayPomos as today
+  const now=new Date();
+  const ranked=allMembers.map(m=>{
+    let sec=0;
+    if(rankPeriod==='day'){sec=(m.todayPomos||0)*(settings.focus||25)*60;}
+    else if(rankPeriod==='week'){sec=m.weekFocusSec||m.totalFocusSec||0;}
+    else{sec=m.totalFocusSec||0;}
+    return{...m,rankSec:sec};
+  }).sort((a,b)=>b.rankSec-a.rankSec);
+  
+  if(!ranked.length){
+    list.innerHTML='<div class="rank-empty">Henüz kayıt yok</div>';
+    return;
+  }
+  
+  ranked.forEach((m,i)=>{
+    const isMe=m.id===u.uid;
+    const numCls=i===0?'top1':i===1?'top2':i===2?'top3':'';
+    const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+    const row=document.createElement('div');
+    row.className=`rank-row${isMe?' me-rank':''}`;
+    row.innerHTML=`
+      <div class="rank-num ${numCls}">${medal||('#'+(i+1))}</div>
+      <div class="rank-avatar" style="background:${m.color||'#c8775a'}">${aLetter(m.name)}</div>
+      <div class="rank-info">
+        <div class="rank-name">${m.name}${isMe?'<span class="rank-me-tag">sen</span>':''}</div>
+        <div class="rank-sub">${rankPeriod==='day'?'Bugün':rankPeriod==='week'?'Bu Hafta':'Bu Yıl'}</div>
+      </div>
+      <div>
+        <div class="rank-time">${fmtH(m.rankSec)}</div>
+        <div style="font-size:.65rem;color:var(--text-muted);text-align:right">${rankPeriod==='day'?m.todayPomos||0:Math.round(m.rankSec/((settings.focus||25)*60))}🍅</div>
+      </div>
+    `;
+    list.appendChild(row);
   });
 }
+
+// ══ DAILY GOAL CARD ══
+
 function timeToMin(hhmm){if(!hhmm)return 0;const[h,m]=(hhmm||'00:00').split(':').map(Number);return h*60+(m||0);}
 function minToTime(min){const h=Math.floor(min/60)%24,m=min%60;return`${p2(h)}:${p2(m)}`;}
 
@@ -1213,12 +1471,20 @@ function renderTaskList(){
   if(timed.length){const g=document.createElement('div');g.innerHTML='<div class="task-group-lbl">🕐 Saatli Görevler</div>';timed.forEach(t=>g.appendChild(mkTaskEl(t)));c.appendChild(g);}
   if(any.length){const g=document.createElement('div');if(timed.length)g.innerHTML='<div class="task-group-lbl">📌 Esnek Görevler</div>';any.forEach(t=>g.appendChild(mkTaskEl(t)));c.appendChild(g);}
 }
+function calcTaskPomos(task){
+  // Calculate how many pomodoros worth of time has been spent on this task
+  const spentSec=ttime[task.id]||0;
+  const pomoSec=(task.cp?.f||settings.focus||25)*60;
+  return Math.floor(spentSec/pomoSec);
+}
+
 function mkTaskEl(task){
   const div=document.createElement('div');div.className=`task-item priority-${task.priority}${task.completed?' completed':''}`;
   const ts=task.timeType==='range'&&task.timeStart?`<span class="tc">🕐 ${task.timeStart}–${task.timeEnd||''}</span>`:'';
   const cat=task.category?`<span class="tag">${task.category}</span>`:'';
-  const pom=task.pomodoros>0?`<span class="tc">🍅×${task.pomodoros}</span>`:'';
-  const pc=task.pomoCount>0?`<span class="tc">🎯${task.pomoCount}🍅</span>`:'';
+  const earnedPomos=calcTaskPomos(task);
+  const pom=earnedPomos>0?`<span class="tc">🍅×${earnedPomos}</span>`:'';
+  const pc=task.pomoCount>0?`<span class="tc pomo-goal-badge">🎯 ${task.pomoCount}🍅</span>`:'';
   const sp=ttime[task.id]?`<span class="tc">⏱${fmtS(ttime[task.id])}</span>`:'';
   const rep=task.rd?.length?'<span class="tc">🔁</span>':'';
   const pb={high:`<span class="pb pb-h">Yüksek</span>`,mid:`<span class="pb pb-m">Orta</span>`,low:''}[task.priority];
@@ -1315,7 +1581,7 @@ function toggleTaskDrop(e){e.stopPropagation();const dd=document.getElementById(
 function switchActive(id){
   commitSeg();selId=id;
   document.getElementById('taskDrop').style.display='none';
-  renderSelBox();renderCatFilter();
+  renderSelBox();renderCatFilter();renderFlow();
   // Auto-update timer duration for new task's custom pomo settings
   if(!tRunning){
     const s=getAS();
@@ -1345,7 +1611,7 @@ function resetDots(){cycles.push({type:'cycle_complete',dots:dots.map(s=>({...s}
 const C=2*Math.PI*85,P=2*Math.PI*93;
 function updateRing(frac){const el=document.getElementById('ringProg');el.style.strokeDasharray=C;el.style.strokeDashoffset=C*(1-frac);el.style.stroke=frac>0.5?'var(--accent)':frac>0.2?'var(--orange)':'var(--red)';}
 function updateTDisplay(){const m=Math.floor(tSec/60),s=tSec%60;document.getElementById('timerDisp').textContent=`${p2(m)}:${p2(s)}`;updateRing(tSec/totSec);}
-function setMode(mode){if(tRunning)return;tMode=mode;document.querySelectorAll('.mode-pill').forEach((p,i)=>p.classList.toggle('active',['focus','short','long'][i]===mode));const s=getAS();const mins={focus:s.focus,short:s.short,long:s.long}[mode];tSec=mins*60;totSec=mins*60;updateTimerLabel();updateTDisplay();}
+function setMode(mode){if(tRunning)return;tMode=mode;document.querySelectorAll('.mode-pill').forEach(p=>p.classList.remove('active'));const pillMap={focus:'modePillFocus',short:'modePillShort',long:'modePillLong'};const pill=document.getElementById(pillMap[mode]);if(pill)pill.classList.add('active');const s=getAS();const mins={focus:s.focus,short:s.short,long:s.long}[mode];tSec=mins*60;totSec=mins*60;updateTimerLabel();updateTDisplay();}
 
 function toggleTimer(){
   if(tRunning){
@@ -1502,7 +1768,7 @@ function setCatFilter(cat){
 // ══ CLEAR SELECTION ══
 function clearSelection(){
   selId=null;selCat=null;
-  renderSelBox();renderCatFilter();
+  renderSelBox();renderCatFilter();renderFlow();
   if(!tRunning){const s=getAS();const mins={focus:s.focus,short:s.short,long:s.long}[tMode];tSec=mins*60;totSec=mins*60;updateTDisplay();}
   document.getElementById('selClearBtn').style.display='none';
 }
@@ -1604,44 +1870,78 @@ function renderFlow(){
     const isLast=idx===items.length-1;
     const isCurrent=nowMin>=item.startMin&&nowMin<item.endMin;
     const isPast=nowMin>=item.endMin;
-    const dotCls=t.completed?'done':isCurrent?'current':isPast?'accent':'';
+    const isSelected=selId===t.id;
+
+    // Color logic: selected task overrides time-based color
+    let contentCls='';
+    let accentColor='var(--accent)';
+    if(isSelected){
+      contentCls='flow-selected-task';
+      accentColor='var(--accent)';
+    } else if(isCurrent){
+      contentCls='current-item';
+    }
+
+    const dotCls=t.completed?'done':isSelected?'current':isCurrent?'current':isPast?'accent':'';
     const durationMin=item.endMin-item.startMin;
 
-    // Start + End time display
     const startLabel=item.isTimed?t.timeStart:item.slotStart;
     const endLabel=item.isTimed?(t.timeEnd||''):item.slotEnd;
-    const timeRange=endLabel?`${startLabel}–${endLabel}`:startLabel;
 
-    // Pomo segments
+    // Pomodoro segments
     const pomoMin=t.cp?.f||settings.focus||25;
-    const numSegs=durationMin>0&&durationMin<24*60?Math.max(1,Math.round(durationMin/pomoMin)):0;
-    const spentMin=Math.round((ttime[t.id]||0)/60);
-    const totalCapMin=numSegs*pomoMin;
+    // If timed task: number of segs = round(duration / pomoMin), unless pomoCount set
+    let numSegs=0;
+    if(t.pomoCount>0){
+      numSegs=t.pomoCount;
+    } else if(item.isTimed&&durationMin>0&&durationMin<24*60){
+      numSegs=Math.max(1,Math.round(durationMin/pomoMin));
+    } else if(!item.isTimed&&durationMin<24*60&&durationMin>0){
+      numSegs=Math.max(1,Math.round(durationMin/pomoMin));
+    }
+
+    // Earned pomos = floor(total spent sec / pomoSec)
+    const spentSec=ttime[t.id]||0;
+    const pomoSec=pomoMin*60;
+    const earnedPomos=Math.floor(spentSec/pomoSec);
+    const partialFrac=(spentSec%(pomoSec))/pomoSec;
+
     let segBarsHTML='';
     if(numSegs>0&&numSegs<=20){
       const bars=[];
       for(let i=0;i<numSegs;i++){
-        const segStart=i*pomoMin,segEnd=(i+1)*pomoMin;
-        if(spentMin>=segEnd){
-          bars.push(`<div class="flow-segment filled" style="border-radius:${i===0?'3px 0 0 3px':i===numSegs-1?'0 3px 3px 0':'0'}"></div>`);
-        } else if(spentMin>segStart){
-          const pct=Math.round((spentMin-segStart)/pomoMin*100);
-          bars.push(`<div class="flow-segment partial" style="--pct:${pct}%;border-radius:${i===0?'3px 0 0 3px':i===numSegs-1?'0 3px 3px 0':'0'}"></div>`);
+        const r0=i===0,r1=i===numSegs-1;
+        const rad=`border-radius:${r0?'3px':'0'} ${r1?'3px':'0'} ${r1?'3px':'0'} ${r0?'3px':'0'}`;
+        if(i<earnedPomos){
+          bars.push(`<div class="flow-segment filled" style="${rad}"></div>`);
+        } else if(i===earnedPomos&&partialFrac>0){
+          bars.push(`<div class="flow-segment partial" style="--pct:${Math.round(partialFrac*100)}%;${rad}"></div>`);
         } else {
-          bars.push(`<div class="flow-segment empty" style="border-radius:${i===0?'3px 0 0 3px':i===numSegs-1?'0 3px 3px 0':'0'}"></div>`);
+          bars.push(`<div class="flow-segment empty" style="${rad}"></div>`);
         }
       }
-      // Add separator lines between segments (subtle)
       segBarsHTML=`<div class="flow-bar-wrap" style="gap:${numSegs>6?'1px':'2px'}">${bars.join('')}</div>`;
     }
+
+    // Pomodoro counter label for flow
+    const flowPomoLabel=numSegs>0?`<span class="flow-chip dur">🍅 ${earnedPomos}/${numSegs}</span>`:'';
 
     let chips='';
     if(t.category)chips+=`<span class="flow-chip cat">${t.category}</span>`;
     if(t.priority==='high')chips+=`<span class="flow-chip prio-h">Yüksek</span>`;
-    if(t.pomodoros>0)chips+=`<span class="flow-chip dur">🍅×${t.pomodoros}</span>`;
+    chips+=flowPomoLabel;
 
     const row=document.createElement('div');
     row.className='flow-item';
+
+    // Selected task styling
+    let contentStyle='';
+    if(isSelected){
+      contentStyle='background:var(--accent-glow);border:1px solid var(--accent);border-radius:10px;';
+    } else if(isCurrent&&!isSelected){
+      contentStyle='';
+    }
+
     row.innerHTML=`
       <div class="flow-time-col">
         <div class="flow-time">${startLabel}</div>
@@ -1651,8 +1951,8 @@ function renderFlow(){
         <div class="flow-dot ${dotCls}"></div>
         ${!isLast?'<div class="flow-line"></div>':''}
       </div>
-      <div class="flow-content${isCurrent?' current-item':''}" onclick="openTaskModal('${t.id}')">
-        ${isCurrent?'<div class="flow-glow"></div>':''}
+      <div class="flow-content${isCurrent&&!isSelected?' current-item':''}" style="${contentStyle}" onclick="openTaskModal('${t.id}')">
+        ${isCurrent&&!isSelected?'<div class="flow-glow"></div>':''}
         <div class="flow-task-name">
           ${t.completed?'<span class="done-check">✓</span>':''}
           ${t.name}
@@ -1756,11 +2056,11 @@ function renderAnalysis(){
   // Ring colors for categories
   const RING_COLORS=['#c8775a','#b5956a','#5a9a6a','#5a78b8','#8a5ab8','#b85a78','#5a9898','#c8a05a','#7a8a5a','#c85a8a'];
 
-  // Task ring
+  // Task ring - pass all entries, makeRingChart groups others
   if(tE.length){
     const rc1=document.createElement('div');rc1.className='ring-chart-card';rc1.innerHTML='<h3>📋 Görev Dağılımı</h3>';
     const total_t=tE.reduce((a,[,v])=>a+v,0);
-    rc1.appendChild(makeRingChart(tE.slice(0,8).map(([n,v],i)=>({label:n,value:v,color:RING_COLORS[i%RING_COLORS.length]})),total_t,'süre'));
+    rc1.appendChild(makeRingChart(tE.map(([n,v],i)=>({label:n,value:v,color:RING_COLORS[i%RING_COLORS.length]})),total_t,'süre'));
     page2.appendChild(rc1);
   }
 
@@ -1813,23 +2113,52 @@ function renderAnalysis(){
 }
 
 function makeRingChart(items, total, unit){
-  const size=130,stroke=22,r=(size-stroke)/2,cx=size/2,cy=size/2;
+  const MAX_SHOW=10;
+  // Group items beyond MAX_SHOW into "Diğerleri"
+  let displayItems=[...items];
+  if(items.length>MAX_SHOW){
+    const shown=items.slice(0,MAX_SHOW-1);
+    const otherVal=items.slice(MAX_SHOW-1).reduce((a,i)=>a+i.value,0);
+    displayItems=[...shown,{label:'Diğerleri',value:otherVal,color:'#b0a088'}];
+  }
+
+  const size=160,stroke=24,r=(size-stroke)/2,cx=size/2,cy=size/2;
   const circ=2*Math.PI*r;
   let offset=0;
   let paths='';
+  let labelPaths='';
   const validTotal=total||1;
-  items.forEach(item=>{
+
+  displayItems.forEach((item,idx)=>{
     const pct=item.value/validTotal;
     const dash=pct*circ;
     const gap=circ-dash;
     paths+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${item.color}" stroke-width="${stroke}" stroke-dasharray="${dash.toFixed(1)} ${gap.toFixed(1)}" stroke-dashoffset="${(-offset*circ+circ/4).toFixed(1)}" stroke-linecap="butt"/>`;
+
+    // Label on ring if segment is big enough (>8%)
+    if(pct>0.08){
+      const midAngle=(offset+pct/2)*2*Math.PI - Math.PI/2;
+      const labelR=r;
+      const lx=cx+labelR*Math.cos(midAngle);
+      const ly=cy+labelR*Math.sin(midAngle);
+      const pctText=Math.round(pct*100)+'%';
+      const timeText=fmtS(item.value);
+      labelPaths+=`<text x="${lx.toFixed(1)}" y="${(ly-5).toFixed(1)}" text-anchor="middle" font-size="8" fill="white" font-family="DM Mono,monospace" font-weight="600" dominant-baseline="middle">${pctText}</text>`;
+      labelPaths+=`<text x="${lx.toFixed(1)}" y="${(ly+6).toFixed(1)}" text-anchor="middle" font-size="7" fill="white" opacity="0.85" font-family="Outfit,sans-serif" dominant-baseline="middle">${timeText}</text>`;
+    }
+
     offset+=pct;
   });
-  const svg=`<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="transform:rotate(-90deg);flex-shrink:0"><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--surface3)" stroke-width="${stroke}"/>${paths}</svg>`;
+
+  const svg=`<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="transform:rotate(-90deg);flex-shrink:0">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--surface3)" stroke-width="${stroke}"/>
+    ${paths}
+    <g style="transform:rotate(90deg);transform-origin:${cx}px ${cy}px">${labelPaths}</g>
+  </svg>`;
 
   const wrap=document.createElement('div');wrap.className='ring-canvas-wrap';
-  const legend=`<div class="ring-legend">${items.slice(0,6).map(item=>`<div class="ring-legend-item"><div class="ring-legend-dot" style="background:${item.color}"></div><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${item.label}</span><span class="ring-legend-val">${Math.round(item.value/validTotal*100)}%</span></div>`).join('')}</div>`;
-  wrap.innerHTML=svg+legend;
+  const legendItems=displayItems.slice(0,8).map(item=>`<div class="ring-legend-item"><div class="ring-legend-dot" style="background:${item.color}"></div><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;font-size:.72rem">${item.label}</span><span class="ring-legend-val">${fmtS(item.value)} · ${Math.round(item.value/validTotal*100)}%</span></div>`).join('');
+  wrap.innerHTML=svg+`<div class="ring-legend">${legendItems}</div>`;
   return wrap;
 }
 
