@@ -469,7 +469,12 @@ header{display:flex;align-items:center;justify-content:space-between;padding:max
 .time-field-group{display:flex;flex-direction:column;gap:4px;flex:1;min-width:100px}
 .time-field-label{font-size:.68rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px}
 
-/* ── Category autocomplete ── */
+/* ── Date quick buttons ── */
+.date-quick-btn{padding:7px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:.8rem;font-weight:500;cursor:pointer;transition:all .18s;flex-shrink:0}
+.date-quick-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.date-quick-btn:hover:not(.active){border-color:var(--text-muted);color:var(--text)}
+
+
 .cat-suggestions{position:absolute;top:calc(100%+4px);left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-lg);z-index:100;overflow:hidden;display:none}
 .cat-suggestions.show{display:block}
 .cat-suggestion{padding:9px 13px;font-size:.85rem;cursor:pointer;transition:background .13s;color:var(--text)}
@@ -691,8 +696,8 @@ header{display:flex;align-items:center;justify-content:space-between;padding:max
           </div>
           <div class="ctrl-secondary">
             <button class="btn-ctrl" onclick="resetTimer()">↺ Sıfırla</button>
-            <button class="btn-ctrl cancel-btn" id="cancelBtn" onclick="cancelPomodoro()">✕ İptal</button>
-            <button class="btn-ctrl" onclick="skipForward()">⏭ Atla</button>
+            <button class="btn-ctrl cancel-btn" id="cancelBtn" onclick="confirmCancel()">✕ İptal</button>
+            <button class="btn-ctrl" onclick="confirmSkip()">⏭ Atla</button>
           </div>
         </div>
       </div>
@@ -774,6 +779,14 @@ header{display:flex;align-items:center;justify-content:space-between;padding:max
       <div>
         <label class="form-lbl">Görev Adı</label>
         <input class="fi" id="tName" placeholder="Görev adı..." onkeydown="if(event.key==='Enter')saveTask()">
+      </div>
+      <div>
+        <label class="form-lbl">📅 Tarih</label>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <button class="date-quick-btn active" id="dqToday" onclick="setQuickDate('today')">Bugün</button>
+          <button class="date-quick-btn" id="dqTomorrow" onclick="setQuickDate('tomorrow')">Yarın</button>
+          <input class="fi" id="tDatePicker" type="date" style="flex:1;min-width:130px" onchange="setQuickDate('custom')" title="Tarih seç">
+        </div>
       </div>
       <div>
         <label class="form-lbl">Zaman</label>
@@ -1188,7 +1201,15 @@ function gs_leaveGroup(){if(!confirm('Gruptan ayrılmak istediğine emin misin?'
 function copyGroupCode(){if(!currentGroupCode)return;navigator.clipboard?.writeText(currentGroupCode).then(()=>toast('📋 Kopyalandı: '+currentGroupCode)).catch(()=>toast('Kod: '+currentGroupCode));}
 
 // ══ GROUP PANEL ══
-window.myPresencePayload=function(){const u=window._currentUser||{};const s=tRunning?'working':(pauseMs!==null?'break':'idle');const tn=selId?(tasks.find(t=>t.id===selId)?.name||''):'';return{id:u.uid||'g',name:u.name||'?',color:u.color||'#c8775a',status:s,taskName:tn,mood:u.mood||'',totalFocusSec:myTotalFocus(),todayPomos:myTodayPomos(),lastSeen:Date.now()};};
+window.myPresencePayload=function(){const u=window._currentUser||{};
+  // working: sadece odak modunda timer aktif çalışıyorken
+  // break: timer duraklatıldığında VEYA kısa/uzun mola modundayken (çalışıyor ya da değil)
+  // idle: hiçbir şey başlatılmamış
+  let s;
+  if(tRunning && tMode==='focus') s='working';
+  else if(tMode==='short'||tMode==='long'||(pauseMs!==null)) s='break';
+  else s='idle';
+  const tn=selId?(tasks.find(t=>t.id===selId)?.name||''):'';return{id:u.uid||'g',name:u.name||'?',color:u.color||'#c8775a',status:s,taskName:tn,mood:u.mood||'',totalFocusSec:myTotalFocus(),todayPomos:myTodayPomos(),lastSeen:Date.now()};};
 window._lastGroupMembers=[];
 window.renderGroupPanel=function(members){
   window._lastGroupMembers=members;
@@ -1244,27 +1265,36 @@ function deskFigureWorking(color){
     <rect x="8" y="48" width="64" height="6" rx="3" fill="${color}" opacity="0.25"/>
     <rect x="14" y="54" width="4" height="12" rx="2" fill="${color}" opacity="0.2"/>
     <rect x="62" y="54" width="4" height="12" rx="2" fill="${color}" opacity="0.2"/>
-    <!-- Book open -->
-    <rect x="22" y="36" width="17" height="13" rx="2" fill="#e8d8c0" stroke="${color}" stroke-width="1.2"/>
-    <line x1="30.5" y1="37" x2="30.5" y2="48" stroke="${color}" stroke-width="0.8" opacity="0.5"/>
-    <line x1="24" y1="40" x2="30" y2="40" stroke="${color}" stroke-width="0.6" opacity="0.4"/>
-    <line x1="24" y1="43" x2="30" y2="43" stroke="${color}" stroke-width="0.6" opacity="0.4"/>
-    <line x1="31" y1="40" x2="37" y2="40" stroke="${color}" stroke-width="0.6" opacity="0.4"/>
-    <line x1="31" y1="43" x2="37" y2="43" stroke="${color}" stroke-width="0.6" opacity="0.4"/>
+    <!-- Book open (richer ivory/cream color) -->
+    <rect x="18" y="35" width="18" height="14" rx="2" fill="#f0e6c8" stroke="#8a6a3a" stroke-width="1.3"/>
+    <rect x="18" y="35" width="9" height="14" rx="1" fill="#ede0b8" stroke="#8a6a3a" stroke-width="0.8"/>
+    <line x1="27" y1="36" x2="27" y2="48" stroke="#8a6a3a" stroke-width="1" opacity="0.5"/>
+    <line x1="20" y1="39" x2="26" y2="39" stroke="#8a6a3a" stroke-width="0.7" opacity="0.5"/>
+    <line x1="20" y1="42" x2="26" y2="42" stroke="#8a6a3a" stroke-width="0.7" opacity="0.5"/>
+    <line x1="20" y1="45" x2="26" y2="45" stroke="#8a6a3a" stroke-width="0.7" opacity="0.5"/>
+    <line x1="28" y1="39" x2="34" y2="39" stroke="#8a6a3a" stroke-width="0.7" opacity="0.5"/>
+    <line x1="28" y1="42" x2="34" y2="42" stroke="#8a6a3a" stroke-width="0.7" opacity="0.5"/>
+    <line x1="28" y1="45" x2="34" y2="45" stroke="#8a6a3a" stroke-width="0.7" opacity="0.5"/>
     <!-- Body sitting -->
-    <ellipse cx="46" cy="43" rx="9" ry="7" fill="${color}" opacity="0.7"/>
-    <!-- Head -->
-    <circle cx="46" cy="28" r="9" fill="${color}" opacity="0.85"/>
-    <!-- Eyes focused down -->
-    <ellipse cx="42.5" cy="30" rx="1.5" ry="1.8" fill="white"/>
-    <circle cx="42.8" cy="30.5" r="1" fill="#333"/>
-    <ellipse cx="49.5" cy="30" rx="1.5" ry="1.8" fill="white"/>
-    <circle cx="49.8" cy="30.5" r="1" fill="#333"/>
-    <!-- Small smile -->
-    <path d="M43.5 33.5 Q46 35 48.5 33.5" stroke="#fff" stroke-width="1" fill="none" stroke-linecap="round"/>
-    <!-- Arms on desk -->
-    <path d="M37 44 Q30 46 28 46" stroke="${color}" stroke-width="3.5" fill="none" stroke-linecap="round" opacity="0.7"/>
-    <path d="M55 44 Q58 46 42 47" stroke="${color}" stroke-width="3.5" fill="none" stroke-linecap="round" opacity="0.7"/>
+    <ellipse cx="50" cy="43" rx="9" ry="7" fill="${color}" opacity="0.7"/>
+    <!-- Head tilted down (reading pose) - rotated group -->
+    <g transform="rotate(-18, 50, 30)">
+      <circle cx="50" cy="28" r="9" fill="${color}" opacity="0.9"/>
+      <!-- Hair hint -->
+      <ellipse cx="50" cy="20" rx="8" ry="3.5" fill="${color}" opacity="0.5"/>
+      <!-- Eyes hidden / squinted (focused reading - eyes looking down, not visible from tilt) -->
+      <path d="M45.5 28 Q47 27 48.5 28" stroke="rgba(255,255,255,0.6)" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+      <path d="M51 28 Q52.5 27 54 28" stroke="rgba(255,255,255,0.6)" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+    </g>
+    <!-- Focus attention lines around head -->
+    <line x1="62" y1="16" x2="66" y2="13" stroke="${color}" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+    <line x1="63" y1="22" x2="68" y2="21" stroke="${color}" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+    <line x1="61" y1="28" x2="66" y2="29" stroke="${color}" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+    <line x1="60" y1="12" x2="62" y2="8" stroke="${color}" stroke-width="1.2" stroke-linecap="round" opacity="0.45"/>
+    <line x1="55" y1="10" x2="55" y2="6" stroke="${color}" stroke-width="1.2" stroke-linecap="round" opacity="0.4"/>
+    <!-- Arms on desk reaching toward book -->
+    <path d="M42 46 Q36 47 34 46" stroke="${color}" stroke-width="3.5" fill="none" stroke-linecap="round" opacity="0.7"/>
+    <path d="M58 46 Q56 47 52 47" stroke="${color}" stroke-width="3.5" fill="none" stroke-linecap="round" opacity="0.7"/>
   </svg>`;
 }
 
@@ -1274,21 +1304,29 @@ function deskFigureBreak(color){
     <rect x="8" y="48" width="64" height="6" rx="3" fill="${color}" opacity="0.25"/>
     <rect x="14" y="54" width="4" height="12" rx="2" fill="${color}" opacity="0.2"/>
     <rect x="62" y="54" width="4" height="12" rx="2" fill="${color}" opacity="0.2"/>
-    <!-- Coffee mug -->
-    <rect x="33" y="34" width="16" height="14" rx="3" fill="#faf0e0" stroke="${color}" stroke-width="1.5" opacity="0.9"/>
-    <path d="M49 38 Q55 38 55 43 Q55 48 49 48" stroke="${color}" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-    <!-- Steam -->
-    <path d="M38 32 Q40 28 38 24" stroke="${color}" stroke-width="1.2" fill="none" stroke-linecap="round" opacity="0.5"/>
-    <path d="M43 31 Q45 27 43 23" stroke="${color}" stroke-width="1.2" fill="none" stroke-linecap="round" opacity="0.5"/>
-    <!-- Body relaxed -->
-    <ellipse cx="46" cy="44" rx="9" ry="6" fill="${color}" opacity="0.6"/>
-    <!-- Head tilted -->
-    <circle cx="48" cy="28" r="9" fill="${color}" opacity="0.85"/>
-    <!-- Eyes relaxed/happy -->
-    <path d="M43.5 27.5 Q45 26 46.5 27.5" stroke="white" stroke-width="1.3" fill="none" stroke-linecap="round"/>
-    <path d="M49.5 27.5 Q51 26 52.5 27.5" stroke="white" stroke-width="1.3" fill="none" stroke-linecap="round"/>
-    <!-- Big smile -->
-    <path d="M44 31 Q48 35 52 31" stroke="#fff" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+    <!-- Coffee mug (warmer brown tones) -->
+    <rect x="32" y="34" width="16" height="14" rx="3" fill="#c8956a" opacity="0.25" stroke="#6b3d1e" stroke-width="1.5"/>
+    <rect x="33" y="35" width="14" height="5" rx="1.5" fill="#4a2210" opacity="0.55"/>
+    <path d="M48 38 Q54 38 54 43 Q54 48 48 48" stroke="#6b3d1e" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    <!-- Saucer -->
+    <ellipse cx="40" cy="48.5" rx="10" ry="2" fill="#6b3d1e" opacity="0.18"/>
+    <!-- Steam (more visible) -->
+    <path d="M37 32 Q39.5 28 37 24" stroke="#6b3d1e" stroke-width="1.4" fill="none" stroke-linecap="round" opacity="0.55"/>
+    <path d="M42 31 Q44.5 27 42 23" stroke="#6b3d1e" stroke-width="1.4" fill="none" stroke-linecap="round" opacity="0.55"/>
+    <path d="M47 32 Q49.5 28 47 24" stroke="#6b3d1e" stroke-width="1.4" fill="none" stroke-linecap="round" opacity="0.4"/>
+    <!-- Body relaxed, slightly leaned back -->
+    <ellipse cx="44" cy="44" rx="9" ry="6" fill="${color}" opacity="0.6"/>
+    <!-- Head tilted slightly sideways (relaxed) -->
+    <g transform="rotate(10, 44, 28)">
+      <circle cx="44" cy="28" r="9" fill="${color}" opacity="0.9"/>
+      <!-- Hair hint -->
+      <ellipse cx="44" cy="20" rx="8" ry="3.5" fill="${color}" opacity="0.5"/>
+      <!-- Eyes relaxed/happy (curved upward - smiling eyes) -->
+      <path d="M39.5 27 Q41 25.5 42.5 27" stroke="white" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+      <path d="M45.5 27 Q47 25.5 48.5 27" stroke="white" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+      <!-- Big smile -->
+      <path d="M40 31 Q44 35 48 31" stroke="#fff" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+    </g>
   </svg>`;
 }
 
@@ -1533,6 +1571,15 @@ function openTaskModal(idOrNull){
   document.getElementById('cpF').textContent=task?.cp?.f||settings.focus;
   document.getElementById('cpS').textContent=task?.cp?.s||settings.short;
   document.getElementById('cpL').textContent=task?.cp?.l||settings.long;
+  // Date selector
+  const targetDay=task?.dayKey||selDay||todayKey();
+  const todayK=todayKey();
+  const tomorrowK=dateKey(new Date(Date.now()+864e5));
+  document.getElementById('tDatePicker').value=targetDay;
+  document.querySelectorAll('.date-quick-btn').forEach(b=>b.classList.remove('active'));
+  if(targetDay===todayK)document.getElementById('dqToday').classList.add('active');
+  else if(targetDay===tomorrowK)document.getElementById('dqTomorrow').classList.add('active');
+  else{/* custom date — highlight date picker */}
   // Show/hide time fields
   onTTC();onRTC();
   document.getElementById('cpPanel').classList.toggle('open',!!task?.cp);
@@ -1543,6 +1590,20 @@ function openTaskModal(idOrNull){
   document.body.style.overflow='hidden';
   setTimeout(()=>document.getElementById('tName').focus(),200);
 }
+function setQuickDate(which){
+  const todayK=todayKey();
+  const tomorrowK=dateKey(new Date(Date.now()+864e5));
+  document.querySelectorAll('.date-quick-btn').forEach(b=>b.classList.remove('active'));
+  if(which==='today'){
+    document.getElementById('tDatePicker').value=todayK;
+    document.getElementById('dqToday').classList.add('active');
+  } else if(which==='tomorrow'){
+    document.getElementById('tDatePicker').value=tomorrowK;
+    document.getElementById('dqTomorrow').classList.add('active');
+  } else {
+    // custom: date was picked from input, no quick btn active
+  }
+}
 function closeTaskModal(){document.getElementById('taskModal').classList.remove('open');document.body.style.overflow='';editingTaskId=null;}
 function onModalOverlayClick(e){if(e.target===document.getElementById('taskModal'))closeTaskModal();}
 
@@ -1552,18 +1613,42 @@ function saveTask(){
   const tt=document.getElementById('tTimeType').value,ts=document.getElementById('tStart').value;
   if(tt==='range'&&!ts){toast('⚠️ Saat belirt');return;}
   const rd=getRdays(),rt=document.getElementById('tRemType').value,useCP=document.getElementById('cpCheck').checked;
+  // Get selected date from picker
+  const chosenDay=document.getElementById('tDatePicker').value||selDay||todayKey();
   const base={name,timeType:tt,timeStart:ts||'',timeEnd:document.getElementById('tEnd').value||'',priority:document.getElementById('tPrio').value,category:document.getElementById('tCat').value.trim(),pomoCount:parseInt(document.getElementById('tPomoCount').value)||0,rd,reminderType:rt,reminderTime:rt==='scheduled'?ts:(document.getElementById('tRemTime').value),cp:useCP?{f:parseInt(document.getElementById('cpF').textContent),s:parseInt(document.getElementById('cpS').textContent),l:parseInt(document.getElementById('cpL').textContent)}:null};
 
   if(editingTaskId){
-    // Edit existing
+    // Edit existing — update repeat days properly
     const idx=tasks.findIndex(t=>t.id===editingTaskId);
-    if(idx!==-1){tasks[idx]={...tasks[idx],...base};}
+    if(idx!==-1){
+      const oldTask=tasks[idx];
+      const oldRdStr=JSON.stringify((oldTask.rd||[]).slice().sort());
+      const newRdStr=JSON.stringify((rd||[]).slice().sort());
+      if(oldRdStr!==newRdStr){
+        // Repeat days changed: remove all future repeat instances of this task group
+        const baseId=editingTaskId.split('_s')[0].split('_')[0];
+        const today=todayKey();
+        // Remove future repeats (keep today and past)
+        const toRemove=tasks.filter((t,i)=>i!==idx&&(t.id.startsWith(baseId+'_')||t.id===baseId+'_s')&&t.dayKey>=today);
+        toRemove.forEach(t=>{const ti=tasks.indexOf(t);if(ti!==-1)tasks.splice(ti,1);});
+        // Update the edited task
+        tasks[idx]={...tasks[idx],...base};
+        // Add new repeat instances if rd set
+        if(rd.length>0){
+          const sd=new Date(tasks[idx].dayKey+'T12:00:00');
+          const nx=new Date(sd);nx.setDate(nx.getDate()+1);const en=new Date(nx);en.setDate(en.getDate()+365);
+          for(let d=new Date(nx);d<=en;d.setDate(d.getDate()+1)){const dow=d.getDay(),oi=dow===0?6:dow-1;if(rd.includes(oi))tasks.push({...tasks[idx],...base,id:baseId+'_'+dateKey(d)+'_'+Math.random().toString(36).slice(2),dayKey:dateKey(d),completed:false,pomodoros:0});}
+        }
+      } else {
+        tasks[idx]={...tasks[idx],...base};
+      }
+    }
     toast('✏️ Güncellendi');
   } else {
     // Add new
-    const newTask={...base,id:Date.now().toString(),dayKey:selDay,completed:false,pomodoros:0};
+    const newTask={...base,id:Date.now().toString(),dayKey:chosenDay,completed:false,pomodoros:0};
     if(rd.length>0){
-      const sd=new Date(selDay+'T12:00:00'),sdow=sd.getDay(),si=sdow===0?6:sdow-1;
+      const sd=new Date(chosenDay+'T12:00:00'),sdow=sd.getDay(),si=sdow===0?6:sdow-1;
       if(rd.includes(si))tasks.push({...newTask,id:Date.now()+'_s'});
       const nx=new Date(sd);nx.setDate(nx.getDate()+1);const en=new Date(nx);en.setDate(en.getDate()+365);
       for(let d=new Date(nx);d<=en;d.setDate(d.getDate()+1)){const dow=d.getDay(),oi=dow===0?6:dow-1;if(rd.includes(oi))tasks.push({...newTask,id:Date.now()+'_'+dateKey(d)+'_'+Math.random().toString(36).slice(2),dayKey:dateKey(d)});}
@@ -1611,7 +1696,7 @@ function resetDots(){cycles.push({type:'cycle_complete',dots:dots.map(s=>({...s}
 const C=2*Math.PI*85,P=2*Math.PI*93;
 function updateRing(frac){const el=document.getElementById('ringProg');el.style.strokeDasharray=C;el.style.strokeDashoffset=C*(1-frac);el.style.stroke=frac>0.5?'var(--accent)':frac>0.2?'var(--orange)':'var(--red)';}
 function updateTDisplay(){const m=Math.floor(tSec/60),s=tSec%60;document.getElementById('timerDisp').textContent=`${p2(m)}:${p2(s)}`;updateRing(tSec/totSec);}
-function setMode(mode){if(tRunning)return;tMode=mode;document.querySelectorAll('.mode-pill').forEach(p=>p.classList.remove('active'));const pillMap={focus:'modePillFocus',short:'modePillShort',long:'modePillLong'};const pill=document.getElementById(pillMap[mode]);if(pill)pill.classList.add('active');const s=getAS();const mins={focus:s.focus,short:s.short,long:s.long}[mode];tSec=mins*60;totSec=mins*60;updateTimerLabel();updateTDisplay();}
+function setMode(mode){if(tRunning)return;tMode=mode;document.querySelectorAll('.mode-pill').forEach(p=>p.classList.remove('active'));const pillMap={focus:'modePillFocus',short:'modePillShort',long:'modePillLong'};const pill=document.getElementById(pillMap[mode]);if(pill)pill.classList.add('active');const s=getAS();const mins={focus:s.focus,short:s.short,long:s.long}[mode];tSec=mins*60;totSec=mins*60;updateTimerLabel();updateTDisplay();nudgePresence();}
 
 function toggleTimer(){
   if(tRunning){
@@ -1671,8 +1756,79 @@ function doResetCycle(){
   const m=document.getElementById('resetMenu');if(m)m.remove();
   resetDots();toast('🔄 Döngü sıfırlandı');
 }
+// ── Confirm dialogs for Skip & Cancel ──
+function showConfirmSheet(title, subtitle, confirmLabel, confirmClass, onConfirm){
+  const existing=document.getElementById('confirmSheet');if(existing)existing.remove();
+  const sheet=document.createElement('div');
+  sheet.id='confirmSheet';
+  sheet.style.cssText='position:fixed;inset:0;z-index:350;display:flex;align-items:flex-end;justify-content:center;background:rgba(30,20,10,.5);backdrop-filter:blur(4px);animation:fadeUp .2s ease';
+  sheet.innerHTML=`<div style="width:100%;max-width:500px;background:var(--surface);border-radius:22px 22px 0 0;padding:24px 20px calc(24px + env(safe-area-inset-bottom));box-shadow:var(--shadow-lg)">
+    <div style="width:36px;height:4px;border-radius:99px;background:var(--border);margin:0 auto 20px"></div>
+    <div style="font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:6px">${title}</div>
+    <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:22px;line-height:1.5">${subtitle}</div>
+    <button id="confirmSheetYes" style="width:100%;padding:14px;border-radius:13px;border:none;background:var(--accent);color:#fff;font-family:'Outfit',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;margin-bottom:10px" class="${confirmClass}">${confirmLabel}</button>
+    <button onclick="document.getElementById('confirmSheet').remove()" style="width:100%;padding:12px;border-radius:13px;border:1.5px solid var(--border);background:transparent;color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:.88rem;cursor:pointer">Vazgeç</button>
+  </div>`;
+  sheet.addEventListener('click',e=>{if(e.target===sheet)sheet.remove();});
+  document.getElementById('confirmSheetYes').addEventListener('click',()=>{sheet.remove();onConfirm();});
+  document.body.appendChild(sheet);
+}
+
+function confirmCancel(){
+  // If timer hasn't started at all, cancel silently
+  if(!tRunning&&tSec===totSec&&pauseMs===null&&cumulPause===0)return;
+  const worked=Object.values(sessTT).reduce((a,v)=>a+v,0);
+  const workedMin=Math.round(worked/60);
+  const subtitle=workedMin>0
+    ?`${workedMin} dakika çalışıldı olarak kaydedilecek ve bu pomodoro iptal edilecek.`
+    :'Hiç çalışmadan iptal edilecek. Süre kaydedilmeyecek.';
+  showConfirmSheet('Bu pomodoro iptal edilecek',subtitle,'✕ Evet, İptal Et','',cancelPomodoro);
+}
+
+function confirmSkip(){
+  const worked=Object.values(sessTT).reduce((a,v)=>a+v,0);
+  const workedMin=Math.round(worked/60);
+  let subtitle='';
+  if(tMode==='focus'){
+    subtitle=workedMin>0
+      ?`${workedMin} dakika çalışıldı olarak kaydedilecek ve bir sonraki molaya geçilecek.`
+      :'Hiç çalışılmadı olarak atlanacak, süre kaydedilmeyecek.';
+  } else {
+    subtitle='Mola atlanacak ve odak moduna geçilecek.';
+  }
+  showConfirmSheet('Bu aşama atlanacak',subtitle,'⏭ Evet, Atla','',skipForward);
+}
+
 function cancelPomodoro(){if(!tRunning&&tSec===totSec&&pauseMs===null&&cumulPause===0)return;clearInterval(tIv);tRunning=false;document.getElementById('playBtn').textContent='BAŞLAT';commitSeg();if(pauseMs!==null){const dur=Math.round((Date.now()-pauseMs)/1000);sessP.push({duration:dur,at:new Date(pauseMs).toISOString()});cumulPause+=dur;pauseMs=null;}clearPauseRing();const totalP=sessP.reduce((a,p)=>a+p.duration,0),worked=Object.values(sessTT).reduce((a,v)=>a+v,0);dotCancel();stats.cancel++;const rec={type:'cancelled',mode:tMode,taskId:selId,taskName:selId?(tasks.find(t=>t.id===selId)?.name||''):'',category:selId?(tasks.find(t=>t.id===selId)?.category||''):(selCat||''),taskTimes:{...sessTT},pauseTotal:totalP,workedSec:worked,totalSec:worked+totalP,pauses:[...sessP],dayKey:todayKey(),at:new Date().toISOString()};cycles.push(rec);failed.unshift({...rec});sessP=[];sessTT={};cumulPause=0;pauseDispSec=0;pauseCount=0;save();renderDots();updateStats();renderDailyGoal();nudgePresence();const s=getAS();const mins={focus:s.focus,short:s.short,long:s.long}[tMode];tSec=mins*60;totSec=mins*60;updateTDisplay();pauseAmbient();toast('❌ İptal edildi');}
-function skipForward(){clearInterval(tIv);tRunning=false;document.getElementById('playBtn').textContent='BAŞLAT';commitSeg();if(pauseMs!==null){const dur=Math.round((Date.now()-pauseMs)/1000);sessP.push({duration:dur,at:new Date(pauseMs).toISOString()});cumulPause+=dur;pauseMs=null;}clearPauseRing();const worked=Object.values(sessTT).reduce((a,v)=>a+v,0),totalP=sessP.reduce((a,p)=>a+p.duration,0);if(tMode==='focus'){stats.pomo++;stats.min+=Math.round(worked/60);if(selId){const t=tasks.find(t=>t.id===selId);if(t)t.pomodoros=(t.pomodoros||0)+1;}dotDone();cycles.push({type:'completed',mode:'focus',skipped:true,taskId:selId,taskName:selId?(tasks.find(t=>t.id===selId)?.name||''):'',category:selId?(tasks.find(t=>t.id===selId)?.category||''):(selCat||''),taskTimes:{...sessTT},pauseTotal:totalP,focusDuration:worked,totalDuration:worked+totalP,pauses:[...sessP],dayKey:todayKey(),at:new Date().toISOString()});sessP=[];sessTT={};cumulPause=0;pauseDispSec=0;pauseCount=0;save();updateStats();renderDots();renderDailyGoal();nudgePresence();const gc=dots.filter(s=>s.t==='g').length;if(gc>=4){toast('⏭ Uzun molaya');setMode('long');}else{toast('⏭ Kısa molaya');setMode('short');}}else if(tMode==='long'){sessP=[];sessTT={};cumulPause=0;pauseDispSec=0;pauseCount=0;resetDots();save();toast('⏭ Yeni döngü');setMode('focus');nudgePresence();}else{sessP=[];sessTT={};cumulPause=0;pauseDispSec=0;pauseCount=0;save();toast('⏭ Odağa');setMode('focus');nudgePresence();}}
+function skipForward(){
+  clearInterval(tIv);tRunning=false;document.getElementById('playBtn').textContent='BAŞLAT';
+  commitSeg();
+  if(pauseMs!==null){const dur=Math.round((Date.now()-pauseMs)/1000);sessP.push({duration:dur,at:new Date(pauseMs).toISOString()});cumulPause+=dur;pauseMs=null;}
+  clearPauseRing();
+  const worked=Object.values(sessTT).reduce((a,v)=>a+v,0);
+  const totalP=sessP.reduce((a,p)=>a+p.duration,0);
+  if(tMode==='focus'){
+    // Only count as a pomo if something was worked
+    const workedMin=Math.round(worked/60);
+    if(worked>0){
+      stats.pomo++;
+      stats.min+=workedMin;
+      if(selId){const t=tasks.find(t=>t.id===selId);if(t)t.pomodoros=(t.pomodoros||0)+1;}
+      dotDone();
+      cycles.push({type:'completed',mode:'focus',skipped:true,skippedEarly:true,taskId:selId,taskName:selId?(tasks.find(t=>t.id===selId)?.name||''):'',category:selId?(tasks.find(t=>t.id===selId)?.category||''):(selCat||''),taskTimes:{...sessTT},pauseTotal:totalP,focusDuration:worked,totalDuration:worked+totalP,pauses:[...sessP],dayKey:todayKey(),at:new Date().toISOString()});
+    } else {
+      // Skipped with 0 work — record as skipped-unworked, don't advance dot
+      dotCancel();
+      cycles.push({type:'cancelled',mode:'focus',skipped:true,skippedNoWork:true,taskId:selId,taskName:selId?(tasks.find(t=>t.id===selId)?.name||''):'',category:selId?(tasks.find(t=>t.id===selId)?.category||''):(selCat||''),taskTimes:{},pauseTotal:totalP,workedSec:0,totalSec:totalP,pauses:[...sessP],dayKey:todayKey(),at:new Date().toISOString()});
+    }
+    sessP=[];sessTT={};cumulPause=0;pauseDispSec=0;pauseCount=0;
+    save();updateStats();renderDots();renderDailyGoal();renderFlow();nudgePresence();
+    const gc=dots.filter(s=>s.t==='g').length;
+    if(gc>=4){toast('⏭ Uzun molaya');setMode('long');}else{toast('⏭ Kısa molaya');setMode('short');}
+  }else if(tMode==='long'){sessP=[];sessTT={};cumulPause=0;pauseDispSec=0;pauseCount=0;resetDots();save();toast('⏭ Yeni döngü');setMode('focus');nudgePresence();}
+  else{sessP=[];sessTT={};cumulPause=0;pauseDispSec=0;pauseCount=0;save();toast('⏭ Odağa');setMode('focus');nudgePresence();}
+  pauseAmbient();
+}
 function onTimerEnd(){const s=getAS();if(tMode==='focus'){stats.pomo++;stats.min+=s.focus;if(selId){const t=tasks.find(t=>t.id===selId);if(t)t.pomodoros=(t.pomodoros||0)+1;}const totalP=sessP.reduce((a,p)=>a+p.duration,0);dotDone();cycles.push({type:'completed',mode:'focus',taskId:selId,taskName:selId?(tasks.find(t=>t.id===selId)?.name||''):'',category:selId?(tasks.find(t=>t.id===selId)?.category||''):(selCat||''),taskTimes:{...sessTT},pauseTotal:totalP,focusDuration:s.focus*60,totalDuration:s.focus*60+totalP,pauses:[...sessP],dayKey:todayKey(),at:new Date().toISOString()});sessP=[];sessTT={};cumulPause=0;pauseDispSec=0;pauseCount=0;clearPauseRing();save();updateStats();renderDailyGoal();renderFlow();const gc=dots.filter(x=>x.t==='g').length;if(gc>=4){playBeep();toast('🎉 4 Pomodoro! Uzun mola.');setTimeout(()=>{setMode('long');toggleTimer();},600);}else{playBeep();toast('🍅 Tamamlandı! Kısa mola.');setTimeout(()=>setMode('short'),500);}renderDots();nudgePresence();}else if(tMode==='long'){playBeep();toast('☀️ Uzun mola bitti!');resetDots();save();setTimeout(()=>setMode('focus'),500);nudgePresence();}else{playBeep();toast('⏰ Mola bitti!');setTimeout(()=>setMode('focus'),500);nudgePresence();}}
 function playBeep(){if(settings.sound===false||!document.getElementById('soundToggle').checked)return;try{const ctx=new(window.AudioContext||window.webkitAudioContext)();[0,.15,.3].forEach((t,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=i===2?880:660;g.gain.setValueAtTime(.25,ctx.currentTime+t);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+t+.25);o.start(ctx.currentTime+t);o.stop(ctx.currentTime+t+.25);});}catch(e){}}
 function updateStats(){renderDailyGoal();}
@@ -1890,15 +2046,16 @@ function renderFlow(){
 
     // Pomodoro segments
     const pomoMin=t.cp?.f||settings.focus||25;
-    // If timed task: number of segs = round(duration / pomoMin), unless pomoCount set
+    // hasTarget: user explicitly set pomoCount OR set a time range
+    const hasTarget=t.pomoCount>0||(item.isTimed&&t.timeStart);
+    // numSegs = target segs (only used for bar rendering and /N display)
     let numSegs=0;
     if(t.pomoCount>0){
       numSegs=t.pomoCount;
     } else if(item.isTimed&&durationMin>0&&durationMin<24*60){
       numSegs=Math.max(1,Math.round(durationMin/pomoMin));
-    } else if(!item.isTimed&&durationMin<24*60&&durationMin>0){
-      numSegs=Math.max(1,Math.round(durationMin/pomoMin));
     }
+    // For untimed tasks with no pomoCount: no target bars
 
     // Earned pomos = floor(total spent sec / pomoSec)
     const spentSec=ttime[t.id]||0;
@@ -1923,8 +2080,16 @@ function renderFlow(){
       segBarsHTML=`<div class="flow-bar-wrap" style="gap:${numSegs>6?'1px':'2px'}">${bars.join('')}</div>`;
     }
 
-    // Pomodoro counter label for flow
-    const flowPomoLabel=numSegs>0?`<span class="flow-chip dur">🍅 ${earnedPomos}/${numSegs}</span>`:'';
+    // Pomodoro counter label for flow:
+    // - hasTarget → show earned/total (e.g. 🍅 2/5)
+    // - no target → show only earned (e.g. 🍅 3), always show chip
+    let flowPomoLabel='';
+    if(hasTarget&&numSegs>0){
+      flowPomoLabel=`<span class="flow-chip dur">🍅 ${earnedPomos}/${numSegs}</span>`;
+    } else {
+      // always show chip even if 0 earned (shows user how many they've done on this task)
+      flowPomoLabel=`<span class="flow-chip dur">🍅 ${earnedPomos}</span>`;
+    }
 
     let chips='';
     if(t.category)chips+=`<span class="flow-chip cat">${t.category}</span>`;
