@@ -970,8 +970,6 @@ header{display:flex;align-items:center;justify-content:space-between;padding:max
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendEmailVerification } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getDatabase, ref, set, get, onValue, off } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
-import { initializeAppCheck, ReCaptchaV3Provider } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js';
-
 const firebaseConfig = {
   apiKey: "AIzaSyBEw4wPpONaf_wWUU6ivgOZl3Nf5n5luWU",
   authDomain: "focusflow-8916a.firebaseapp.com",
@@ -983,12 +981,6 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-
-// App Check - reCAPTCHA v3
-initializeAppCheck(app, {
-  provider: new ReCaptchaV3Provider('6LdGc7EsAAAAAJ1hohFlpQo5dlnYzAcTA9kFlYCw'),
-  isTokenAutoRefreshEnabled: true
-});
 
 const auth = getAuth(app);
 const db = getDatabase(app);
