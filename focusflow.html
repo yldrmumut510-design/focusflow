@@ -1080,7 +1080,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
 
-let pendingEmail='',pendingPass='',pendingMode='',resendTimer=null;
+let pendingEmail='',pendingPass='',pendingMode='',pendingName='',resendTimer=null;
 let groupListener=null,heartbeatIv=null;
 
 onAuthStateChanged(auth, async (fbUser) => {
@@ -1105,10 +1105,10 @@ window._doRegister = async (name,email,pass) => {
   const btn=document.getElementById('reg_btn');btn.disabled=true;btn.innerHTML=`<span class="spin"></span>${t('registering')}`;
   try{
     const cred=await createUserWithEmailAndPassword(auth,email,pass);
-    await set(ref(db,`users/${cred.user.uid}/profile`),{name,color:'#c8775a',email});
+    // Profile yazma doğrulama SONRASINA ertelendi — DB rules gereği
     await sendEmailVerification(cred.user,{url:window.location.href});
     await signOut(auth);
-    pendingEmail=email;pendingPass=pass;pendingMode='register';
+    pendingEmail=email;pendingPass=pass;pendingMode='register';pendingName=name;
     showOtpPanel('register');toast(t('toastVerifSent'));
   }catch(e){showAuthErr('reg_err',fbErr(e.code));}
   btn.disabled=false;btn.textContent=t('registerBtn');
@@ -1134,7 +1134,12 @@ window.checkVerification = async () => {
   try{
     const cred=await signInWithEmailAndPassword(auth,pendingEmail,pendingPass);
     await cred.user.reload();
-    if(cred.user.emailVerified){toast(t('toastVerifOk'));}
+    if(cred.user.emailVerified){
+      if(pendingMode==='register'){
+        await set(ref(db,`users/${cred.user.uid}/profile`),{name:pendingName,color:'#c8775a',email:pendingEmail});
+      }
+      toast(t('toastVerifOk'));
+    }
     else{await signOut(auth);showAuthErr('otp_err',t('toastNotVerified'));}
   }catch(e){showAuthErr('otp_err',fbErr(e.code));}
   btn.disabled=false;btn.textContent=t('otpConfirm');
