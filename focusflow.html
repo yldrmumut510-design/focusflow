@@ -2231,9 +2231,9 @@ function mkTaskEl(task){
   div.onclick=()=>openTaskModal(task.id);
   return div;
 }
-function toggleTask(id){const t=tasks.find(t=>t.id===id);if(!t)return;t.completed=!t.completed;if(t.completed){if(!history.find(h=>h.id===id))history.unshift({id,name:t.name,category:t.category||'',dayKey:t.dayKey,completedAt:new Date().toISOString(),pomodoros:t.pomodoros||0,timeSpent:ttime[id]||0});if(t.dayKey===todayKey())stats.task++;toast(t('toastCompleted'));}else{history=history.filter(h=>h.id!==id);if(t.dayKey===todayKey())stats.task=Math.max(0,stats.task-1);}save();renderTaskList();renderTaskPicker();renderSelBox();renderDailyGoal();renderFlow();updateStats();
+function toggleTask(id){const task=tasks.find(tk=>tk.id===id);if(!task)return;task.completed=!task.completed;if(task.completed){if(!history.find(h=>h.id===id))history.unshift({id,name:task.name,category:task.category||'',dayKey:task.dayKey,completedAt:new Date().toISOString(),pomodoros:task.pomodoros||0,timeSpent:ttime[id]||0});if(task.dayKey===todayKey())stats.task++;toast(t('toastCompleted'));}else{history=history.filter(h=>h.id!==id);if(task.dayKey===todayKey())stats.task=Math.max(0,stats.task-1);}save();renderTaskList();renderTaskPicker();renderSelBox();renderDailyGoal();renderFlow();updateStats();
   // Check if today's goal just met
-  if(t.completed&&t.dayKey===todayKey())checkStreakAutoOpen();
+  if(task.completed&&task.dayKey===todayKey())checkStreakAutoOpen();
 }
 function delTask(id){
   const task=tasks.find(t=>t.id===id);
@@ -3416,11 +3416,11 @@ function renderFlow(){
 
   timeline.innerHTML='';
   items.forEach((item,idx)=>{
-    const t=item.task;
+    const task=item.task;
     const isLast=idx===items.length-1;
     const isCurrent=nowMin>=item.startMin&&nowMin<item.endMin;
     const isPast=nowMin>=item.endMin;
-    const isSelected=selId===t.id;
+    const isSelected=selId===task.id;
 
     // Color logic: selected task overrides time-based color
     let contentCls='';
@@ -3432,27 +3432,27 @@ function renderFlow(){
       contentCls='current-item';
     }
 
-    const dotCls=t.completed?'done':isSelected?'current':isCurrent?'current':isPast?'accent':'';
+    const dotCls=task.completed?'done':isSelected?'current':isCurrent?'current':isPast?'accent':'';
     const durationMin=item.endMin-item.startMin;
 
-    const startLabel=item.isTimed?t.timeStart:item.slotStart;
-    const endLabel=item.isTimed?(t.timeEnd||''):item.slotEnd;
+    const startLabel=item.isTimed?task.timeStart:item.slotStart;
+    const endLabel=item.isTimed?(task.timeEnd||''):item.slotEnd;
 
     // Pomodoro segments
-    const pomoMin=t.cp?.f||settings.focus||25;
+    const pomoMin=task.cp?.f||settings.focus||25;
     // hasTarget: user explicitly set pomoCount OR set a time range
-    const hasTarget=t.pomoCount>0||(item.isTimed&&t.timeStart);
+    const hasTarget=task.pomoCount>0||(item.isTimed&&task.timeStart);
     // numSegs = target segs (only used for bar rendering and /N display)
     let numSegs=0;
-    if(t.pomoCount>0){
-      numSegs=t.pomoCount;
+    if(task.pomoCount>0){
+      numSegs=task.pomoCount;
     } else if(item.isTimed&&durationMin>0&&durationMin<24*60){
       numSegs=Math.max(1,Math.round(durationMin/pomoMin));
     }
     // For untimed tasks with no pomoCount: no target bars
 
     // Earned pomos = floor(total spent sec / pomoSec)
-    const spentSec=ttime[t.id]||0;
+    const spentSec=ttime[task.id]||0;
     const pomoSec=pomoMin*60;
     const earnedPomos=Math.floor(spentSec/pomoSec);
     const partialFrac=(spentSec%(pomoSec))/pomoSec;
@@ -3486,8 +3486,8 @@ function renderFlow(){
     }
 
     let chips='';
-    if(t.category)chips+=`<span class="flow-chip cat">${t.category}</span>`;
-    if(t.priority==='high')chips+=`<span class="flow-chip prio-h">${t('prioHigh')}</span>`;
+    if(task.category)chips+=`<span class="flow-chip cat">${task.category}</span>`;
+    if(task.priority==='high')chips+=`<span class="flow-chip prio-h">${t('prioHigh')}</span>`;
     chips+=flowPomoLabel;
 
     const row=document.createElement('div');
@@ -3510,11 +3510,11 @@ function renderFlow(){
         <div class="flow-dot ${dotCls}"></div>
         ${!isLast?'<div class="flow-line"></div>':''}
       </div>
-      <div class="flow-content${isCurrent&&!isSelected?' current-item':''}" style="${contentStyle}" onclick="openTaskModal('${t.id}')">
+      <div class="flow-content${isCurrent&&!isSelected?' current-item':''}" style="${contentStyle}" onclick="openTaskModal('${task.id}')">
         ${isCurrent&&!isSelected?'<div class="flow-glow"></div>':''}
         <div class="flow-task-name">
-          ${t.completed?'<span class="done-check">✓</span>':''}
-          ${t.name}
+          ${task.completed?'<span class="done-check">✓</span>':''}
+          ${task.name}
           ${!item.isTimed?`<span class="untimed-label">${t('untimedLabel')}</span>`:''}
         </div>
         ${chips?`<div class="flow-task-meta">${chips}</div>`:''}
