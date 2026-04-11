@@ -92,8 +92,8 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .otp-resend button:disabled{color:var(--text-dim);cursor:not-allowed}
 .spin{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spinning .7s linear infinite;vertical-align:middle;margin-right:6px}
 @keyframes spinning{to{transform:rotate(360deg)}}
-.forgot-link{display:block;text-align:right;font-size:.75rem;color:var(--text-muted);margin-top:5px;cursor:pointer;background:none;border:none;font-family:'Outfit',sans-serif;padding:0;transition:color .15s}
-.forgot-link:hover{color:var(--accent)}
+.forgot-link{display:block;text-align:right;font-size:.75rem;color:var(--text-muted);margin-top:5px;cursor:pointer;background:none;border:none;font-family:'Outfit',sans-serif;padding:4px 0;transition:color .15s;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;text-decoration:none}
+.forgot-link:hover,.forgot-link:active{color:var(--accent)}
 .reset-panel{display:none}
 .reset-panel.show{display:block}
 .reset-success{font-size:.8rem;color:var(--green);margin-bottom:14px;line-height:1.5;padding:11px 13px;background:var(--green-bg);border-radius:10px;border:1px solid var(--green);display:none}
@@ -687,7 +687,8 @@ header{display:flex;align-items:center;justify-content:space-between;padding:max
       </div>
       <div id="panel_login">
         <div class="auth-field"><label class="auth-label">E-posta</label><input class="auth-input" id="login_email" type="email" placeholder="ornek@mail.com" oninput="clearAuthErr()" onkeydown="if(event.key==='Enter')doLogin()"></div>
-        <div class="auth-field"><label class="auth-label">Şifre</label><input class="auth-input" id="login_pass" type="password" placeholder="••••••••" oninput="clearAuthErr()" onkeydown="if(event.key==='Enter')doLogin()"><button class="forgot-link" onclick="showResetPanel()" id="forgotBtn">Şifremi unuttum</button></div>
+        <div class="auth-field"><label class="auth-label">Şifre</label><input class="auth-input" id="login_pass" type="password" placeholder="••••••••" oninput="clearAuthErr()" onkeydown="if(event.key==='Enter')doLogin()"></div>
+        <a href="javascript:void(0)" class="forgot-link" id="forgotBtn">Şifremi unuttum</a>
         <div class="auth-err" id="login_err"></div>
         <button class="auth-btn" id="login_btn" onclick="doLogin()" style="margin-top:14px">Giriş Yap</button>
         <div class="auth-divider"><span>veya</span></div>
@@ -700,7 +701,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:max
         <div class="auth-err" id="reset_err"></div>
         <div class="reset-success" id="reset_success">📧 Şifre sıfırlama bağlantısı e-postana gönderildi. Maildeki bağlantıya tıkla ve yeni şifreni belirle.</div>
         <button class="auth-btn" id="reset_btn" onclick="doPasswordReset()" style="margin-top:4px">Sıfırlama Bağlantısı Gönder</button>
-        <button class="guest-btn" onclick="showLoginPanel()" style="margin-top:8px">← Giriş ekranına dön</button>
+        <button class="guest-btn" id="resetBackBtn" style="margin-top:8px">← Giriş ekranına dön</button>
       </div>
       <div id="panel_register" style="display:none">
         <div class="auth-field"><label class="auth-label">Adın</label><input class="auth-input" id="reg_name" type="text" placeholder="Adın veya takma adın" maxlength="24" oninput="clearAuthErr()"></div>
@@ -3999,7 +4000,19 @@ function buildFireplace(ctx,master){
 // ══ BOOT ══
 buildRdays();
 // Apply language on initial load (auth screen)
-document.addEventListener('DOMContentLoaded',()=>{applyI18n();});
+document.addEventListener('DOMContentLoaded',()=>{
+  applyI18n();
+  var fb=document.getElementById('forgotBtn');
+  if(fb){
+    fb.addEventListener('touchstart',function(e){e.preventDefault();showResetPanel();},{passive:false});
+    fb.addEventListener('click',function(e){e.preventDefault();showResetPanel();});
+  }
+  var rb=document.getElementById('resetBackBtn');
+  if(rb){
+    rb.addEventListener('touchstart',function(e){e.preventDefault();showLoginPanel();},{passive:false});
+    rb.addEventListener('click',function(e){e.preventDefault();showLoginPanel();});
+  }
+});
 </script>
 </body>
 </html>
