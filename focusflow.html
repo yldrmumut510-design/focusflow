@@ -982,6 +982,12 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
+import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
+
+const appCheck = initializeAppCheck(app, {
+  provider: new ReCaptchaV3Provider('6LdGc7EsAAAAAJ1hohFlpQo5dlnYzAcTA9kFlYCw'),
+  isTokenAutoRefreshEnabled: true
+});
 const auth = getAuth(app);
 const db = getDatabase(app);
 
