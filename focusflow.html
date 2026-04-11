@@ -1240,6 +1240,19 @@ const I18N={
     resetCancel:'İptal',
     // Sign out
     signOutConfirm:'Çıkmak istediğinizden emin misiniz?',
+    // Delete task dialog
+    delDialogTitle:'Görevi Sil',
+    delOnlyToday:'Sadece Bugünü Sil',
+    delAllRepeat:'Tüm Tekrar Serisini Sil',
+    delTodayTitle:'Bugünü nasıl silmek istiyorsun?',
+    delRemoveFromSeries:'Bugünü Tekrar Serisinden Kaldır',
+    delRemoveFromSeriesSub:'Bu ve sonraki tüm perşembeler kaldırılır',
+    delOnlyInstance:'Sadece Bu Günü Sil',
+    delOnlyInstanceSub:'Gelecek tekrarlar etkilenmez',
+    delConfirmTitle:'Bu görev silinsin mi?',
+    delConfirmSub:'Çalışma verileri korunur, sadece görev kaldırılır.',
+    delConfirmBtn:'Evet, Sil',
+    delCancelBtn:'Vazgeç',
     // Misc
     online:'çevrimiçi',
     catNoTask:(cat)=>`"${cat}" kategorisinde görev yok`,
@@ -1396,6 +1409,19 @@ const I18N={
     resetCycle:'Reset Pomodoro Cycle', resetCycleSub:'Reset the 4-dot counter',
     resetCancel:'Cancel',
     signOutConfirm:'Are you sure you want to sign out?',
+    // Delete task dialog
+    delDialogTitle:'Delete Task',
+    delOnlyToday:'Delete Today Only',
+    delAllRepeat:'Delete Entire Series',
+    delTodayTitle:'How do you want to delete today?',
+    delRemoveFromSeries:'Remove from Repeat Series',
+    delRemoveFromSeriesSub:'This and all future occurrences removed',
+    delOnlyInstance:'Delete Only This Day',
+    delOnlyInstanceSub:'Future repeats are not affected',
+    delConfirmTitle:'Delete this task?',
+    delConfirmSub:'Work data is preserved, only the task is removed.',
+    delConfirmBtn:'Yes, Delete',
+    delCancelBtn:'Cancel',
     online:'online',
     catNoTask:(cat)=>`No tasks in "${cat}"`,
     noTask:'No tasks',
@@ -2071,12 +2097,131 @@ function mkTaskEl(task){
   const sp=ttime[task.id]?`<span class="tc">⏱${fmtS(ttime[task.id])}</span>`:'';
   const rep=task.rd?.length?'<span class="tc">🔁</span>':'';
   const pb={high:`<span class="pb pb-h">${t('prioHigh')}</span>`,mid:`<span class="pb pb-m">${t('prioMid')||'Orta'}</span>`,low:''}[task.priority];
-  div.innerHTML=`<div class="tchk${task.completed?' chk':''}" onclick="event.stopPropagation();toggleTask('${task.id}')">${task.completed?'✓':''}</div><div class="tinfo"><div class="tname">${task.name}</div><div class="tmeta">${ts}${cat}${pb}${pom}${pc}${sp}${rep}</div></div><button class="t-start" onclick="event.stopPropagation();startPomo('${task.id}')">▶</button><button class="t-del" onclick="event.stopPropagation();delTask('${task.id}')">✕</button>`;
+  div.innerHTML=`<div class="tchk${task.completed?' chk':''}" onclick="event.stopPropagation();toggleTask('${task.id}')">${task.completed?'✓':''}</div><div class="tinfo"><div class="tname">${task.name}</div><div class="tmeta">${ts}${cat}${pb}${pom}${pc}${sp}${rep}</div></div><button class="t-start" onclick="event.stopPropagation();startPomo('${task.id}')">▶</button><button class="t-del" onclick="event.stopPropagation();delTask('${task.id}')" title="Sil">🗑</button>`;
   div.onclick=()=>openTaskModal(task.id);
   return div;
 }
 function toggleTask(id){const t=tasks.find(t=>t.id===id);if(!t)return;t.completed=!t.completed;if(t.completed){if(!history.find(h=>h.id===id))history.unshift({id,name:t.name,category:t.category||'',dayKey:t.dayKey,completedAt:new Date().toISOString(),pomodoros:t.pomodoros||0,timeSpent:ttime[id]||0});if(t.dayKey===todayKey())stats.task++;toast(t('toastCompleted'));}else{history=history.filter(h=>h.id!==id);if(t.dayKey===todayKey())stats.task=Math.max(0,stats.task-1);}save();renderTaskList();renderTaskPicker();renderSelBox();renderDailyGoal();renderFlow();updateStats();}
-function delTask(id){tasks=tasks.filter(t=>t.id!==id);history=history.filter(h=>h.id!==id);if(selId===id){selId=null;renderSelBox();}save();renderTaskList();renderTaskPicker();renderSelBox();renderWeek();renderFlow();}
+function delTask(id){
+  const task=tasks.find(t=>t.id===id);
+  if(!task)return;
+  const isRepeat=task.rd&&task.rd.length>0;
+  // Remove existing dialog
+  const ex=document.getElementById('delTaskDialog');if(ex)ex.remove();
+
+  function doRemove(idsToRemove){
+    // Remove tasks but KEEP history, ttime, cycles (analysis stays intact)
+    idsToRemove.forEach(rid=>{
+      tasks=tasks.filter(t=>t.id!==rid);
+      // Don't remove from history or ttime — analysis preserved
+      if(selId===rid){selId=null;}
+    });
+    save();renderTaskList();renderTaskPicker();renderSelBox();renderWeek();renderFlow();renderDailyGoal();
+  }
+
+  function showDialog(html,onClose){
+    const overlay=document.createElement('div');
+    overlay.id='delTaskDialog';
+    overlay.style.cssText='position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;animation:fadeUp .2s ease';
+    overlay.innerHTML=`<div style="width:100%;max-width:500px;background:var(--surface);border-radius:22px 22px 0 0;padding:24px 20px max(24px,env(safe-area-inset-bottom));box-shadow:var(--shadow-lg)">${html}</div>`;
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click',e=>{if(e.target===overlay){overlay.remove();if(onClose)onClose();}});
+  }
+
+  if(!isRepeat){
+    // Simple: single task — show confirm
+    showDialog(`
+      <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:6px">${t('delConfirmTitle')}</div>
+      <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:20px">${t('delConfirmSub')}</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button id="_delSimpleConfirm" style="width:100%;padding:14px;border-radius:12px;border:none;background:var(--red);color:#fff;font-family:'Outfit',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer">${t('delConfirmBtn')}</button>
+        <button id="_delSimpleCancel" style="width:100%;padding:13px;border-radius:12px;border:1.5px solid var(--border);background:transparent;color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:.9rem;cursor:pointer">${t('delCancelBtn')}</button>
+      </div>`);
+    document.getElementById('_delSimpleConfirm').onclick=()=>{document.getElementById('delTaskDialog').remove();doRemove([id]);};
+    document.getElementById('_delSimpleCancel').onclick=()=>document.getElementById('delTaskDialog').remove();
+    return;
+  }
+
+  // Repeat task: Step 1 — today only vs all series
+  function step2TodayOptions(){
+    const ex2=document.getElementById('delTaskDialog');if(ex2)ex2.remove();
+    // Determine if today is in the repeat series
+    const today=todayKey();
+    const taskDay=task.dayKey;
+    const todayDow=new Date(today+'T12:00:00').getDay();
+    const todayDowIdx=todayDow===0?6:todayDow-1;
+    const inSeries=task.rd.includes(todayDowIdx);
+
+    if(inSeries){
+      // Two sub-options
+      showDialog(`
+        <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:16px">${t('delTodayTitle')}</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button id="_delFromSeries" style="width:100%;padding:14px 16px;border-radius:12px;border:1.5px solid var(--border);background:var(--surface2);text-align:left;cursor:pointer;font-family:'Outfit',sans-serif">
+            <div style="font-size:.88rem;font-weight:600;color:var(--text)">${t('delRemoveFromSeries')}</div>
+            <div style="font-size:.72rem;color:var(--text-muted);margin-top:2px">${t('delRemoveFromSeriesSub')}</div>
+          </button>
+          <button id="_delOnlyInst" style="width:100%;padding:14px 16px;border-radius:12px;border:1.5px solid var(--border);background:var(--surface2);text-align:left;cursor:pointer;font-family:'Outfit',sans-serif">
+            <div style="font-size:.88rem;font-weight:600;color:var(--text)">${t('delOnlyInstance')}</div>
+            <div style="font-size:.72rem;color:var(--text-muted);margin-top:2px">${t('delOnlyInstanceSub')}</div>
+          </button>
+          <button onclick="document.getElementById('delTaskDialog').remove()" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid var(--border);background:transparent;color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:.88rem;cursor:pointer">${t('delCancelBtn')}</button>
+        </div>`);
+
+      document.getElementById('_delFromSeries').onclick=()=>{
+        // Remove this task AND all future tasks in same repeat group with same day-of-week
+        const baseId=getBaseId(id);
+        const toRemove=tasks.filter(tt=>{
+          const bid=getBaseId(tt.id);
+          if(bid!==baseId)return false;
+          const dow=new Date(tt.dayKey+'T12:00:00').getDay();
+          const di=dow===0?6:dow-1;
+          return di===todayDowIdx&&tt.dayKey>=today;
+        }).map(tt=>tt.id);
+        document.getElementById('delTaskDialog').remove();
+        doRemove(toRemove);
+      };
+
+      document.getElementById('_delOnlyInst').onclick=()=>{
+        document.getElementById('delTaskDialog').remove();
+        doRemove([id]);
+      };
+    } else {
+      // Not in series for today's day — just delete this instance
+      document.getElementById('delTaskDialog').remove();
+      doRemove([id]);
+    }
+  }
+
+  showDialog(`
+    <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:16px">${t('delDialogTitle')}</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button id="_delToday" style="width:100%;padding:14px 16px;border-radius:12px;border:1.5px solid var(--border);background:var(--surface2);text-align:left;cursor:pointer;font-family:'Outfit',sans-serif">
+        <div style="font-size:.88rem;font-weight:600;color:var(--text)">${t('delOnlyToday')}</div>
+      </button>
+      <button id="_delAll" style="width:100%;padding:14px 16px;border-radius:12px;border:1.5px solid var(--red-bg);border-color:var(--red);background:var(--red-bg);text-align:left;cursor:pointer;font-family:'Outfit',sans-serif">
+        <div style="font-size:.88rem;font-weight:600;color:var(--red)">${t('delAllRepeat')}</div>
+      </button>
+      <button onclick="document.getElementById('delTaskDialog').remove()" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid var(--border);background:transparent;color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:.88rem;cursor:pointer">${t('delCancelBtn')}</button>
+    </div>`);
+
+  document.getElementById('_delToday').onclick=step2TodayOptions;
+
+  document.getElementById('_delAll').onclick=()=>{
+    // Remove ALL tasks in this repeat group (all days of week, all future+past)
+    const baseId=getBaseId(id);
+    const toRemove=tasks.filter(tt=>getBaseId(tt.id)===baseId).map(tt=>tt.id);
+    document.getElementById('delTaskDialog').remove();
+    doRemove(toRemove);
+  };
+}
+
+function getBaseId(id){
+  // IDs are: "base_s", "base_YYYY-MM-DD_xyz", or just "base"
+  // Strip _s or _YYYY-MM-DD_xxx suffix
+  const m=id.match(/^(\d+)(?:_s|_\d{4}-\d{2}-\d{2}_[a-z0-9]+)?$/);
+  return m?m[1]:id;
+}
 
 function renderGoalMini(){
   const dt=tasks.filter(t=>t.dayKey===selDay),done=dt.filter(t=>t.completed).length,goal=settings.goal||5;
