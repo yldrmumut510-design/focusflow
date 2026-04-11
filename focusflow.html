@@ -694,7 +694,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:max
         <button class="guest-btn" id="guestBtn1" onclick="doGuest()">👤 Misafir olarak devam et</button>
         <div id="guestNote1" style="font-size:.7rem;color:var(--text-dim);text-align:center;margin-top:8px">Misafir modunda veriler kaydedilmez</div>
       </div>
-      <div id="panel_reset" class="reset-panel">
+      <div id="panel_reset" style="display:none">
         <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:14px;line-height:1.5">Kayıtlı e-posta adresini gir, şifre sıfırlama bağlantısı gönderelim.</p>
         <div class="auth-field"><label class="auth-label" id="resetEmailLabel">E-posta</label><input class="auth-input" id="reset_email" type="email" placeholder="ornek@mail.com" oninput="clearAuthErr()" onkeydown="if(event.key==='Enter')doPasswordReset()"></div>
         <div class="auth-err" id="reset_err"></div>
@@ -1169,8 +1169,8 @@ window.showLoginPanel = undefined; // global function handles this
 window._doPasswordReset = async (email, btn) => {
   try{
     await sendPasswordResetEmail(auth, email, {url: window.location.href});
-    document.getElementById('reset_success').classList.add('show');
-    document.getElementById('reset_err').classList.remove('show');
+    document.getElementById('reset_success').style.display='block';
+    document.getElementById('reset_err').style.display='none';
   }catch(e){showAE('reset_err', fbErr(e.code));}
   btn.disabled=false; btn.textContent=t('resetSendBtn');
 };
@@ -1759,8 +1759,8 @@ function doLogin(){const email=document.getElementById('login_email').value.trim
 function doRegister(){const name=document.getElementById('reg_name').value.trim(),email=document.getElementById('reg_email').value.trim(),pass=document.getElementById('reg_pass').value;if(!name){showAE('reg_err','Ad gerekli.');return;}if(!email){showAE('reg_err','E-posta gerekli.');return;}if(pass.length<6){showAE('reg_err','Şifre en az 6 karakter olmalı.');return;}if(window._doRegister){window._doRegister(name,email,pass);}else{showAE('reg_err','Bağlantı kuruluyor, lütfen bekle...');}}
 function doGuest(){isGuest=true;window._currentUser={uid:null,email:null,name:currentLang==='tr'?'Misafir':'Guest',color:'#b0a898',guest:true};tasks=ld(LS.tasks,[]);history=ld(LS.history,[]);settings={...{focus:25,short:5,long:15,goal:5,goalHours:0,dark:false,sound:true},...ld(LS.settings,{})};stats=ld(LS.stats,{pomo:0,min:0,task:0,cancel:0,date:''});moods=ld(LS.moods,{});cycles=ld(LS.cycles,[]);dots=ld(LS.dots,[{t:'e',c:0},{t:'e',c:0},{t:'e',c:0},{t:'e',c:0}]);ttime=ld(LS.ttime,{});failed=ld(LS.failed,[]);launchApp();}
 function showAE(id,msg){const e=document.getElementById(id);e.textContent=msg;e.classList.add('show');}
-function showResetPanel(){document.getElementById('panel_login').style.display='none';document.getElementById('panel_reset').classList.add('show');document.getElementById('reset_success').classList.remove('show');clearAuthErr();const ev=document.getElementById('login_email').value;if(ev)document.getElementById('reset_email').value=ev;}
-function showLoginPanel(){document.getElementById('panel_reset').classList.remove('show');document.getElementById('panel_login').style.display='block';clearAuthErr();}
+function showResetPanel(){document.getElementById('panel_login').style.display='none';document.getElementById('panel_reset').style.display='block';document.getElementById('reset_success').style.display='none';clearAuthErr();const ev=document.getElementById('login_email').value;if(ev)document.getElementById('reset_email').value=ev;}
+function showLoginPanel(){document.getElementById('panel_reset').style.display='none';document.getElementById('panel_login').style.display='block';clearAuthErr();}
 function doPasswordReset(){const email=document.getElementById('reset_email').value.trim();if(!email){showAE('reset_err',t('fbInvalidEmail'));return;}const btn=document.getElementById('reset_btn');btn.disabled=true;btn.innerHTML=`<span class="spin"></span>${currentLang==='tr'?'Gönderiliyor...':'Sending...'}`;if(window._doPasswordReset){window._doPasswordReset(email,btn);}else{showAE('reset_err',t('toastConnecting'));btn.disabled=false;btn.textContent=t('resetSendBtn');}}
 
 // ══ LAUNCH ══
