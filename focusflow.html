@@ -437,6 +437,68 @@ header{display:flex;align-items:center;justify-content:space-between;padding:max
 .toast.show{transform:translateY(0);opacity:1}
 @media(max-width:400px){.timer-disp{font-size:2.5rem}.ring-wrap{width:180px;height:180px}}
 
+/* ══ WEEK STRIP STREAK ══ */
+.wday.streak-done{position:relative;}
+.wday.streak-done .wday-dot{display:none}
+.wday-tick{width:22px;height:22px;border-radius:7px;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:.75rem;color:#fff;font-weight:700;margin:2px auto 0;border:none;line-height:1}
+.wday.active .wday-tick{background:rgba(255,255,255,0.9);color:var(--green)}
+.wday-streak-badge{position:absolute;bottom:-8px;right:-4px;background:var(--green);color:#fff;font-family:'DM Mono',monospace;font-size:.52rem;font-weight:700;border-radius:99px;padding:1px 5px;border:2px solid var(--bg);white-space:nowrap;z-index:2}
+
+/* ══ STREAK PAGE ══ */
+.streak-page{position:fixed;inset:0;z-index:250;background:var(--bg);display:none;flex-direction:column;max-width:500px;margin:0 auto;overflow:hidden}
+.streak-page.active{display:flex;animation:fadeUp .3s cubic-bezier(.4,0,.2,1)}
+.streak-header{padding:max(20px,env(safe-area-inset-top)) 20px 16px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.streak-back{padding:7px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:.82rem;cursor:pointer;transition:all .18s}
+.streak-back:hover{border-color:var(--text-muted)}
+.streak-title{font-family:'DM Serif Display',serif;font-size:1.15rem;color:var(--text)}
+.streak-content{flex:1;overflow-y:auto;padding:20px 20px calc(24px + env(safe-area-inset-bottom))}
+
+/* Confetti banner */
+.streak-congrats{text-align:center;margin-bottom:24px;padding:20px;background:var(--green-bg);border:1.5px solid var(--green);border-radius:18px;position:relative;overflow:hidden}
+.streak-congrats-emoji{font-size:2.5rem;margin-bottom:6px;display:block}
+.streak-congrats-title{font-family:'DM Serif Display',serif;font-size:1.5rem;color:var(--green);margin-bottom:4px}
+.streak-congrats-sub{font-size:.82rem;color:var(--text-muted);line-height:1.5}
+
+/* Avatar circle */
+.streak-avatar-wrap{display:flex;justify-content:center;margin-bottom:22px}
+.streak-avatar-circle{width:100px;height:100px;border-radius:50%;border:3px solid var(--green);background:var(--surface);display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 0 0 6px var(--green-bg)}
+.streak-avatar-circle img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.streak-avatar-circle svg{width:70px;height:70px}
+
+/* Streak road */
+.streak-road-wrap{margin-bottom:22px}
+.streak-road-title{font-size:.72rem;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);margin-bottom:12px;text-align:center}
+.streak-road{display:flex;flex-direction:column;gap:0;position:relative;padding:0 16px}
+.streak-road::before{content:'';position:absolute;left:50%;top:0;bottom:0;width:3px;background:var(--border);border-radius:99px;transform:translateX(-50%)}
+.streak-milestone{display:flex;align-items:center;gap:12px;position:relative;z-index:1;margin-bottom:12px}
+.streak-milestone:nth-child(even){flex-direction:row-reverse}
+.streak-milestone:nth-child(even) .sm-label{text-align:right}
+.sm-node{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:.78rem;font-weight:700;border:2.5px solid;flex-shrink:0;transition:all .3s}
+.sm-node.done{background:var(--green);border-color:var(--green);color:#fff;box-shadow:0 0 0 4px var(--green-bg)}
+.sm-node.current{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 0 0 4px var(--accent-glow);animation:breathe 1.5s infinite}
+.sm-node.next{background:var(--surface);border-color:var(--border);color:var(--text-muted)}
+.sm-label{flex:1;font-size:.78rem;color:var(--text-muted)}
+.sm-label-val{font-weight:600;color:var(--text);font-size:.85rem}
+
+/* Drag figure */
+.streak-drag-section{margin-bottom:24px}
+.streak-drag-hint{font-size:.8rem;color:var(--text-muted);text-align:center;margin-bottom:14px;padding:10px 14px;background:var(--accent-glow);border-radius:10px;border:1px solid var(--accent);color:var(--accent)}
+.streak-figure-wrap{display:flex;flex-direction:column;align-items:center;gap:8px;cursor:grab;user-select:none}
+.streak-figure-wrap:active{cursor:grabbing}
+.streak-figure-img{width:80px;height:80px;border-radius:50%;border:3px solid var(--accent);background:var(--surface2);display:flex;align-items:center;justify-content:center;overflow:hidden;transition:transform .2s;box-shadow:var(--shadow)}
+.streak-figure-img.dragging{transform:scale(1.1);box-shadow:var(--shadow-lg);border-color:var(--green)}
+.streak-figure-img img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.streak-figure-img svg{width:60px;height:60px}
+.streak-figure-lbl{font-size:.72rem;color:var(--text-muted);text-align:center}
+
+/* Drop zone */
+.streak-drop-zone{border:2.5px dashed var(--border);border-radius:14px;padding:18px;display:flex;align-items:center;justify-content:center;font-size:.82rem;color:var(--text-dim);transition:all .25s;margin-top:8px}
+.streak-drop-zone.over{border-color:var(--green);background:var(--green-bg);color:var(--green)}
+
+/* Today streak badge in tasks header */
+.today-streak-btn{width:28px;height:28px;border-radius:8px;border:1.5px solid var(--green);background:var(--green-bg);color:var(--green);font-size:.78rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .18s;flex-shrink:0}
+.today-streak-btn:hover{background:var(--green);color:#fff}
+
 /* ── Category / Label filter chips ── */
 .filter-row{display:flex;align-items:center;gap:6px;padding:0 0 2px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex-shrink:0}
 .filter-row::-webkit-scrollbar{display:none}
@@ -715,7 +777,10 @@ header{display:flex;align-items:center;justify-content:space-between;padding:max
     <!-- ══ TASKS ══ -->
     <div class="page" id="page-tasks">
       <div class="tasks-toolbar">
-        <div class="tasks-title" id="tasksTitle">Görevler</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="tasks-title" id="tasksTitle">Görevler</div>
+          <button class="today-streak-btn" id="streakAccessBtn" onclick="openStreakPage()" title="Streak">🔥</button>
+        </div>
         <button class="add-btn" onclick="openTaskModal(null)">+ Ekle</button>
       </div>
       <div style="padding:0 12px 8px;display:flex;align-items:center;gap:6px">
@@ -889,6 +954,18 @@ header{display:flex;align-items:center;justify-content:space-between;padding:max
       </div>
       <div class="ranking-list" id="rankingList"></div>
     </div>
+  </div>
+</div>
+
+<!-- ══ STREAK PAGE ══ -->
+<div class="streak-page" id="streakPage">
+  <div class="streak-header">
+    <button class="streak-back" onclick="closeStreakPage()">← Geri</button>
+    <div class="streak-title">🔥 Streak</div>
+    <div style="width:60px"></div>
+  </div>
+  <div class="streak-content" id="streakContent">
+    <!-- Rendered by JS -->
   </div>
 </div>
 
@@ -1653,7 +1730,7 @@ function init(){
   const ua=document.getElementById('userAvatarHead');ua.textContent=aLetter(u.name);ua.style.background=u.color;
   document.getElementById('guestBadgeHead').style.display=isGuest?'':'none';
   if(!isGuest&&currentGroupCode){document.getElementById('groupPanel').style.display='block';document.getElementById('gphBadge').textContent=currentGroupCode;window._startGroupSync(currentGroupCode);}
-  buildRdays();renderWeek();renderTaskList();renderCatFilter();renderSelBox();renderDots();renderDailyGoal();renderFlow();updateTDisplay();updateRing(1);updateStats();
+  buildRdays();renderWeek();renderTaskList();renderCatFilter();renderSelBox();renderDots();renderDailyGoal();renderFlow();updateTDisplay();updateRing(1);updateStats();updateStreakBtn();
   tSec=getAS().focus*60;totSec=tSec;updateTDisplay();
   applyI18n();
 }
@@ -1663,7 +1740,7 @@ function switchPage(n,btn){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.bn-tab').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+n).classList.add('active');btn.classList.add('active');
-  if(n==='tasks'){renderWeek();renderTaskList();}
+  if(n==='tasks'){renderWeek();renderTaskList();updateStreakBtn();}
   if(n==='history')renderHistPage();
   if(n==='analysis')renderAnalysis();
   if(n==='pomodoro'){renderCatFilter();renderSelBox();renderDots();renderDailyGoal();renderFlow();}
@@ -1703,6 +1780,12 @@ function openSettings(){
       <div class="srow"><div class="sr-left"><div class="sr-label">${t('sLongBreak')}</div></div><div class="num-wrap"><button class="num-btn" onclick="adjSS('long',-5)">−</button><div class="num-val" id="svl">15</div><button class="num-btn" onclick="adjSS('long',5)">+</button></div></div>
       <div class="srow"><div class="sr-left"><div class="sr-label">${t('sDailyTaskGoal')}</div></div><div class="num-wrap"><button class="num-btn" onclick="adjSS('goal',-1)">−</button><div class="num-val" id="svg_s">5</div><button class="num-btn" onclick="adjSS('goal',1)">+</button></div></div>
       <div class="srow"><div class="sr-left"><div class="sr-label">${t('sDailyFocusHour')}</div></div><div class="num-wrap"><button class="num-btn" onclick="adjSS('goalHours',-1)">−</button><div class="num-val" id="svgh">0</div><button class="num-btn" onclick="adjSS('goalHours',1)">+</button></div></div>
+      <div class="srow"><div class="sr-left"><div class="sr-label">🔥 Streak Hedefi</div><div class="sr-sub">Hangi hedefe göre streak sayılsın</div></div>
+        <div id="streakGoalToggle" style="display:flex;gap:4px;background:var(--surface2);border-radius:8px;padding:3px">
+          <button id="streakGoalTask" onclick="setStreakGoalType('task')" style="padding:4px 12px;border-radius:6px;border:none;font-family:'Outfit',sans-serif;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .18s">Görev</button>
+          <button id="streakGoalHour" onclick="setStreakGoalType('hour')" style="padding:4px 12px;border-radius:6px;border:none;font-family:'Outfit',sans-serif;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .18s">Saat</button>
+        </div>
+      </div>
     </div></div>
     <div class="sps"><div class="sps-title">${t('sAppearance')}</div><div class="sblock">
       <div class="srow"><div class="sr-left"><div class="sr-label">${t('sDarkMode')}</div></div><label class="toggle"><input type="checkbox" id="darkToggle" onchange="toggleDarkMode()"><span class="tslider"></span></label></div>
@@ -1744,6 +1827,11 @@ function openSettings(){
   document.querySelector('#settingsPage .back-content').innerHTML=settingsHTML;
   // Re-apply values
   ['svf','svs','svl','svg_s','svgh'].forEach((id,i)=>{const k=['focus','short','long','goal','goalHours'][i];const el=document.getElementById(id);if(el)el.textContent=settings[k]||[25,5,15,5,0][i];});
+  // Streak goal toggle style
+  const sgt=settings.streakGoalType||'task';
+  const sgTask=document.getElementById('streakGoalTask');const sgHour=document.getElementById('streakGoalHour');
+  if(sgTask){sgTask.style.background=sgt==='task'?'var(--accent)':'transparent';sgTask.style.color=sgt==='task'?'#fff':'var(--text-muted)';}
+  if(sgHour){sgHour.style.background=sgt==='hour'?'var(--accent)':'transparent';sgHour.style.color=sgt==='hour'?'#fff':'var(--text-muted)';}
   document.getElementById('darkToggle').checked=!!settings.dark;
   document.getElementById('soundToggle').checked=settings.sound!==false;
   if(currentGroupCode){document.getElementById('gs_nogroup').style.display='none';document.getElementById('gs_hasgroup').style.display='block';document.getElementById('agr_code').textContent=currentGroupCode;document.getElementById('sGroupCodeRow').style.display='flex';document.getElementById('sGroupCode').textContent=currentGroupCode;}
@@ -2063,14 +2151,32 @@ function changeWeek(d){weekOff+=d;renderWeek();renderTaskList();}
 function renderWeek(){
   const days=getWeekDates(weekOff);
   const c=document.getElementById('weekStrip');c.innerHTML='';
-  days.forEach(d=>{
+  const today=todayKey();
+  // Build streak chain for these days
+  days.forEach((d,idx)=>{
     const key=dateKey(d),isAct=key===selDay,hasTasks=tasks.some(t=>t.dayKey===key);
-    const div=document.createElement('button');div.className=`wday${isAct?' active':''}${hasTasks?' has-tasks':''}`;
-    div.innerHTML=`<div class="wday-name">${TR_DAYS[d.getDay()]}</div><div class="wday-num">${d.getDate()}</div><div class="wday-dot"></div>`;
+    const isFuture=key>today;
+    const goalMet=!isFuture&&isDayGoalMet(key);
+    // Calculate streak ending at this day
+    const streakAtDay=goalMet?getStreakEndingAt(key):0;
+    // Show streak badge only if it's a milestone or >= 3
+    const showBadge=streakAtDay>=3;
+    const div=document.createElement('button');
+    div.className=`wday${isAct?' active':''}${hasTasks?' has-tasks':''}${goalMet?' streak-done':''}`;
+    div.innerHTML=`
+      <div class="wday-name">${TR_DAYS[d.getDay()]}</div>
+      <div class="wday-num">${d.getDate()}</div>
+      ${goalMet
+        ? `<div class="wday-tick">✓</div>`
+        : `<div class="wday-dot"></div>`}
+      ${showBadge?`<div class="wday-streak-badge">🔥${streakAtDay}</div>`:''}
+    `;
     div.onclick=()=>{selDay=key;renderWeek();renderTaskList();};
     c.appendChild(div);
   });
-  document.getElementById('tasksTitle').textContent=selDay===todayKey()?t('today'):new Date(selDay+'T12:00:00').toLocaleDateString(currentLang==='tr'?'tr-TR':'en-US',{weekday:'long',day:'numeric',month:'long'});
+  const titleEl=document.getElementById('tasksTitle');
+  if(titleEl)titleEl.textContent=selDay===today?t('today'):new Date(selDay+'T12:00:00').toLocaleDateString(currentLang==='tr'?'tr-TR':'en-US',{weekday:'long',day:'numeric',month:'long'});
+  updateStreakBtn();
 }
 
 // ══ TASK LIST ══
@@ -2107,7 +2213,10 @@ function mkTaskEl(task){
   div.onclick=()=>openTaskModal(task.id);
   return div;
 }
-function toggleTask(id){const t=tasks.find(t=>t.id===id);if(!t)return;t.completed=!t.completed;if(t.completed){if(!history.find(h=>h.id===id))history.unshift({id,name:t.name,category:t.category||'',dayKey:t.dayKey,completedAt:new Date().toISOString(),pomodoros:t.pomodoros||0,timeSpent:ttime[id]||0});if(t.dayKey===todayKey())stats.task++;toast(t('toastCompleted'));}else{history=history.filter(h=>h.id!==id);if(t.dayKey===todayKey())stats.task=Math.max(0,stats.task-1);}save();renderTaskList();renderTaskPicker();renderSelBox();renderDailyGoal();renderFlow();updateStats();}
+function toggleTask(id){const t=tasks.find(t=>t.id===id);if(!t)return;t.completed=!t.completed;if(t.completed){if(!history.find(h=>h.id===id))history.unshift({id,name:t.name,category:t.category||'',dayKey:t.dayKey,completedAt:new Date().toISOString(),pomodoros:t.pomodoros||0,timeSpent:ttime[id]||0});if(t.dayKey===todayKey())stats.task++;toast(t('toastCompleted'));}else{history=history.filter(h=>h.id!==id);if(t.dayKey===todayKey())stats.task=Math.max(0,stats.task-1);}save();renderTaskList();renderTaskPicker();renderSelBox();renderDailyGoal();renderFlow();updateStats();
+  // Check if today's goal just met
+  if(t.completed&&t.dayKey===todayKey())checkStreakAutoOpen();
+}
 function delTask(id){
   const task=tasks.find(t=>t.id===id);
   if(!task)return;
@@ -2665,6 +2774,8 @@ function onTimerEnd(){const s=getAS();if(tMode==='focus'){
     });
   }
   sessP=[];sessTT={};sessTT_days={};lastTickDay=todayKey();cumulPause=0;pauseDispSec=0;pauseCount=0;clearPauseRing();save();updateStats();renderDailyGoal();renderFlow();const gc=dots.filter(x=>x.t==='g').length;if(gc>=4){playBeep();toast(t('toast4Pomo'));setTimeout(()=>{setMode('long');toggleTimer();},600);}else{playBeep();toast(t('toastPomoComplete'));setTimeout(()=>setMode('short'),500);}renderDots();nudgePresence();
+  // Check hour-based streak goal
+  if((settings.streakGoalType||'task')==='hour')checkStreakAutoOpen();
 }else if(tMode==='long'){playBeep();toast(t('toastLongBreakEnd'));resetDots();save();setTimeout(()=>setMode('focus'),500);nudgePresence();}else{playBeep();toast(t('toastShortBreakEnd'));setTimeout(()=>setMode('focus'),500);nudgePresence();}}
 function playBeep(){if(settings.sound===false||!document.getElementById('soundToggle').checked)return;try{const ctx=new(window.AudioContext||window.webkitAudioContext)();[0,.15,.3].forEach((t,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=i===2?880:660;g.gain.setValueAtTime(.25,ctx.currentTime+t);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+t+.25);o.start(ctx.currentTime+t);o.stop(ctx.currentTime+t+.25);});}catch(e){}}
 function updateStats(){renderDailyGoal();}
@@ -2822,6 +2933,286 @@ function renderDailyGoal(){
 
 function setGoalMode(mode){
   settings.goalMode=mode;save();renderDailyGoal();
+}
+
+function setStreakGoalType(type){
+  settings.streakGoalType=type;
+  save();
+  // Update toggle buttons if visible
+  const sgTask=document.getElementById('streakGoalTask');
+  const sgHour=document.getElementById('streakGoalHour');
+  if(sgTask){sgTask.style.background=type==='task'?'var(--accent)':'transparent';sgTask.style.color=type==='task'?'#fff':'var(--text-muted)';}
+  if(sgHour){sgHour.style.background=type==='hour'?'var(--accent)':'transparent';sgHour.style.color=type==='hour'?'#fff':'var(--text-muted)';}
+}
+
+// ══ STREAK ENGINE ══
+
+// Check if a given day met its goal
+function isDayGoalMet(dayKey){
+  const sgt=settings.streakGoalType||'task';
+  if(sgt==='task'){
+    const goal=settings.goal||5;
+    const done=tasks.filter(t=>t.dayKey===dayKey&&t.completed).length;
+    return done>=goal;
+  } else {
+    const hourGoal=settings.goalHours||0;
+    if(!hourGoal) return false;
+    // Calculate focus minutes for that day from cycles
+    const dayMin=cycles.filter(c=>c.dayKey===dayKey&&c.mode==='focus'&&c.type==='completed').reduce((a,c)=>a+(c.focusDuration||0),0)/60;
+    return dayMin>=(hourGoal*60);
+  }
+}
+
+// Calculate current streak (consecutive days ending today or yesterday)
+function calcStreak(){
+  const today=todayKey();
+  let streak=0;
+  let checkDate=new Date(today+'T12:00:00');
+  // Check today first, if not met yet check yesterday as base
+  const todayMet=isDayGoalMet(today);
+  if(!todayMet){
+    // Start from yesterday
+    checkDate.setDate(checkDate.getDate()-1);
+  }
+  // Count consecutive days backward
+  for(let i=0;i<365;i++){
+    const dk=dateKey(checkDate);
+    if(isDayGoalMet(dk)){
+      streak++;
+      checkDate.setDate(checkDate.getDate()-1);
+    } else {
+      break;
+    }
+  }
+  return streak;
+}
+
+// Get streak for each day in a given week dates array
+function getWeekStreakInfo(weekDates){
+  return weekDates.map(d=>{
+    const dk=dateKey(d);
+    return{dk,met:isDayGoalMet(dk)};
+  });
+}
+
+// Get consecutive streak ending at today (or yesterday if today not done)
+function getStreakEndingAt(targetKey){
+  let streak=0;
+  let checkDate=new Date(targetKey+'T12:00:00');
+  for(let i=0;i<365;i++){
+    const dk=dateKey(checkDate);
+    if(isDayGoalMet(dk)){streak++;checkDate.setDate(checkDate.getDate()-1);}
+    else break;
+  }
+  return streak;
+}
+
+// Milestones
+const STREAK_MILESTONES=[1,3,5,10,20,30,50,100,200];
+
+function getNextMilestone(streak){
+  return STREAK_MILESTONES.find(m=>m>streak)||null;
+}
+
+function getPrevMilestone(streak){
+  const passed=STREAK_MILESTONES.filter(m=>m<=streak);
+  return passed.length?passed[passed.length-1]:null;
+}
+
+// Desk figure SVG for streak page (user avatar representation)
+function streakFigureSVG(color){
+  return `<svg viewBox="0 0 80 70" xmlns="http://www.w3.org/2000/svg">
+    <rect x="8" y="48" width="64" height="6" rx="3" fill="${color}" opacity="0.25"/>
+    <rect x="14" y="54" width="4" height="12" rx="2" fill="${color}" opacity="0.2"/>
+    <rect x="62" y="54" width="4" height="12" rx="2" fill="${color}" opacity="0.2"/>
+    <ellipse cx="50" cy="43" rx="9" ry="7" fill="${color}" opacity="0.7"/>
+    <g transform="rotate(-18, 50, 30)">
+      <circle cx="50" cy="28" r="9" fill="${color}" opacity="0.9"/>
+      <ellipse cx="50" cy="20" rx="8" ry="3.5" fill="${color}" opacity="0.5"/>
+      <path d="M45.5 28 Q47 27 48.5 28" stroke="rgba(255,255,255,0.6)" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+      <path d="M51 28 Q52.5 27 54 28" stroke="rgba(255,255,255,0.6)" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+      <path d="M46.5 32 Q50 35 53.5 32" stroke="rgba(255,255,255,0.7)" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+    </g>
+    <text x="22" y="20" font-size="18" fill="${color}" opacity="0.9">✨</text>
+  </svg>`;
+}
+
+// Open streak page
+function openStreakPage(autoTriggered){
+  const streak=calcStreak();
+  const nextM=getNextMilestone(streak);
+  const prevM=getPrevMilestone(streak);
+  const u=window._currentUser||{name:'?',color:'#c8775a'};
+  const color=u.color||'#c8775a';
+
+  let congratsHTML='';
+  if(autoTriggered&&prevM){
+    const msgs={1:'İlk gününü tamamladın!',3:'3 günlük seri!',5:'5 günlük seri — harika!',10:'10. günün! İnanılmaz!',20:'20 gün! Sen bir fırıldaksın!',30:'30 günlük seri! Efsane!',50:'50 gün! Destansı!',100:'100 gün! Söz yok!',200:'200 gün! Gelmiş geçmiş en iyisi!'};
+    congratsHTML=`
+      <div class="streak-congrats">
+        <span class="streak-congrats-emoji">🎉</span>
+        <div class="streak-congrats-title">${prevM}. Streak'ine Ulaştın!</div>
+        <div class="streak-congrats-sub">${msgs[prevM]||'Tebrikler!'}</div>
+      </div>`;
+  }
+
+  // Road milestones
+  const visibleMs=STREAK_MILESTONES.filter(m=>{
+    if(m<=streak) return true; // done
+    if(m===nextM) return true; // current target
+    const afterNext=STREAK_MILESTONES.filter(x=>x>streak).slice(0,3);
+    return afterNext.includes(m);
+  });
+
+  let roadHTML='';
+  visibleMs.forEach(m=>{
+    const done=streak>=m;
+    const isCurrent=m===nextM;
+    const nodeClass=done?'done':isCurrent?'current':'next';
+    const label=done?`<div class="sm-label"><div class="sm-label-val">✓ ${m} Gün</div></div>`:
+                isCurrent?`<div class="sm-label"><div class="sm-label-val">${m} Gün</div><div style="font-size:.72rem;color:var(--accent)">${m-streak} gün kaldı</div></div>`:
+                `<div class="sm-label"><div class="sm-label-val">${m} Gün</div></div>`;
+    roadHTML+=`<div class="streak-milestone"><div class="sm-node ${nodeClass}">${done?'✓':m}</div>${label}</div>`;
+  });
+
+  // Drag hint
+  let dragHTML='';
+  if(nextM){
+    dragHTML=`
+      <div class="streak-drag-section">
+        <div class="streak-drag-hint">💪 ${nextM}. streak için flow'una hemen devam et!</div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:12px">
+          <div style="font-size:.75rem;color:var(--text-muted);text-align:center">Figürünü bir sonraki hedefe sürükle</div>
+          <div class="streak-figure-wrap" id="streakFigure" draggable="true"
+            ontouchstart="streakDragStart(event)" ontouchmove="streakDragMove(event)" ontouchend="streakDragEnd(event)"
+            ondragstart="streakDragStartD(event)">
+            <div class="streak-figure-img" id="streakFigureImg">
+              ${streakFigureSVG(color)}
+            </div>
+            <div class="streak-figure-lbl">Sen · ${streak} gün 🔥</div>
+          </div>
+          <div class="streak-drop-zone" id="streakDropZone"
+            ondragover="event.preventDefault();this.classList.add('over')"
+            ondragleave="this.classList.remove('over')"
+            ondrop="streakDropped(event)">
+            🎯 ${nextM}. Streak Hedefi
+          </div>
+        </div>
+      </div>`;
+  }
+
+  const sgt=settings.streakGoalType||'task';
+  const goalDesc=sgt==='task'?`${settings.goal||5} görev tamamlama`:`${settings.goalHours||0} saat odak`;
+
+  document.getElementById('streakContent').innerHTML=`
+    ${congratsHTML}
+    <div class="streak-avatar-wrap">
+      <div class="streak-avatar-circle">${streakFigureSVG(color)}</div>
+    </div>
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-family:'DM Mono',monospace;font-size:2.8rem;font-weight:700;color:var(--green);line-height:1">${streak}</div>
+      <div style="font-size:.78rem;color:var(--text-muted);margin-top:4px">günlük seri 🔥</div>
+      <div style="font-size:.72rem;color:var(--text-dim);margin-top:6px;background:var(--surface2);border-radius:8px;padding:5px 12px;display:inline-block">Hedef: ${goalDesc}</div>
+    </div>
+    <div class="streak-road-wrap">
+      <div class="streak-road-title">Streak Yolculuğu</div>
+      <div class="streak-road">${roadHTML}</div>
+    </div>
+    ${dragHTML}
+  `;
+
+  document.getElementById('streakPage').classList.add('active');
+  document.body.style.overflow='hidden';
+
+  // Setup drag for desktop
+  const fig=document.getElementById('streakFigure');
+  if(fig){fig.addEventListener('dragend',()=>{const dz=document.getElementById('streakDropZone');if(dz)dz.classList.remove('over');});}
+}
+
+function closeStreakPage(){
+  document.getElementById('streakPage').classList.remove('active');
+  document.body.style.overflow='';
+}
+
+// Touch drag for streak figure
+let streakDragY0=null,streakDragEl=null;
+function streakDragStart(e){
+  streakDragY0=e.touches[0].clientY;
+  streakDragEl=document.getElementById('streakFigureImg');
+  if(streakDragEl)streakDragEl.classList.add('dragging');
+}
+function streakDragMove(e){
+  e.preventDefault();
+  const dy=e.touches[0].clientY-streakDragY0;
+  const fig=document.getElementById('streakFigure');
+  if(fig)fig.style.transform=`translateY(${Math.min(0,dy)}px)`;
+  // Highlight drop zone if dragged up enough
+  const dz=document.getElementById('streakDropZone');
+  if(dz){const dzRect=dz.getBoundingClientRect();const ty=e.touches[0].clientY;dz.classList.toggle('over',ty<=dzRect.bottom&&ty>=dzRect.top);}
+}
+function streakDragEnd(e){
+  const fig=document.getElementById('streakFigure');
+  if(fig)fig.style.transform='';
+  if(streakDragEl)streakDragEl.classList.remove('dragging');
+  const dz=document.getElementById('streakDropZone');
+  if(dz&&dz.classList.contains('over')){dz.classList.remove('over');streakDropConfirm();}
+}
+function streakDragStartD(e){
+  e.dataTransfer.setData('text/plain','streak-figure');
+}
+function streakDropped(e){
+  e.preventDefault();
+  document.getElementById('streakDropZone').classList.remove('over');
+  streakDropConfirm();
+}
+function streakDropConfirm(){
+  const nextM=getNextMilestone(calcStreak());
+  if(!nextM)return;
+  toast(`💪 ${nextM}. streak'e doğru devam ediyorsun!`);
+  setTimeout(()=>closeStreakPage(),800);
+}
+
+// Check if today's goal just met — auto-open streak page
+function checkStreakAutoOpen(){
+  const today=todayKey();
+  const alreadyShown=localStorage.getItem('ff6_streak_shown_'+today);
+  if(alreadyShown) return;
+  if(isDayGoalMet(today)){
+    const streak=calcStreak();
+    const prevM=getPrevMilestone(streak);
+    // Only auto-open on milestone or first time today
+    const isNewMilestone=prevM&&!localStorage.getItem('ff6_streak_ms_'+today+'_'+prevM);
+    if(isNewMilestone){
+      localStorage.setItem('ff6_streak_ms_'+today+'_'+prevM,'1');
+      localStorage.setItem('ff6_streak_shown_'+today,'1');
+      setTimeout(()=>openStreakPage(true),600);
+    } else if(!localStorage.getItem('ff6_streak_shown_'+today)){
+      // Show once per day when goal is first met
+      localStorage.setItem('ff6_streak_shown_'+today,'1');
+      setTimeout(()=>openStreakPage(true),600);
+    }
+  }
+}
+
+// Update streak access button in tasks header
+function updateStreakBtn(){
+  const btn=document.getElementById('streakAccessBtn');
+  if(!btn) return;
+  const streak=calcStreak();
+  btn.style.display='flex';
+  if(streak>0){
+    btn.title=`${streak} günlük streak 🔥`;
+    btn.textContent='🔥';
+    btn.style.background='var(--green-bg)';
+    btn.style.borderColor='var(--green)';
+    btn.style.color='var(--green)';
+  } else {
+    btn.title='Streak sayfası';
+    btn.textContent='🔥';
+    btn.style.background='var(--surface2)';
+    btn.style.borderColor='var(--border)';
+    btn.style.color='var(--text-dim)';
+  }
 }
 
 // ══ TODAY'S FLOW (improved) ══
