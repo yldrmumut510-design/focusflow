@@ -92,6 +92,12 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .otp-resend button:disabled{color:var(--text-dim);cursor:not-allowed}
 .spin{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spinning .7s linear infinite;vertical-align:middle;margin-right:6px}
 @keyframes spinning{to{transform:rotate(360deg)}}
+.forgot-link{display:block;text-align:right;font-size:.75rem;color:var(--text-muted);margin-top:5px;cursor:pointer;background:none;border:none;font-family:'Outfit',sans-serif;padding:0;transition:color .15s}
+.forgot-link:hover{color:var(--accent)}
+.reset-panel{display:none}
+.reset-panel.show{display:block}
+.reset-success{font-size:.8rem;color:var(--green);margin-bottom:14px;line-height:1.5;padding:11px 13px;background:var(--green-bg);border-radius:10px;border:1px solid var(--green);display:none}
+.reset-success.show{display:block}
 
 /* ══ MAIN LAYOUT ══ */
 .app{max-width:500px;margin:0 auto;padding:0;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column}
@@ -681,12 +687,20 @@ header{display:flex;align-items:center;justify-content:space-between;padding:max
       </div>
       <div id="panel_login">
         <div class="auth-field"><label class="auth-label">E-posta</label><input class="auth-input" id="login_email" type="email" placeholder="ornek@mail.com" oninput="clearAuthErr()" onkeydown="if(event.key==='Enter')doLogin()"></div>
-        <div class="auth-field"><label class="auth-label">Şifre</label><input class="auth-input" id="login_pass" type="password" placeholder="••••••••" oninput="clearAuthErr()" onkeydown="if(event.key==='Enter')doLogin()"></div>
+        <div class="auth-field"><label class="auth-label">Şifre</label><input class="auth-input" id="login_pass" type="password" placeholder="••••••••" oninput="clearAuthErr()" onkeydown="if(event.key==='Enter')doLogin()"><button class="forgot-link" onclick="showResetPanel()" id="forgotBtn">Şifremi unuttum</button></div>
         <div class="auth-err" id="login_err"></div>
         <button class="auth-btn" id="login_btn" onclick="doLogin()" style="margin-top:14px">Giriş Yap</button>
         <div class="auth-divider"><span>veya</span></div>
         <button class="guest-btn" id="guestBtn1" onclick="doGuest()">👤 Misafir olarak devam et</button>
         <div id="guestNote1" style="font-size:.7rem;color:var(--text-dim);text-align:center;margin-top:8px">Misafir modunda veriler kaydedilmez</div>
+      </div>
+      <div id="panel_reset" class="reset-panel">
+        <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:14px;line-height:1.5">Kayıtlı e-posta adresini gir, şifre sıfırlama bağlantısı gönderelim.</p>
+        <div class="auth-field"><label class="auth-label" id="resetEmailLabel">E-posta</label><input class="auth-input" id="reset_email" type="email" placeholder="ornek@mail.com" oninput="clearAuthErr()" onkeydown="if(event.key==='Enter')doPasswordReset()"></div>
+        <div class="auth-err" id="reset_err"></div>
+        <div class="reset-success" id="reset_success">📧 Şifre sıfırlama bağlantısı e-postana gönderildi. Maildeki bağlantıya tıkla ve yeni şifreni belirle.</div>
+        <button class="auth-btn" id="reset_btn" onclick="doPasswordReset()" style="margin-top:4px">Sıfırlama Bağlantısı Gönder</button>
+        <button class="guest-btn" onclick="showLoginPanel()" style="margin-top:8px">← Giriş ekranına dön</button>
       </div>
       <div id="panel_register" style="display:none">
         <div class="auth-field"><label class="auth-label">Adın</label><input class="auth-input" id="reg_name" type="text" placeholder="Adın veya takma adın" maxlength="24" oninput="clearAuthErr()"></div>
@@ -1063,7 +1077,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:max
 <!-- Firebase -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendEmailVerification } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendEmailVerification, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getDatabase, ref, set, get, onValue, off } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 const firebaseConfig = {
   apiKey: "AIzaSyBEw4wPpONaf_wWUU6ivgOZl3Nf5n5luWU",
@@ -1147,6 +1161,18 @@ window.checkVerification = async () => {
 
 window.resendVerification = async () => {
   try{const cred=await signInWithEmailAndPassword(auth,pendingEmail,pendingPass);await sendEmailVerification(cred.user,{url:window.location.href});await signOut(auth);toast(t('toastResent'));startResendTimer();}catch(e){toast('❌ '+fbErr(e.code));}
+};
+
+window.showResetPanel = undefined; // global function handles this
+window.showLoginPanel = undefined; // global function handles this
+
+window._doPasswordReset = async (email, btn) => {
+  try{
+    await sendPasswordResetEmail(auth, email, {url: window.location.href});
+    document.getElementById('reset_success').classList.add('show');
+    document.getElementById('reset_err').classList.remove('show');
+  }catch(e){showAE('reset_err', fbErr(e.code));}
+  btn.disabled=false; btn.textContent=t('resetSendBtn');
 };
 
 window._doSignOut = async () => {
@@ -1377,6 +1403,9 @@ const I18N={
     registering:'Kayıt yapılıyor...',
     loggingIn:'Giriş yapılıyor...',
     checking:'Kontrol ediliyor...',
+    resetSendBtn:'Sıfırlama Bağlantısı Gönder',
+    forgotPass:'Şifremi unuttum',
+    resetSuccessMsg:'📧 Şifre sıfırlama bağlantısı e-postana gönderildi. Maildeki bağlantıya tıkla ve yeni şifreni belirle.',
     // Days
     days:['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'],
     daysLong:['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'],
@@ -1543,6 +1572,9 @@ const I18N={
     registering:'Registering...',
     loggingIn:'Logging in...',
     checking:'Checking...',
+    resetSendBtn:'Send Reset Link',
+    forgotPass:'Forgot password',
+    resetSuccessMsg:'📧 A password reset link has been sent to your email. Click the link and set a new password.',
     days:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
     daysLong:['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
   }
@@ -1579,6 +1611,8 @@ function applyI18n(){
   const lEmail=document.getElementById('login_email');if(lEmail)lEmail.placeholder=t('emailPlaceholder');
   const lPass=document.getElementById('login_pass');if(lPass)lPass.placeholder=t('passwdPlaceholder');
   const lBtn=document.getElementById('login_btn');if(lBtn&&!lBtn.disabled)lBtn.textContent=t('loginBtn');
+  const forgotBtn=document.getElementById('forgotBtn');if(forgotBtn)forgotBtn.textContent=t('forgotPass');
+  const resetBtn=document.getElementById('reset_btn');if(resetBtn&&!resetBtn.disabled)resetBtn.textContent=t('resetSendBtn');
   // Register panel
   const rLabels=document.querySelectorAll('#panel_register .auth-label');
   if(rLabels[0])rLabels[0].textContent=t('yourName');
@@ -1719,12 +1753,15 @@ function save(){
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2700);}
 
 // ══ AUTH UI ══
-function setAuthTab(t){['login','register'].forEach(x=>{document.getElementById('atab_'+x).classList.toggle('active',x===t);document.getElementById('panel_'+x).style.display=x===t?'block':'none';});document.getElementById('panel_otp').classList.remove('show');clearAuthErr();}
-function clearAuthErr(){['login_err','reg_err','otp_err'].forEach(id=>{const e=document.getElementById(id);if(e){e.textContent='';e.classList.remove('show');}});}
+function setAuthTab(t){['login','register'].forEach(x=>{document.getElementById('atab_'+x).classList.toggle('active',x===t);document.getElementById('panel_'+x).style.display=x===t?'block':'none';});document.getElementById('panel_otp').classList.remove('show');document.getElementById('panel_reset').classList.remove('show');clearAuthErr();}
+function clearAuthErr(){['login_err','reg_err','otp_err','reset_err'].forEach(id=>{const e=document.getElementById(id);if(e){e.textContent='';e.classList.remove('show');}});}
 function doLogin(){const email=document.getElementById('login_email').value.trim(),pass=document.getElementById('login_pass').value;if(!email||!pass){showAE('login_err',t('fbInvalidEmail'));return;}if(window._doLogin){window._doLogin(email,pass);}else{showAE('login_err',t('toastConnecting'));}}
 function doRegister(){const name=document.getElementById('reg_name').value.trim(),email=document.getElementById('reg_email').value.trim(),pass=document.getElementById('reg_pass').value;if(!name){showAE('reg_err','Ad gerekli.');return;}if(!email){showAE('reg_err','E-posta gerekli.');return;}if(pass.length<6){showAE('reg_err','Şifre en az 6 karakter olmalı.');return;}if(window._doRegister){window._doRegister(name,email,pass);}else{showAE('reg_err','Bağlantı kuruluyor, lütfen bekle...');}}
 function doGuest(){isGuest=true;window._currentUser={uid:null,email:null,name:currentLang==='tr'?'Misafir':'Guest',color:'#b0a898',guest:true};tasks=ld(LS.tasks,[]);history=ld(LS.history,[]);settings={...{focus:25,short:5,long:15,goal:5,goalHours:0,dark:false,sound:true},...ld(LS.settings,{})};stats=ld(LS.stats,{pomo:0,min:0,task:0,cancel:0,date:''});moods=ld(LS.moods,{});cycles=ld(LS.cycles,[]);dots=ld(LS.dots,[{t:'e',c:0},{t:'e',c:0},{t:'e',c:0},{t:'e',c:0}]);ttime=ld(LS.ttime,{});failed=ld(LS.failed,[]);launchApp();}
 function showAE(id,msg){const e=document.getElementById(id);e.textContent=msg;e.classList.add('show');}
+function showResetPanel(){document.getElementById('panel_login').style.display='none';document.getElementById('panel_reset').classList.add('show');document.getElementById('reset_success').classList.remove('show');clearAuthErr();const ev=document.getElementById('login_email').value;if(ev)document.getElementById('reset_email').value=ev;}
+function showLoginPanel(){document.getElementById('panel_reset').classList.remove('show');document.getElementById('panel_login').style.display='block';clearAuthErr();}
+function doPasswordReset(){const email=document.getElementById('reset_email').value.trim();if(!email){showAE('reset_err',t('fbInvalidEmail'));return;}const btn=document.getElementById('reset_btn');btn.disabled=true;btn.innerHTML=`<span class="spin"></span>${currentLang==='tr'?'Gönderiliyor...':'Sending...'}`;if(window._doPasswordReset){window._doPasswordReset(email,btn);}else{showAE('reset_err',t('toastConnecting'));btn.disabled=false;btn.textContent=t('resetSendBtn');}}
 
 // ══ LAUNCH ══
 window.launchApp=function(){
