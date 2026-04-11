@@ -2433,9 +2433,40 @@ function toggleTimer(){
     if(pauseMs!==null){const dur=Math.round((Date.now()-pauseMs)/1000);sessP.push({duration:dur,at:new Date(pauseMs).toISOString()});cumulPause+=dur;pauseMs=null;freezePauseCounter();}
     tRunning=true;document.getElementById('playBtn').textContent=t('stopBtn');
     segStart=Date.now();
+    lastTickDay=todayKey();
+    if(!sessTT_days[lastTickDay])sessTT_days[lastTickDay]={};
     const selSound=settings.ambientSound||'none';
     if(selSound!=='none'){ if(!ambientActive){startAmbient(selSound);}else{resumeAmbient();} }
-    tIv=setInterval(()=>{tSec--;updateTDisplay();if(tSec<=0){clearInterval(tIv);tRunning=false;document.getElementById('playBtn').textContent=t('startBtn');commitSeg();onTimerEnd();}},1000);
+    tIv=setInterval(()=>{
+      // Midnight detection
+      const nowDay=todayKey();
+      if(nowDay!==lastTickDay){
+        // Day changed — commit the segment up to midnight boundary
+        // The commitSeg call will split it correctly using segStart timestamp
+        // Record cycles for yesterday's portion then reset daily stats
+        const prevDay=lastTickDay;
+        lastTickDay=nowDay;
+        // Commit current segment (splits across midnight automatically)
+        if(segStart&&selId&&tMode==='focus'){
+          commitSegWithSplit(segStart,Date.now(),selId);
+          segStart=Date.now(); // new segment starts now in the new day
+        }
+        // Save a "midnight_split" cycle entry for yesterday's work
+        const prevDayWork=sessTT_days[prevDay]||{};
+        const prevDaySec=Object.values(prevDayWork).reduce((a,v)=>a+v,0);
+        if(prevDaySec>0){
+          const prevDayMin=Math.round(prevDaySec/60);
+          cycles.push({type:'completed',mode:'focus',split:true,splitDay:prevDay,taskId:selId,taskName:selId?(tasks.find(t=>t.id===selId)?.name||''):'',category:selId?(tasks.find(t=>t.id===selId)?.category||''):(selCat||''),taskTimes:{...prevDayWork},pauseTotal:0,focusDuration:prevDaySec,totalDuration:prevDaySec,pauses:[],dayKey:prevDay,at:new Date().toISOString()});
+          // Add worked minutes to previous day (retroactively won't affect today's stats)
+        }
+        // Reset today's daily stats (new day)
+        stats={pomo:0,min:0,task:0,cancel:0,date:nowDay};
+        sessTT_days[nowDay]=sessTT_days[nowDay]||{};
+        save();
+        renderDailyGoal();
+        renderFlow();
+      }
+      tSec--;updateTDisplay();if(tSec<=0){clearInterval(tIv);tRunning=false;document.getElementById('playBtn').textContent=t('startBtn');commitSeg();onTimerEnd();}},1000);
     nudgePresence();
   }
 }
@@ -2443,7 +2474,38 @@ function startPauseCounter(){const arc=document.getElementById('ringPause'),disp
 function freezePauseCounter(){clearInterval(pauseIv);pauseIv=null;pauseDispSec=cumulPause;updatePauseVisual();}
 function clearPauseRing(){clearInterval(pauseIv);pauseIv=null;pauseDispSec=0;cumulPause=0;pauseCount=0;document.getElementById('cancelBtn').classList.remove('blink-warn');document.getElementById('ringPause').style.opacity='0';document.getElementById('pauseDisp').style.display='none';}
 function updatePauseVisual(){const arc=document.getElementById('ringPause'),disp=document.getElementById('pauseDisp');arc.style.strokeDashoffset=P*(1-(pauseDispSec%60)/60);disp.textContent=`⏸ ${fmtT(pauseDispSec)}`;}
-function commitSeg(){if(segStart&&selId&&tMode==='focus'){const el=Math.round((Date.now()-segStart)/1000);if(!ttime[selId])ttime[selId]=0;ttime[selId]+=el;if(!sessTT[selId])sessTT[selId]=0;sessTT[selId]+=el;}segStart=null;}
+// Returns YYYY-MM-DD for a given timestamp (ms)
+function dateKeyFromMs(ms){const d=new Date(ms);return`${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`;}
+
+let sessTT_days={}; // per-day task seconds in current session {dayKey:{taskId:sec}}
+let lastTickDay=todayKey(); // track day changes during active timer
+
+function commitSegWithSplit(segStartMs, segEndMs, taskId){
+  if(!taskId||!segStartMs||segEndMs<=segStartMs) return;
+  let cursor=segStartMs;
+  while(cursor<segEndMs){
+    const curDay=dateKeyFromMs(cursor);
+    const curDate=new Date(cursor);
+    const nextMidnight=new Date(curDate.getFullYear(),curDate.getMonth(),curDate.getDate()+1,0,0,0,0).getTime();
+    const sliceEnd=Math.min(nextMidnight,segEndMs);
+    const sliceSec=Math.round((sliceEnd-cursor)/1000);
+    if(sliceSec>0){
+      if(!ttime[taskId])ttime[taskId]=0; ttime[taskId]+=sliceSec;
+      if(!sessTT[taskId])sessTT[taskId]=0; sessTT[taskId]+=sliceSec;
+      if(!sessTT_days[curDay])sessTT_days[curDay]={};
+      if(!sessTT_days[curDay][taskId])sessTT_days[curDay][taskId]=0;
+      sessTT_days[curDay][taskId]+=sliceSec;
+    }
+    cursor=sliceEnd;
+  }
+}
+
+function commitSeg(){
+  if(segStart&&selId&&tMode==='focus'){
+    commitSegWithSplit(segStart, Date.now(), selId);
+  }
+  segStart=null;
+}
 function resetTimer(){
   // Show two-option menu
   const existing=document.getElementById('resetMenu');
@@ -2471,7 +2533,7 @@ function resetTimer(){
 function doResetSession(){
   const m=document.getElementById('resetMenu');if(m)m.remove();
   clearInterval(tIv);tRunning=false;document.getElementById('playBtn').textContent='BAŞLAT';
-  clearPauseRing();pauseMs=null;segStart=null;sessP=[];sessTT={};cumulPause=0;pauseDispSec=0;pauseCount=0;
+  clearPauseRing();pauseMs=null;segStart=null;sessP=[];sessTT={};sessTT_days={};lastTickDay=todayKey();cumulPause=0;pauseDispSec=0;pauseCount=0;
   const s=getAS();const mins={focus:s.focus,short:s.short,long:s.long}[tMode];
   tSec=mins*60;totSec=mins*60;updateTDisplay();nudgePresence();
   toast(t('toastResetSession'));
@@ -2518,7 +2580,27 @@ function confirmSkip(){
   showConfirmSheet(t('confirmSkipTitle'),subtitle,t('confirmSkipBtn'),'',skipForward);
 }
 
-function cancelPomodoro(){if(!tRunning&&tSec===totSec&&pauseMs===null&&cumulPause===0)return;clearInterval(tIv);tRunning=false;document.getElementById('playBtn').textContent='BAŞLAT';commitSeg();if(pauseMs!==null){const dur=Math.round((Date.now()-pauseMs)/1000);sessP.push({duration:dur,at:new Date(pauseMs).toISOString()});cumulPause+=dur;pauseMs=null;}clearPauseRing();const totalP=sessP.reduce((a,p)=>a+p.duration,0),worked=Object.values(sessTT).reduce((a,v)=>a+v,0);dotCancel();stats.cancel++;const rec={type:'cancelled',mode:tMode,taskId:selId,taskName:selId?(tasks.find(t=>t.id===selId)?.name||''):'',category:selId?(tasks.find(t=>t.id===selId)?.category||''):(selCat||''),taskTimes:{...sessTT},pauseTotal:totalP,workedSec:worked,totalSec:worked+totalP,pauses:[...sessP],dayKey:todayKey(),at:new Date().toISOString()};cycles.push(rec);failed.unshift({...rec});sessP=[];sessTT={};cumulPause=0;pauseDispSec=0;pauseCount=0;save();renderDots();updateStats();renderDailyGoal();nudgePresence();const s=getAS();const mins={focus:s.focus,short:s.short,long:s.long}[tMode];tSec=mins*60;totSec=mins*60;updateTDisplay();pauseAmbient();toast(t('toastCancelled'));}
+function cancelPomodoro(){if(!tRunning&&tSec===totSec&&pauseMs===null&&cumulPause===0)return;clearInterval(tIv);tRunning=false;document.getElementById('playBtn').textContent='BAŞLAT';commitSeg();if(pauseMs!==null){const dur=Math.round((Date.now()-pauseMs)/1000);sessP.push({duration:dur,at:new Date(pauseMs).toISOString()});cumulPause+=dur;pauseMs=null;}clearPauseRing();const totalP=sessP.reduce((a,p)=>a+p.duration,0),worked=Object.values(sessTT).reduce((a,v)=>a+v,0);dotCancel();stats.cancel++;
+// Split cycles across days if midnight was crossed
+const allDays=Object.keys(sessTT_days).sort();
+if(allDays.length<=1){
+  const rec={type:'cancelled',mode:tMode,taskId:selId,taskName:selId?(tasks.find(t=>t.id===selId)?.name||''):'',category:selId?(tasks.find(t=>t.id===selId)?.category||''):(selCat||''),taskTimes:{...sessTT},pauseTotal:totalP,workedSec:worked,totalSec:worked+totalP,pauses:[...sessP],dayKey:todayKey(),at:new Date().toISOString()};
+  cycles.push(rec);failed.unshift({...rec});
+} else {
+  // Multi-day: emit a record per day
+  allDays.forEach((dk,idx)=>{
+    const dayWork=sessTT_days[dk]||{};
+    const daySec=Object.values(dayWork).reduce((a,v)=>a+v,0);
+    if(daySec>0){
+      const rec={type:'cancelled',mode:tMode,split:true,taskId:selId,taskName:selId?(tasks.find(t=>t.id===selId)?.name||''):'',category:selId?(tasks.find(t=>t.id===selId)?.category||''):(selCat||''),taskTimes:{...dayWork},pauseTotal:idx===allDays.length-1?totalP:0,workedSec:daySec,totalSec:daySec+(idx===allDays.length-1?totalP:0),pauses:idx===allDays.length-1?[...sessP]:[],dayKey:dk,at:new Date().toISOString()};
+      cycles.push(rec);if(idx===allDays.length-1)failed.unshift({...rec});
+    }
+  });
+}
+// Update today's stats.min with today's worked minutes
+const todaySec=Object.values(sessTT_days[todayKey()]||{}).reduce((a,v)=>a+v,0);
+stats.min+=Math.round(todaySec/60);
+sessP=[];sessTT={};sessTT_days={};lastTickDay=todayKey();cumulPause=0;pauseDispSec=0;pauseCount=0;save();renderDots();updateStats();renderDailyGoal();nudgePresence();const s=getAS();const mins={focus:s.focus,short:s.short,long:s.long}[tMode];tSec=mins*60;totSec=mins*60;updateTDisplay();pauseAmbient();toast(t('toastCancelled'));}
 function skipForward(){
   clearInterval(tIv);tRunning=false;document.getElementById('playBtn').textContent='BAŞLAT';
   commitSeg();
@@ -2530,25 +2612,60 @@ function skipForward(){
     // Only count as a pomo if something was worked
     const workedMin=Math.round(worked/60);
     if(worked>0){
-      stats.pomo++;
-      stats.min+=workedMin;
-      if(selId){const t=tasks.find(t=>t.id===selId);if(t)t.pomodoros=(t.pomodoros||0)+1;}
-      dotDone();
-      cycles.push({type:'completed',mode:'focus',skipped:true,skippedEarly:true,taskId:selId,taskName:selId?(tasks.find(t=>t.id===selId)?.name||''):'',category:selId?(tasks.find(t=>t.id===selId)?.category||''):(selCat||''),taskTimes:{...sessTT},pauseTotal:totalP,focusDuration:worked,totalDuration:worked+totalP,pauses:[...sessP],dayKey:todayKey(),at:new Date().toISOString()});
+      const allDays=Object.keys(sessTT_days).sort();
+      if(allDays.length<=1){
+        stats.pomo++;
+        stats.min+=workedMin;
+        if(selId){const t=tasks.find(t=>t.id===selId);if(t)t.pomodoros=(t.pomodoros||0)+1;}
+        dotDone();
+        cycles.push({type:'completed',mode:'focus',skipped:true,skippedEarly:true,taskId:selId,taskName:selId?(tasks.find(t=>t.id===selId)?.name||''):'',category:selId?(tasks.find(t=>t.id===selId)?.category||''):(selCat||''),taskTimes:{...sessTT},pauseTotal:totalP,focusDuration:worked,totalDuration:worked+totalP,pauses:[...sessP],dayKey:todayKey(),at:new Date().toISOString()});
+      } else {
+        // Multi-day split
+        if(selId){const t=tasks.find(t=>t.id===selId);if(t)t.pomodoros=(t.pomodoros||0)+1;}
+        dotDone();
+        allDays.forEach((dk,idx)=>{
+          const dayWork=sessTT_days[dk]||{};
+          const daySec=Object.values(dayWork).reduce((a,v)=>a+v,0);
+          if(daySec>0){
+            cycles.push({type:'completed',mode:'focus',skipped:true,skippedEarly:true,split:true,taskId:selId,taskName:selId?(tasks.find(t=>t.id===selId)?.name||''):'',category:selId?(tasks.find(t=>t.id===selId)?.category||''):(selCat||''),taskTimes:{...dayWork},pauseTotal:idx===allDays.length-1?totalP:0,focusDuration:daySec,totalDuration:daySec+(idx===allDays.length-1?totalP:0),pauses:idx===allDays.length-1?[...sessP]:[],dayKey:dk,at:new Date().toISOString()});
+          }
+        });
+        const todaySec=Object.values(sessTT_days[todayKey()]||{}).reduce((a,v)=>a+v,0);
+        stats.pomo++;
+        stats.min+=Math.round(todaySec/60);
+      }
     } else {
       // Skipped with 0 work — record as skipped-unworked, don't advance dot
       dotCancel();
       cycles.push({type:'cancelled',mode:'focus',skipped:true,skippedNoWork:true,taskId:selId,taskName:selId?(tasks.find(t=>t.id===selId)?.name||''):'',category:selId?(tasks.find(t=>t.id===selId)?.category||''):(selCat||''),taskTimes:{},pauseTotal:totalP,workedSec:0,totalSec:totalP,pauses:[...sessP],dayKey:todayKey(),at:new Date().toISOString()});
     }
-    sessP=[];sessTT={};cumulPause=0;pauseDispSec=0;pauseCount=0;
+    sessP=[];sessTT={};sessTT_days={};lastTickDay=todayKey();cumulPause=0;pauseDispSec=0;pauseCount=0;
     save();updateStats();renderDots();renderDailyGoal();renderFlow();nudgePresence();
     const gc=dots.filter(s=>s.t==='g').length;
     if(gc>=4){toast(t('toastBreakLong'));setMode('long');}else{toast(t('toastBreakShort'));setMode('short');}
-  }else if(tMode==='long'){sessP=[];sessTT={};cumulPause=0;pauseDispSec=0;pauseCount=0;resetDots();save();toast(t('toastNewCycle'));setMode('focus');nudgePresence();}
-  else{sessP=[];sessTT={};cumulPause=0;pauseDispSec=0;pauseCount=0;save();toast(t('toastFocus'));setMode('focus');nudgePresence();}
+  }else if(tMode==='long'){sessP=[];sessTT={};sessTT_days={};lastTickDay=todayKey();cumulPause=0;pauseDispSec=0;pauseCount=0;resetDots();save();toast(t('toastNewCycle'));setMode('focus');nudgePresence();}
+  else{sessP=[];sessTT={};sessTT_days={};lastTickDay=todayKey();cumulPause=0;pauseDispSec=0;pauseCount=0;save();toast(t('toastFocus'));setMode('focus');nudgePresence();}
   pauseAmbient();
 }
-function onTimerEnd(){const s=getAS();if(tMode==='focus'){stats.pomo++;stats.min+=s.focus;if(selId){const t=tasks.find(t=>t.id===selId);if(t)t.pomodoros=(t.pomodoros||0)+1;}const totalP=sessP.reduce((a,p)=>a+p.duration,0);dotDone();cycles.push({type:'completed',mode:'focus',taskId:selId,taskName:selId?(tasks.find(t=>t.id===selId)?.name||''):'',category:selId?(tasks.find(t=>t.id===selId)?.category||''):(selCat||''),taskTimes:{...sessTT},pauseTotal:totalP,focusDuration:s.focus*60,totalDuration:s.focus*60+totalP,pauses:[...sessP],dayKey:todayKey(),at:new Date().toISOString()});sessP=[];sessTT={};cumulPause=0;pauseDispSec=0;pauseCount=0;clearPauseRing();save();updateStats();renderDailyGoal();renderFlow();const gc=dots.filter(x=>x.t==='g').length;if(gc>=4){playBeep();toast(t('toast4Pomo'));setTimeout(()=>{setMode('long');toggleTimer();},600);}else{playBeep();toast(t('toastPomoComplete'));setTimeout(()=>setMode('short'),500);}renderDots();nudgePresence();}else if(tMode==='long'){playBeep();toast(t('toastLongBreakEnd'));resetDots();save();setTimeout(()=>setMode('focus'),500);nudgePresence();}else{playBeep();toast(t('toastShortBreakEnd'));setTimeout(()=>setMode('focus'),500);nudgePresence();}}
+function onTimerEnd(){const s=getAS();if(tMode==='focus'){
+  const allDays=Object.keys(sessTT_days).sort();
+  const todaySec=Object.values(sessTT_days[todayKey()]||{}).reduce((a,v)=>a+v,0);
+  stats.pomo++;stats.min+=Math.round(todaySec/60);
+  if(selId){const t=tasks.find(t=>t.id===selId);if(t)t.pomodoros=(t.pomodoros||0)+1;}
+  const totalP=sessP.reduce((a,p)=>a+p.duration,0);dotDone();
+  if(allDays.length<=1){
+    cycles.push({type:'completed',mode:'focus',taskId:selId,taskName:selId?(tasks.find(t=>t.id===selId)?.name||''):'',category:selId?(tasks.find(t=>t.id===selId)?.category||''):(selCat||''),taskTimes:{...sessTT},pauseTotal:totalP,focusDuration:s.focus*60,totalDuration:s.focus*60+totalP,pauses:[...sessP],dayKey:todayKey(),at:new Date().toISOString()});
+  } else {
+    allDays.forEach((dk,idx)=>{
+      const dayWork=sessTT_days[dk]||{};
+      const daySec=Object.values(dayWork).reduce((a,v)=>a+v,0);
+      if(daySec>0){
+        cycles.push({type:'completed',mode:'focus',split:true,taskId:selId,taskName:selId?(tasks.find(t=>t.id===selId)?.name||''):'',category:selId?(tasks.find(t=>t.id===selId)?.category||''):(selCat||''),taskTimes:{...dayWork},pauseTotal:idx===allDays.length-1?totalP:0,focusDuration:daySec,totalDuration:daySec+(idx===allDays.length-1?totalP:0),pauses:idx===allDays.length-1?[...sessP]:[],dayKey:dk,at:new Date().toISOString()});
+      }
+    });
+  }
+  sessP=[];sessTT={};sessTT_days={};lastTickDay=todayKey();cumulPause=0;pauseDispSec=0;pauseCount=0;clearPauseRing();save();updateStats();renderDailyGoal();renderFlow();const gc=dots.filter(x=>x.t==='g').length;if(gc>=4){playBeep();toast(t('toast4Pomo'));setTimeout(()=>{setMode('long');toggleTimer();},600);}else{playBeep();toast(t('toastPomoComplete'));setTimeout(()=>setMode('short'),500);}renderDots();nudgePresence();
+}else if(tMode==='long'){playBeep();toast(t('toastLongBreakEnd'));resetDots();save();setTimeout(()=>setMode('focus'),500);nudgePresence();}else{playBeep();toast(t('toastShortBreakEnd'));setTimeout(()=>setMode('focus'),500);nudgePresence();}}
 function playBeep(){if(settings.sound===false||!document.getElementById('soundToggle').checked)return;try{const ctx=new(window.AudioContext||window.webkitAudioContext)();[0,.15,.3].forEach((t,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=i===2?880:660;g.gain.setValueAtTime(.25,ctx.currentTime+t);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+t+.25);o.start(ctx.currentTime+t);o.stop(ctx.currentTime+t+.25);});}catch(e){}}
 function updateStats(){renderDailyGoal();}
 
@@ -2872,6 +2989,8 @@ function renderDropContent(){
 
 // ══ RENDER SEL BOX (with clear button) ══
 function renderSelBox(){
+  // If selId points to a deleted task, clear it
+  if(selId&&!tasks.find(t2=>t2.id===selId)){selId=null;}
   const task=selId?tasks.find(t2=>t2.id===selId):null;
   const box=document.getElementById('tsbText');
   const clearBtn=document.getElementById('selClearBtn');
