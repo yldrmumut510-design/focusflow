@@ -3167,9 +3167,84 @@ function streakDropped(e){
 }
 function streakDropConfirm(){
   const nextM=getNextMilestone(calcStreak());
-  if(!nextM)return;
-  toast(`💪 ${nextM}. streak'e doğru devam ediyorsun!`);
-  setTimeout(()=>closeStreakPage(),800);
+  const u=window._currentUser||{name:'?',color:'#c8775a'};
+  const color=u.color||'#c8775a';
+
+  // Build celebration overlay
+  const cel=document.createElement('div');
+  cel.id='streakCelebration';
+  cel.style.cssText=`position:fixed;inset:0;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0);pointer-events:none;max-width:500px;margin:0 auto;overflow:hidden`;
+  document.body.appendChild(cel);
+
+  // Confetti particles
+  const colors=['#5a9a6a','#c8775a','#b5956a','#f9d423','#ff6b6b','#a8edea','#fed6e3','#fff'];
+  for(let i=0;i<60;i++){
+    const p=document.createElement('div');
+    const sz=6+Math.random()*8;
+    const x=Math.random()*100;
+    const delay=Math.random()*0.6;
+    const dur=0.8+Math.random()*0.8;
+    const rot=Math.random()*720-360;
+    const shape=Math.random()>0.5?'50%':'3px';
+    p.style.cssText=`position:absolute;width:${sz}px;height:${sz}px;background:${colors[Math.floor(Math.random()*colors.length)]};border-radius:${shape};left:${x}%;top:-10px;animation:confettiFall${i%3} ${dur}s ${delay}s ease-in forwards;opacity:0`;
+    cel.appendChild(p);
+  }
+
+  // Burst rings around figure center
+  for(let i=0;i<3;i++){
+    const ring=document.createElement('div');
+    const delay=i*0.15;
+    ring.style.cssText=`position:absolute;width:60px;height:60px;border-radius:50%;border:3px solid ${color};top:50%;left:50%;transform:translate(-50%,-50%) scale(0);animation:burstRing 0.7s ${delay}s ease-out forwards;opacity:0.9`;
+    cel.appendChild(ring);
+  }
+
+  // Star sparks
+  const sparkPositions=[
+    {x:-60,y:-60},{x:60,y:-60},{x:-80,y:0},{x:80,y:0},{x:-60,y:60},{x:60,y:60},{x:0,y:-80},{x:0,y:80}
+  ];
+  sparkPositions.forEach((pos,i)=>{
+    const spark=document.createElement('div');
+    spark.style.cssText=`position:absolute;width:8px;height:8px;border-radius:50%;background:${colors[i%colors.length]};top:50%;left:50%;transform:translate(-50%,-50%);animation:sparkFly 0.6s ${i*0.04}s cubic-bezier(0,.9,.57,1) forwards;--tx:${pos.x}px;--ty:${pos.y}px;opacity:0`;
+    cel.appendChild(spark);
+  });
+
+  // Center figure + message
+  const msg=document.createElement('div');
+  msg.style.cssText=`position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:10px;animation:celebPop 0.4s 0.1s cubic-bezier(0.34,1.56,0.64,1) both`;
+  msg.innerHTML=`
+    <div style="width:90px;height:90px;border-radius:50%;border:4px solid var(--green);background:var(--surface);display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 8px rgba(90,154,106,0.25),0 8px 32px rgba(0,0,0,0.3);overflow:hidden">
+      ${streakFigureSVG(color)}
+    </div>
+    <div style="background:var(--green);color:#fff;font-family:'DM Serif Display',serif;font-size:1.15rem;padding:8px 20px;border-radius:99px;box-shadow:0 4px 16px rgba(90,154,106,0.5);white-space:nowrap">
+      💪 ${nextM?nextM+'. Streak\'e doğru!':'Devam ediyorsun!'}
+    </div>
+  `;
+  cel.appendChild(msg);
+
+  // Inject keyframes
+  if(!document.getElementById('streakCelStyle')){
+    const st=document.createElement('style');
+    st.id='streakCelStyle';
+    st.textContent=`
+      @keyframes confettiFall0{0%{opacity:1;transform:translateY(0) rotate(0deg)}100%{opacity:0;transform:translateY(110vh) rotate(360deg)}}
+      @keyframes confettiFall1{0%{opacity:1;transform:translateY(0) rotate(0deg) translateX(0)}50%{transform:translateY(50vh) rotate(180deg) translateX(30px)}100%{opacity:0;transform:translateY(110vh) rotate(360deg) translateX(-20px)}}
+      @keyframes confettiFall2{0%{opacity:1;transform:translateY(0) rotate(0deg) translateX(0)}50%{transform:translateY(50vh) rotate(-180deg) translateX(-30px)}100%{opacity:0;transform:translateY(110vh) rotate(-360deg) translateX(20px)}}
+      @keyframes burstRing{0%{transform:translate(-50%,-50%) scale(0);opacity:0.9}100%{transform:translate(-50%,-50%) scale(4);opacity:0}}
+      @keyframes sparkFly{0%{opacity:1;transform:translate(-50%,-50%)}100%{opacity:0;transform:translate(calc(-50% + var(--tx)),calc(-50% + var(--ty))) scale(0)}}
+      @keyframes celebPop{0%{opacity:0;transform:translate(-50%,-50%) scale(0.3)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+    `;
+    document.head.appendChild(st);
+  }
+
+  // Fade in overlay bg subtly
+  requestAnimationFrame(()=>{cel.style.background='rgba(0,0,0,0.35)';cel.style.transition='background 0.2s';});
+
+  // Auto close after 1.8s
+  setTimeout(()=>{
+    cel.style.transition='opacity 0.4s';
+    cel.style.opacity='0';
+    setTimeout(()=>{cel.remove();closeStreakPage();},400);
+  },1800);
 }
 
 // Check if today's goal just met — auto-open streak page
