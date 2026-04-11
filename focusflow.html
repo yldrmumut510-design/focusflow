@@ -605,8 +605,8 @@ header{display:flex;align-items:center;justify-content:space-between;padding:max
         <div class="auth-err" id="login_err"></div>
         <button class="auth-btn" id="login_btn" onclick="doLogin()" style="margin-top:14px">Giriş Yap</button>
         <div class="auth-divider"><span>veya</span></div>
-        <button class="guest-btn" onclick="doGuest()">👤 Misafir olarak devam et</button>
-        <div style="font-size:.7rem;color:var(--text-dim);text-align:center;margin-top:8px">Misafir modunda veriler kaydedilmez</div>
+        <button class="guest-btn" id="guestBtn1" onclick="doGuest()">👤 Misafir olarak devam et</button>
+        <div id="guestNote1" style="font-size:.7rem;color:var(--text-dim);text-align:center;margin-top:8px">Misafir modunda veriler kaydedilmez</div>
       </div>
       <div id="panel_register" style="display:none">
         <div class="auth-field"><label class="auth-label">Adın</label><input class="auth-input" id="reg_name" type="text" placeholder="Adın veya takma adın" maxlength="24" oninput="clearAuthErr()"></div>
@@ -615,7 +615,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:max
         <div class="auth-err" id="reg_err"></div>
         <button class="auth-btn" id="reg_btn" onclick="doRegister()" style="margin-top:14px">Üye Ol</button>
         <div class="auth-divider"><span>veya</span></div>
-        <button class="guest-btn" onclick="doGuest()">👤 Misafir olarak devam et</button>
+        <button class="guest-btn" id="guestBtn2" onclick="doGuest()">👤 Misafir olarak devam et</button>
       </div>
       <div class="otp-panel" id="panel_otp">
         <div class="otp-info" id="otp_info">📧 E-postanıza doğrulama bağlantısı gönderildi.</div>
@@ -648,7 +648,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:max
       <!-- Group Panel -->
       <div class="group-panel" id="groupPanel" style="display:none">
         <div class="gp-header expanded" id="gpHeader" onclick="toggleGP()">
-          <div class="gph-left"><span>👥</span><span class="gph-title">Çalışma Grubu</span><span class="gph-badge" id="gphBadge"></span></div>
+          <div class="gph-left"><span>👥</span><span class="gph-title" id="groupPanelTitle">Çalışma Grubu</span><span class="gph-badge" id="gphBadge"></span></div>
           <div class="gph-right"><span class="gph-online" id="gphOnline"></span><button class="gp-goto-btn" onclick="event.stopPropagation();openGroupPage()" title="Çalışma Grubu Sayfası">→</button><span class="gph-arrow open" id="gphArrow">▾</span></div>
         </div>
         <div class="gp-body" id="gpBody"></div>
@@ -777,11 +777,11 @@ header{display:flex;align-items:center;justify-content:space-between;padding:max
     </div>
     <div class="modal-body">
       <div>
-        <label class="form-lbl">Görev Adı</label>
+        <label class="form-lbl" id="lbl_taskName">Görev Adı</label>
         <input class="fi" id="tName" placeholder="Görev adı..." onkeydown="if(event.key==='Enter')saveTask()">
       </div>
       <div>
-        <label class="form-lbl">📅 Tarih</label>
+        <label class="form-lbl" id="lbl_date">📅 Tarih</label>
         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
           <button class="date-quick-btn active" id="dqToday" onclick="setQuickDate('today')">Bugün</button>
           <button class="date-quick-btn" id="dqTomorrow" onclick="setQuickDate('tomorrow')">Yarın</button>
@@ -789,63 +789,76 @@ header{display:flex;align-items:center;justify-content:space-between;padding:max
         </div>
       </div>
       <div>
-        <label class="form-lbl">Zaman</label>
+        <label class="form-lbl" id="lbl_time">Zaman</label>
         <select class="fs" id="tTimeType" onchange="onTTC()" style="width:100%">
-          <option value="any">⏰ Herhangi bir saat (esnek)</option>
-          <option value="range">🕐 Saat aralığı belirt</option>
+          <option value="any" id="opt_timeAny">⏰ Herhangi bir saat (esnek)</option>
+          <option value="range" id="opt_timeRange">🕐 Saat aralığı belirt</option>
         </select>
         <div class="time-fields" id="timeFieldsWrap" style="display:none">
           <div class="time-field-group">
-            <span class="time-field-label">Başlangıç</span>
+            <span class="time-field-label" id="lbl_timeStart">Başlangıç</span>
             <input class="fi" id="tStart" type="time">
           </div>
           <div class="time-field-group">
-            <span class="time-field-label">Bitiş</span>
+            <span class="time-field-label" id="lbl_timeEnd">Bitiş</span>
             <input class="fi" id="tEnd" type="time">
           </div>
         </div>
       </div>
       <div class="form-row">
         <div style="flex:1">
-          <label class="form-lbl">Öncelik</label>
-          <select class="fs" id="tPrio"><option value="low">🟢 Normal</option><option value="mid">🟡 Orta</option><option value="high">🔴 Yüksek</option></select>
+          <label class="form-lbl" id="lbl_prio">Öncelik</label>
+          <select class="fs" id="tPrio">
+            <option value="low" id="opt_prioLow">🟢 Normal</option>
+            <option value="mid" id="opt_prioMid">🟡 Orta</option>
+            <option value="high" id="opt_prioHigh">🔴 Yüksek</option>
+          </select>
         </div>
         <div style="flex:1;position:relative">
-          <label class="form-lbl">Kategori / Etiket</label>
+          <label class="form-lbl" id="lbl_cat">Kategori / Etiket</label>
           <input class="fi" id="tCat" placeholder="Kategori..." autocomplete="off"
             oninput="showCatSuggestions()" onblur="hideCatSugg()" onfocus="showCatSuggestions()">
           <div class="cat-suggestions" id="catSuggBox"></div>
         </div>
       </div>
       <div>
-        <label class="form-lbl">Pomodoro Hedefi</label>
-        <select class="fs" id="tPomoCount"><option value="0">Belirtme</option><option value="1">1 🍅</option><option value="2">2 🍅</option><option value="3">3 🍅</option><option value="4">4 🍅</option><option value="5">5 🍅</option><option value="6">6 🍅</option><option value="8">8 🍅</option><option value="10">10 🍅</option></select>
+        <label class="form-lbl" id="lbl_pomoGoal">Pomodoro Hedefi</label>
+        <select class="fs" id="tPomoCount">
+          <option value="0" id="opt_pomoNone">Belirtme</option>
+          <option value="1">1 🍅</option><option value="2">2 🍅</option><option value="3">3 🍅</option>
+          <option value="4">4 🍅</option><option value="5">5 🍅</option><option value="6">6 🍅</option>
+          <option value="8">8 🍅</option><option value="10">10 🍅</option>
+        </select>
       </div>
       <div>
-        <label class="form-lbl">🔁 Tekrar</label>
+        <label class="form-lbl" id="lbl_repeat">🔁 Tekrar</label>
         <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
-          <button class="rall" onclick="toggleAllDays()">Tüm Günler</button>
+          <button class="rall" id="btn_allDays" onclick="toggleAllDays()">Tüm Günler</button>
           <div class="repeat-days" id="repeatDays"></div>
         </div>
       </div>
       <div>
-        <label class="form-lbl">🔔 Hatırlatıcı</label>
+        <label class="form-lbl" id="lbl_reminder">🔔 Hatırlatıcı</label>
         <div class="form-row">
-          <select class="fs" id="tRemType" onchange="onRTC()"><option value="none">Yok</option><option value="scheduled">Planlanan saatte</option><option value="custom">Zaman seç</option></select>
+          <select class="fs" id="tRemType" onchange="onRTC()">
+            <option value="none" id="opt_remNone">Yok</option>
+            <option value="scheduled" id="opt_remSched">Planlanan saatte</option>
+            <option value="custom" id="opt_remCustom">Zaman seç</option>
+          </select>
           <input class="fi" id="tRemTime" type="time" style="display:none;flex:0;width:105px">
         </div>
       </div>
       <div>
-        <label class="cp-toggle"><input type="checkbox" id="cpCheck" onchange="onCpT()"> 🍅 Özel Pomodoro Süresi</label>
+        <label class="cp-toggle"><input type="checkbox" id="cpCheck" onchange="onCpT()"> <span id="lbl_customPomo">🍅 Özel Pomodoro Süresi</span></label>
         <div class="cp-panel" id="cpPanel" style="margin-top:8px">
-          <div class="cp-row"><span style="font-size:.83rem">Odak</span><div class="num-wrap"><button class="num-btn" onclick="adjCp('cpF',-5)">−</button><div class="num-val" id="cpF">25</div><button class="num-btn" onclick="adjCp('cpF',5)">+</button></div></div>
-          <div class="cp-row"><span style="font-size:.83rem">Kısa Mola</span><div class="num-wrap"><button class="num-btn" onclick="adjCp('cpS',-1)">−</button><div class="num-val" id="cpS">5</div><button class="num-btn" onclick="adjCp('cpS',1)">+</button></div></div>
-          <div class="cp-row"><span style="font-size:.83rem">Uzun Mola</span><div class="num-wrap"><button class="num-btn" onclick="adjCp('cpL',-5)">−</button><div class="num-val" id="cpL">15</div><button class="num-btn" onclick="adjCp('cpL',5)">+</button></div></div>
+          <div class="cp-row"><span id="lbl_cpFocus" style="font-size:.83rem">Odak</span><div class="num-wrap"><button class="num-btn" onclick="adjCp('cpF',-5)">−</button><div class="num-val" id="cpF">25</div><button class="num-btn" onclick="adjCp('cpF',5)">+</button></div></div>
+          <div class="cp-row"><span id="lbl_cpShort" style="font-size:.83rem">Kısa Mola</span><div class="num-wrap"><button class="num-btn" onclick="adjCp('cpS',-1)">−</button><div class="num-val" id="cpS">5</div><button class="num-btn" onclick="adjCp('cpS',1)">+</button></div></div>
+          <div class="cp-row"><span id="lbl_cpLong" style="font-size:.83rem">Uzun Mola</span><div class="num-wrap"><button class="num-btn" onclick="adjCp('cpL',-5)">−</button><div class="num-val" id="cpL">15</div><button class="num-btn" onclick="adjCp('cpL',5)">+</button></div></div>
         </div>
       </div>
     </div>
     <div class="modal-actions">
-      <button class="btn-cancel" onclick="closeTaskModal()">İptal</button>
+      <button class="btn-cancel" id="modalCancelBtn" onclick="closeTaskModal()">İptal</button>
       <button class="btn-save" onclick="saveTask()" id="saveTaskBtn">Kaydet</button>
     </div>
   </div>
@@ -938,6 +951,15 @@ header{display:flex;align-items:center;justify-content:space-between;padding:max
       <div style="height:1px;background:var(--border)"></div>
       <div class="srow danger-row" onclick="clearAllData()"><div class="sr-left"><div class="sr-label">Tüm Verileri Sil</div><div class="sr-sub">Kalıcı silme</div></div><span>🗑</span></div>
     </div></div>
+    <div class="sps"><div class="sps-title">🌐 Dil / Language</div><div class="sblock">
+      <div class="srow" style="cursor:default">
+        <div class="sr-left"><div class="sr-label" id="langToggleLabel">Dil / Language</div></div>
+        <div id="langToggleBox" style="display:flex;gap:6px">
+          <button data-lang="tr" onclick="setLang('tr')" style="padding:7px 16px;border-radius:8px;border:1.5px solid var(--border);background:transparent;color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:.85rem;cursor:pointer;transition:all .18s" class="active">TR</button>
+          <button data-lang="en" onclick="setLang('en')" style="padding:7px 16px;border-radius:8px;border:1.5px solid var(--border);background:transparent;color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:.85rem;cursor:pointer;transition:all .18s">EN</button>
+        </div>
+      </div>
+    </div></div>
   </div>
 </div>
 
@@ -979,50 +1001,50 @@ onAuthStateChanged(auth, async (fbUser) => {
 });
 
 window._doRegister = async (name,email,pass) => {
-  const btn=document.getElementById('reg_btn');btn.disabled=true;btn.innerHTML='<span class="spin"></span>Kayıt yapılıyor...';
+  const btn=document.getElementById('reg_btn');btn.disabled=true;btn.innerHTML=`<span class="spin"></span>${t('registering')}`;
   try{
     const cred=await createUserWithEmailAndPassword(auth,email,pass);
     await set(ref(db,`users/${cred.user.uid}/profile`),{name,color:'#c8775a',email});
     await sendEmailVerification(cred.user,{url:window.location.href});
     await signOut(auth);
     pendingEmail=email;pendingPass=pass;pendingMode='register';
-    showOtpPanel('register');toast('📧 Doğrulama e-postası gönderildi!');
+    showOtpPanel('register');toast(t('toastVerifSent'));
   }catch(e){showAuthErr('reg_err',fbErr(e.code));}
-  btn.disabled=false;btn.textContent='Üye Ol';
+  btn.disabled=false;btn.textContent=t('registerBtn');
 };
 
 window._doLogin = async (email,pass) => {
-  const btn=document.getElementById('login_btn');btn.disabled=true;btn.innerHTML='<span class="spin"></span>Giriş yapılıyor...';
+  const btn=document.getElementById('login_btn');btn.disabled=true;btn.innerHTML=`<span class="spin"></span>${t('loggingIn')}`;
   try{
     const cred=await signInWithEmailAndPassword(auth,email,pass);
     if(!cred.user.emailVerified){
       await sendEmailVerification(cred.user,{url:window.location.href});
       await signOut(auth);
       pendingEmail=email;pendingPass=pass;pendingMode='login';
-      showOtpPanel('login');toast('📧 Doğrulama e-postası gönderildi!');
-      btn.disabled=false;btn.textContent='Giriş Yap';return;
+      showOtpPanel('login');toast(t('toastVerifSent'));
+      btn.disabled=false;btn.textContent=t('loginBtn');return;
     }
   }catch(e){showAuthErr('login_err',fbErr(e.code));}
-  btn.disabled=false;btn.textContent='Giriş Yap';
+  btn.disabled=false;btn.textContent=t('loginBtn');
 };
 
 window.checkVerification = async () => {
-  const btn=document.getElementById('otp_btn');btn.disabled=true;btn.innerHTML='<span class="spin"></span>Kontrol ediliyor...';
+  const btn=document.getElementById('otp_btn');btn.disabled=true;btn.innerHTML=`<span class="spin"></span>${t('checking')}`;
   try{
     const cred=await signInWithEmailAndPassword(auth,pendingEmail,pendingPass);
     await cred.user.reload();
-    if(cred.user.emailVerified){toast('✅ Doğrulama başarılı!');}
-    else{await signOut(auth);showAuthErr('otp_err','❌ Henüz doğrulanmamış. Maildeki bağlantıya tıkla.');}
+    if(cred.user.emailVerified){toast(t('toastVerifOk'));}
+    else{await signOut(auth);showAuthErr('otp_err',t('toastNotVerified'));}
   }catch(e){showAuthErr('otp_err',fbErr(e.code));}
-  btn.disabled=false;btn.textContent='✓ Doğruladım, Devam Et';
+  btn.disabled=false;btn.textContent=t('otpConfirm');
 };
 
 window.resendVerification = async () => {
-  try{const cred=await signInWithEmailAndPassword(auth,pendingEmail,pendingPass);await sendEmailVerification(cred.user,{url:window.location.href});await signOut(auth);toast('📧 Tekrar gönderildi!');startResendTimer();}catch(e){toast('❌ '+fbErr(e.code));}
+  try{const cred=await signInWithEmailAndPassword(auth,pendingEmail,pendingPass);await sendEmailVerification(cred.user,{url:window.location.href});await signOut(auth);toast(t('toastResent'));startResendTimer();}catch(e){toast('❌ '+fbErr(e.code));}
 };
 
 window._doSignOut = async () => {
-  if(!confirm('Çıkmak istediğinizden emin misin?'))return;
+  if(!confirm(t('signOutConfirm')))return;
   stopGroupSync();await signOut(auth);
   window._currentUser=null;
   document.getElementById('mainApp').style.display='none';
@@ -1057,16 +1079,461 @@ function showOtpPanel(mode){
   document.getElementById('panel_login').style.display='none';
   document.getElementById('panel_register').style.display='none';
   const p=document.getElementById('panel_otp');p.classList.add('show');
-  document.getElementById('otp_info').innerHTML=`📧 <b>${pendingEmail}</b> adresine doğrulama bağlantısı gönderildi. Maildeki bağlantıya tıkla, sonra butona bas.`;
+  document.getElementById('otp_info').innerHTML=`📧 <b>${pendingEmail}</b> ${currentLang==='tr'?'adresine doğrulama bağlantısı gönderildi. Maildeki bağlantıya tıkla, sonra butona bas.':'— a verification link has been sent. Click the link in your email, then press the button.'}`;
   startResendTimer();
 }
 window.cancelOtp=()=>{document.getElementById('panel_otp').classList.remove('show');setAuthTab(pendingMode==='login'?'login':'register');};
 function startResendTimer(){const btn=document.getElementById('resend_btn'),t=document.getElementById('resend_timer');btn.disabled=true;let s=60;if(resendTimer)clearInterval(resendTimer);resendTimer=setInterval(()=>{s--;t.textContent=`(${s}s)`;if(s<=0){clearInterval(resendTimer);btn.disabled=false;t.textContent='';}},1000);t.textContent=`(${s}s)`;}
-function fbErr(code){const m={'auth/email-already-in-use':'Bu e-posta zaten kayıtlı.','auth/invalid-email':'Geçersiz e-posta.','auth/weak-password':'Şifre en az 6 karakter olmalı.','auth/user-not-found':'E-posta bulunamadı.','auth/wrong-password':'Şifre hatalı.','auth/invalid-credential':'E-posta veya şifre hatalı.','auth/too-many-requests':'Çok fazla deneme.','auth/network-request-failed':'Bağlantı hatası.'};return m[code]||'Hata: '+code;}
+function fbErr(code){const m={'auth/email-already-in-use':t('fbEmailUsed'),'auth/invalid-email':t('fbInvalidEmail'),'auth/weak-password':t('fbWeakPass'),'auth/user-not-found':t('fbUserNotFound'),'auth/wrong-password':t('fbWrongPass'),'auth/invalid-credential':t('fbInvalidCred'),'auth/too-many-requests':t('fbTooMany'),'auth/network-request-failed':t('fbNetwork')};return m[code]||'Error: '+code;}
 function showAuthErr(id,msg){const e=document.getElementById(id);e.textContent=msg;e.classList.add('show');}
 </script>
 
 <script>
+// ══ i18n ══
+const I18N={
+  tr:{
+    // Auth
+    tagline:'Odaklan, takibini yap, birlikte çalış.',
+    login:'Giriş Yap', register:'Üye Ol',
+    email:'E-posta', password:'Şifre', yourName:'Adın',
+    emailPlaceholder:'ornek@mail.com', passwdPlaceholder:'••••••••',
+    namePlaceholder:'Adın veya takma adın', passMinPlaceholder:'En az 6 karakter',
+    loginBtn:'Giriş Yap', registerBtn:'Üye Ol',
+    or:'veya', guestBtn:'👤 Misafir olarak devam et',
+    guestNote:'Misafir modunda veriler kaydedilmez',
+    otpInfo:'📧 E-postanıza doğrulama bağlantısı gönderildi.',
+    otpResend:"Gelmedi mi?", otpResendBtn:'Tekrar Gönder',
+    otpConfirm:'✓ Doğruladım, Devam Et', otpBack:'← Geri',
+    // Header
+    guest:'misafir',
+    // Bottom nav
+    navPomodoro:'Pomodoro', navTasks:'Görevler', navHistory:'Geçmiş', navAnalysis:'Analiz',
+    // Pomodoro page
+    focusMode:'Odak', shortBreak:'Kısa Mola', longBreak:'Uzun Mola',
+    timerSubFocus:'ODAK', timerSubShort:'KISA MOLA', timerSubLong:'UZUN MOLA',
+    selectTask:'Görev seç',
+    startBtn:'BAŞLAT', stopBtn:'DURDUR',
+    resetBtn:'↺ Sıfırla', cancelBtn:'✕ İptal', skipBtn:'⏭ Atla',
+    groupPanel:'Çalışma Grubu',
+    groupPageTitle:'Çalışma Grubu',
+    groupBack:'← Geri',
+    groupTabDesk:'🏠 Odalar', groupTabRank:'🏆 Sıralama',
+    rankToday:'Bugün', rankWeek:'Bu Hafta', rankYear:'Bu Yıl',
+    // Daily goal
+    dailyGoal:'Günlük Hedef',
+    goalTask:'Görev', goalHour:'Saat',
+    statPomodoro:'Pomodoro', statFocusMin:'Dk Odak', statCompleted:'Tamamlanan', statTotal:'Toplam',
+    // Flow
+    flowTitle:"Today's Flow",
+    flowEmpty:'Bugün için görev yok.<br>Görevler sekmesinden ekleyebilirsin.',
+    untimedLabel:'esnek',
+    prioHigh:'Yüksek', prioMid:'Orta',
+    // Tasks page
+    tasksTitle:'Görevler', addBtn:'+ Ekle',
+    timedTasks:'🕐 Saatli Görevler', flexTasks:'📌 Esnek Görevler',
+    taskEmpty:'Görev yok. + Ekle butonuyla başla.',
+    // Task modal
+    modalAddTitle:'Görev Ekle', modalEditTitle:'Görevi Düzenle',
+    taskNameLabel:'Görev Adı', taskNamePlaceholder:'Görev adı...',
+    dateLabel:'📅 Tarih', today:'Bugün', tomorrow:'Yarın',
+    timeLabel:'Zaman',
+    timeAny:'⏰ Herhangi bir saat (esnek)', timeRange:'🕐 Saat aralığı belirt',
+    timeStart:'Başlangıç', timeEnd:'Bitiş',
+    prioLabel:'Öncelik', prioLow:'🟢 Normal', prioMid:'🟡 Orta', prioHigh2:'🔴 Yüksek',
+    catLabel:'Kategori / Etiket', catPlaceholder:'Kategori...',
+    pomoGoalLabel:'Pomodoro Hedefi', pomoGoalNone:'Belirtme',
+    repeatLabel:'🔁 Tekrar', repeatAll:'Tüm Günler',
+    reminderLabel:'🔔 Hatırlatıcı',
+    remNone:'Yok', remScheduled:'Planlanan saatte', remCustom:'Zaman seç',
+    customPomoLabel:'🍅 Özel Pomodoro Süresi',
+    cpFocus:'Odak', cpShort:'Kısa', cpLong:'Uzun',
+    saveBtn:'Kaydet', updateBtn:'Güncelle',
+    // History page
+    histAll:'Tümü', histToday:'Bugün', histWeek:'Hafta', histMonth:'Ay',
+    histEmpty:'Kayıt yok',
+    histCompleted:'✓ tamamlandı', histCancelled:'✕ iptal',
+    // Analysis page
+    anDay:'Gün', anWeek:'Hafta', anMonth:'Ay', anYear:'Yıl',
+    anTaskTime:'📋 Görev Bazlı Süre',
+    anDailyPomo:'🍅 Günlük Pomodoro',
+    anSummary:'📊 Özet',
+    anTaskDist:'📋 Görev Dağılımı',
+    anCatDist:'🏷 Etiket Dağılımı',
+    anNoRecord:'Kayıt yok',
+    anSuccess:'Başarı',
+    anCompleted:'Tamamlanan', anCancelled:'İptal',
+    anPause:'Duraklama', anTotalWorked:'Toplam çalışılan',
+    anSwipeHint:'← Kaydır: Halka Grafikler →',
+    anUncategorized:'Kategorisiz',
+    anOthers:'Diğerleri',
+    // Settings
+    settingsTitle:'Ayarlar',
+    settingsBack:'← Geri',
+    sAccount:'👤 Hesap', sLogout:'Çıkış',
+    sCopyGroupCode:'Grup Kodunu Kopyala',
+    sGroup:'👥 Çalışma Grubu',
+    sGroupCreate:'+ Grup Oluştur', sGroupJoin:'Gruba Katıl',
+    sGroupCodePlaceholder:'6 haneli kod...',
+    sGroupJoinBtn:'Katıl',
+    sGroupNoGroup:'Bir grup oluştur veya mevcut gruba katıl.',
+    sGroupCopy:'📋 Kopyala', sGroupLeave:'Ayrıl',
+    sGroupShareCode:'Bu kodu arkadaşlarınla paylaş.',
+    sPomoDurations:'🍅 Pomodoro Süreleri',
+    sFocusMin:'Odak', sShortBreak:'Kısa Mola', sLongBreak:'Uzun Mola',
+    sDailyTaskGoal:'Günlük Görev Hedefi', sDailyFocusHour:'Günlük Odak Saati',
+    sMinutes:'dakika',
+    sAppearance:'🎨 Görünüm & Ses',
+    sDarkMode:'Karanlık Mod',
+    sTimerSound:'Timer Sesi', sTimerSoundSub:'Pomodoro bitişinde bip',
+    sAmbient:'🎵 Ortam Sesi',
+    sAmbientNote:'Ses seçince 3 saniyelik önizleme çalar. Timer başlayınca aktif olur.',
+    sVolume:'🔉 Ses',
+    soundNone:'Sessiz', soundRain:'Yağmur', soundOcean:'Okyanus', soundCafe:'Kafe',
+    soundForest:'Orman', soundWhite:'Beyaz Gürültü', soundFire:'Şömine',
+    soundBrown:'Brown Gürültü', soundLib:'Kütüphane',
+    sData:'💾 Veri',
+    sExport:'📤 Yedek İndir', sImport:'📥 Yedek Yükle',
+    sDeleteAll:'Tüm Verileri Sil', sDeleteSub:'Kalıcı silme',
+    sLanguage:'🌐 Dil',
+    // Toasts & confirm dialogs
+    toastVerifSent:'📧 Doğrulama e-postası gönderildi!',
+    toastVerifOk:'✅ Doğrulama başarılı!',
+    toastResent:'📧 Tekrar gönderildi!',
+    toastDownloaded:'📤 İndirildi!',
+    toastCopied:'📋 Kopyalandı!',
+    toastCompleted:'✅ Tamamlandı!',
+    toastAdded:'✅ Eklendi',
+    toastUpdated:'✏️ Güncellendi',
+    toastCancelled:'❌ İptal edildi',
+    toastResetSession:'↺ Mevcut görev sıfırlandı',
+    toastResetCycle:'🔄 Döngü sıfırlandı',
+    toastNameRequired:'⚠️ Ad boş',
+    toastTimeRequired:'⚠️ Saat belirt',
+    toastNotVerified:'❌ Henüz doğrulanmamış. Maildeki bağlantıya tıkla.',
+    toastConnecting:'Bağlantı kuruluyor, lütfen bekle...',
+    toastSoundOff:'🔇 Ses kapatıldı',
+    toastTimerActive:(n)=>`seçildi — timer başlayınca aktif olur`,
+    toastBreakShort:'⏭ Kısa molaya', toastBreakLong:'⏭ Uzun molaya',
+    toastNewCycle:'⏭ Yeni döngü', toastFocus:'⏭ Odağa',
+    toastPomoComplete:'🍅 Tamamlandı! Kısa mola.',
+    toastLongComplete:'⚠️ 5 dakika — otomatik iptal!',
+    toastLongBreakEnd:'☀️ Uzun mola bitti!', toastShortBreakEnd:'⏰ Mola bitti!',
+    toast4Pomo:'🎉 4 Pomodoro! Uzun mola.',
+    toastPauseMin:(n)=>`⏸ ${n}. dakika`,
+    toastStarted:(name)=>`▶ "${name}" başladı`,
+    toastRepeatDays:(n)=>` (${n} gün tekrar)`,
+    // Confirm dialogs
+    confirmCancelTitle:'Bu pomodoro iptal edilecek',
+    confirmCancelSubWorked:(m)=>`${m} dakika çalışıldı olarak kaydedilecek ve bu pomodoro iptal edilecek.`,
+    confirmCancelSubEmpty:'Hiç çalışmadan iptal edilecek. Süre kaydedilmeyecek.',
+    confirmCancelBtn:'✕ Evet, İptal Et',
+    confirmSkipTitle:'Bu aşama atlanacak',
+    confirmSkipFocusWorked:(m)=>`${m} dakika çalışıldı olarak kaydedilecek ve bir sonraki molaya geçilecek.`,
+    confirmSkipFocusEmpty:'Hiç çalışılmadı olarak atlanacak, süre kaydedilmeyecek.',
+    confirmSkipBreak:'Mola atlanacak ve odak moduna geçilecek.',
+    confirmSkipBtn:'⏭ Evet, Atla',
+    confirmVazgec:'Vazgeç',
+    // Reset dialog
+    resetDialogTitle:'Neyi sıfırlamak istiyorsun?',
+    resetSession:'Mevcut Görevi Sıfırla', resetSessionSub:"Timer'ı başa sar, kaydedilmez",
+    resetCycle:'Pomodoro Döngüsünü Sıfırla', resetCycleSub:"4'lü dot sayacını sıfırla",
+    resetCancel:'İptal',
+    // Sign out
+    signOutConfirm:'Çıkmak istediğinizden emin misiniz?',
+    // Misc
+    online:'çevrimiçi',
+    catNoTask:(cat)=>`"${cat}" kategorisinde görev yok`,
+    noTask:'Görev yok',
+    guestSession:'Misafir oturumu',
+    // Firebase errors
+    fbEmailUsed:'Bu e-posta zaten kayıtlı.',
+    fbInvalidEmail:'Geçersiz e-posta.',
+    fbWeakPass:'Şifre en az 6 karakter olmalı.',
+    fbUserNotFound:'E-posta bulunamadı.',
+    fbWrongPass:'Şifre hatalı.',
+    fbInvalidCred:'E-posta veya şifre hatalı.',
+    fbTooMany:'Çok fazla deneme.',
+    fbNetwork:'Bağlantı hatası.',
+    // Registering
+    registering:'Kayıt yapılıyor...',
+    loggingIn:'Giriş yapılıyor...',
+    checking:'Kontrol ediliyor...',
+    // Days
+    days:['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'],
+    daysLong:['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'],
+  },
+  en:{
+    tagline:'Focus, track, work together.',
+    login:'Log In', register:'Sign Up',
+    email:'Email', password:'Password', yourName:'Your Name',
+    emailPlaceholder:'example@mail.com', passwdPlaceholder:'••••••••',
+    namePlaceholder:'Your name or nickname', passMinPlaceholder:'At least 6 characters',
+    loginBtn:'Log In', registerBtn:'Sign Up',
+    or:'or', guestBtn:'👤 Continue as guest',
+    guestNote:'Data is not saved in guest mode',
+    otpInfo:'📧 A verification link has been sent to your email.',
+    otpResend:'Didn\'t receive it?', otpResendBtn:'Resend',
+    otpConfirm:'✓ Verified, Continue', otpBack:'← Back',
+    guest:'guest',
+    navPomodoro:'Pomodoro', navTasks:'Tasks', navHistory:'History', navAnalysis:'Analysis',
+    focusMode:'Focus', shortBreak:'Short Break', longBreak:'Long Break',
+    timerSubFocus:'FOCUS', timerSubShort:'SHORT BREAK', timerSubLong:'LONG BREAK',
+    selectTask:'Select task',
+    startBtn:'START', stopBtn:'PAUSE',
+    resetBtn:'↺ Reset', cancelBtn:'✕ Cancel', skipBtn:'⏭ Skip',
+    groupPanel:'Study Group',
+    groupPageTitle:'Study Group',
+    groupBack:'← Back',
+    groupTabDesk:'🏠 Rooms', groupTabRank:'🏆 Rankings',
+    rankToday:'Today', rankWeek:'This Week', rankYear:'This Year',
+    dailyGoal:'Daily Goal',
+    goalTask:'Tasks', goalHour:'Hours',
+    statPomodoro:'Pomodoro', statFocusMin:'Min Focus', statCompleted:'Completed', statTotal:'Total',
+    flowTitle:"Today's Flow",
+    flowEmpty:'No tasks for today.<br>Add tasks from the Tasks tab.',
+    untimedLabel:'flexible',
+    prioHigh:'High', prioMid:'Medium',
+    tasksTitle:'Tasks', addBtn:'+ Add',
+    timedTasks:'🕐 Scheduled Tasks', flexTasks:'📌 Flexible Tasks',
+    taskEmpty:'No tasks. Start by clicking + Add.',
+    modalAddTitle:'Add Task', modalEditTitle:'Edit Task',
+    taskNameLabel:'Task Name', taskNamePlaceholder:'Task name...',
+    dateLabel:'📅 Date', today:'Today', tomorrow:'Tomorrow',
+    timeLabel:'Time',
+    timeAny:'⏰ Any time (flexible)', timeRange:'🕐 Set time range',
+    timeStart:'Start', timeEnd:'End',
+    prioLabel:'Priority', prioLow:'🟢 Normal', prioMid:'🟡 Medium', prioHigh2:'🔴 High',
+    catLabel:'Category / Tag', catPlaceholder:'Category...',
+    pomoGoalLabel:'Pomodoro Goal', pomoGoalNone:'None',
+    repeatLabel:'🔁 Repeat', repeatAll:'All Days',
+    reminderLabel:'🔔 Reminder',
+    remNone:'None', remScheduled:'At scheduled time', remCustom:'Pick time',
+    customPomoLabel:'🍅 Custom Pomodoro Duration',
+    cpFocus:'Focus', cpShort:'Short', cpLong:'Long',
+    saveBtn:'Save', updateBtn:'Update',
+    histAll:'All', histToday:'Today', histWeek:'Week', histMonth:'Month',
+    histEmpty:'No records',
+    histCompleted:'✓ completed', histCancelled:'✕ cancelled',
+    anDay:'Day', anWeek:'Week', anMonth:'Month', anYear:'Year',
+    anTaskTime:'📋 Time by Task',
+    anDailyPomo:'🍅 Daily Pomodoro',
+    anSummary:'📊 Summary',
+    anTaskDist:'📋 Task Distribution',
+    anCatDist:'🏷 Category Distribution',
+    anNoRecord:'No records',
+    anSuccess:'Success',
+    anCompleted:'Completed', anCancelled:'Cancelled',
+    anPause:'Paused', anTotalWorked:'Total worked',
+    anSwipeHint:'← Swipe: Ring Charts →',
+    anUncategorized:'Uncategorized',
+    anOthers:'Others',
+    settingsTitle:'Settings',
+    settingsBack:'← Back',
+    sAccount:'👤 Account', sLogout:'Log Out',
+    sCopyGroupCode:'Copy Group Code',
+    sGroup:'👥 Study Group',
+    sGroupCreate:'+ Create Group', sGroupJoin:'Join Group',
+    sGroupCodePlaceholder:'6-digit code...',
+    sGroupJoinBtn:'Join',
+    sGroupNoGroup:'Create a group or join an existing one.',
+    sGroupCopy:'📋 Copy', sGroupLeave:'Leave',
+    sGroupShareCode:'Share this code with your friends.',
+    sPomoDurations:'🍅 Pomodoro Durations',
+    sFocusMin:'Focus', sShortBreak:'Short Break', sLongBreak:'Long Break',
+    sDailyTaskGoal:'Daily Task Goal', sDailyFocusHour:'Daily Focus Hours',
+    sMinutes:'minutes',
+    sAppearance:'🎨 Appearance & Sound',
+    sDarkMode:'Dark Mode',
+    sTimerSound:'Timer Sound', sTimerSoundSub:'Beep when pomodoro ends',
+    sAmbient:'🎵 Ambient Sound',
+    sAmbientNote:'A 3-second preview plays when selecting. Activates when timer starts.',
+    sVolume:'🔉 Volume',
+    soundNone:'Silent', soundRain:'Rain', soundOcean:'Ocean', soundCafe:'Cafe',
+    soundForest:'Forest', soundWhite:'White Noise', soundFire:'Fireplace',
+    soundBrown:'Brown Noise', soundLib:'Library',
+    sData:'💾 Data',
+    sExport:'📤 Export Backup', sImport:'📥 Import Backup',
+    sDeleteAll:'Delete All Data', sDeleteSub:'Permanent deletion',
+    sLanguage:'🌐 Language',
+    toastVerifSent:'📧 Verification email sent!',
+    toastVerifOk:'✅ Verified successfully!',
+    toastResent:'📧 Resent!',
+    toastDownloaded:'📤 Downloaded!',
+    toastCopied:'📋 Copied!',
+    toastCompleted:'✅ Completed!',
+    toastAdded:'✅ Added',
+    toastUpdated:'✏️ Updated',
+    toastCancelled:'❌ Cancelled',
+    toastResetSession:'↺ Current task reset',
+    toastResetCycle:'🔄 Cycle reset',
+    toastNameRequired:'⚠️ Name required',
+    toastTimeRequired:'⚠️ Time required',
+    toastNotVerified:'❌ Not verified yet. Click the link in your email.',
+    toastConnecting:'Connecting, please wait...',
+    toastSoundOff:'🔇 Sound off',
+    toastTimerActive:(n)=>`selected — activates when timer starts`,
+    toastBreakShort:'⏭ Short break', toastBreakLong:'⏭ Long break',
+    toastNewCycle:'⏭ New cycle', toastFocus:'⏭ Focus',
+    toastPomoComplete:'🍅 Done! Short break.',
+    toastLongComplete:'⚠️ 5 minutes — auto cancel!',
+    toastLongBreakEnd:'☀️ Long break over!', toastShortBreakEnd:'⏰ Break over!',
+    toast4Pomo:'🎉 4 Pomodoros! Long break.',
+    toastPauseMin:(n)=>`⏸ minute ${n}`,
+    toastStarted:(name)=>`▶ "${name}" started`,
+    toastRepeatDays:(n)=>` (repeat ${n} days)`,
+    confirmCancelTitle:'This pomodoro will be cancelled',
+    confirmCancelSubWorked:(m)=>`${m} minutes of work will be recorded and this pomodoro cancelled.`,
+    confirmCancelSubEmpty:'Will be cancelled with no work recorded.',
+    confirmCancelBtn:'✕ Yes, Cancel',
+    confirmSkipTitle:'This phase will be skipped',
+    confirmSkipFocusWorked:(m)=>`${m} minutes will be recorded and you'll move to the next break.`,
+    confirmSkipFocusEmpty:'Will be skipped with no time recorded.',
+    confirmSkipBreak:'Break skipped, switching to focus mode.',
+    confirmSkipBtn:'⏭ Yes, Skip',
+    confirmVazgec:'Dismiss',
+    resetDialogTitle:'What would you like to reset?',
+    resetSession:'Reset Current Task', resetSessionSub:'Rewind timer, nothing saved',
+    resetCycle:'Reset Pomodoro Cycle', resetCycleSub:'Reset the 4-dot counter',
+    resetCancel:'Cancel',
+    signOutConfirm:'Are you sure you want to sign out?',
+    online:'online',
+    catNoTask:(cat)=>`No tasks in "${cat}"`,
+    noTask:'No tasks',
+    guestSession:'Guest session',
+    fbEmailUsed:'This email is already registered.',
+    fbInvalidEmail:'Invalid email.',
+    fbWeakPass:'Password must be at least 6 characters.',
+    fbUserNotFound:'Email not found.',
+    fbWrongPass:'Incorrect password.',
+    fbInvalidCred:'Invalid email or password.',
+    fbTooMany:'Too many attempts.',
+    fbNetwork:'Connection error.',
+    registering:'Registering...',
+    loggingIn:'Logging in...',
+    checking:'Checking...',
+    days:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+    daysLong:['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
+  }
+};
+
+// Detect language: saved preference → phone language → TR fallback
+function detectLang(){
+  const saved=localStorage.getItem('ff6_lang');
+  if(saved&&I18N[saved])return saved;
+  const phone=navigator.language||navigator.userLanguage||'tr';
+  return phone.startsWith('tr')?'tr':'en';
+}
+let currentLang=detectLang();
+function t(key,...args){
+  const val=I18N[currentLang]?.[key]??I18N['tr']?.[key]??key;
+  return typeof val==='function'?val(...args):val;
+}
+function setLang(lang){
+  currentLang=lang;
+  localStorage.setItem('ff6_lang',lang);
+  applyI18n();
+}
+function applyI18n(){
+  const L=currentLang;
+  // Auth screen
+  const tagEl=document.querySelector('.auth-tagline');if(tagEl)tagEl.textContent=t('tagline');
+  const atL=document.getElementById('atab_login');if(atL)atL.textContent=t('login');
+  const atR=document.getElementById('atab_register');if(atR)atR.textContent=t('register');
+  // Login panel
+  const llE=document.querySelector('#panel_login .auth-label');if(llE)llE.textContent=t('email');
+  const lLabels=document.querySelectorAll('#panel_login .auth-label');
+  if(lLabels[0])lLabels[0].textContent=t('email');
+  if(lLabels[1])lLabels[1].textContent=t('password');
+  const lEmail=document.getElementById('login_email');if(lEmail)lEmail.placeholder=t('emailPlaceholder');
+  const lPass=document.getElementById('login_pass');if(lPass)lPass.placeholder=t('passwdPlaceholder');
+  const lBtn=document.getElementById('login_btn');if(lBtn&&!lBtn.disabled)lBtn.textContent=t('loginBtn');
+  // Register panel
+  const rLabels=document.querySelectorAll('#panel_register .auth-label');
+  if(rLabels[0])rLabels[0].textContent=t('yourName');
+  if(rLabels[1])rLabels[1].textContent=t('email');
+  if(rLabels[2])rLabels[2].textContent=t('password');
+  const rName=document.getElementById('reg_name');if(rName)rName.placeholder=t('namePlaceholder');
+  const rEmail=document.getElementById('reg_email');if(rEmail)rEmail.placeholder=t('emailPlaceholder');
+  const rPass=document.getElementById('reg_pass');if(rPass)rPass.placeholder=t('passMinPlaceholder');
+  const rBtn=document.getElementById('reg_btn');if(rBtn&&!rBtn.disabled)rBtn.textContent=t('registerBtn');
+  // Guest buttons
+  const gb1=document.getElementById('guestBtn1');if(gb1)gb1.textContent=t('guestBtn');
+  const gb2=document.getElementById('guestBtn2');if(gb2)gb2.textContent=t('guestBtn');
+  const gn1=document.getElementById('guestNote1');if(gn1)gn1.textContent=t('guestNote');
+  // OTP
+  const otpBtn=document.getElementById('otp_btn');if(otpBtn&&!otpBtn.disabled)otpBtn.textContent=t('otpConfirm');
+  const otpBack=document.querySelector('.guest-btn[onclick="cancelOtp()"]');if(otpBack)otpBack.textContent=t('otpBack');
+  const otpResendSpan=document.querySelector('.otp-resend');if(otpResendSpan){const rb=document.getElementById('resend_btn');const rt=document.getElementById('resend_timer');if(rb)otpResendSpan.childNodes[0].textContent=t('otpResend')+' ';if(rb)rb.textContent=t('otpResendBtn');}
+  // Dividers
+  document.querySelectorAll('.auth-divider span').forEach(s=>s.textContent=t('or'));
+  // Guest badge
+  const gb=document.getElementById('guestBadgeHead');if(gb)gb.textContent=t('guest');
+  // Bottom nav
+  const bnP=document.querySelector('#bn_pomodoro .bn-label');if(bnP)bnP.textContent=t('navPomodoro');
+  const bnT=document.querySelector('#bn_tasks .bn-label');if(bnT)bnT.textContent=t('navTasks');
+  const bnH=document.querySelector('#bn_history .bn-label');if(bnH)bnH.textContent=t('navHistory');
+  const bnA=document.querySelector('#bn_analysis .bn-label');if(bnA)bnA.textContent=t('navAnalysis');
+  // Timer mode pills
+  const mpF=document.getElementById('modePillFocus');if(mpF)mpF.textContent=t('focusMode');
+  const mpS=document.getElementById('modePillShort');if(mpS)mpS.textContent=t('shortBreak');
+  const mpL=document.getElementById('modePillLong');if(mpL)mpL.textContent=t('longBreak');
+  // Timer controls
+  const pb=document.getElementById('playBtn');if(pb)pb.textContent=tRunning?t('stopBtn'):t('startBtn');
+  const rb2=document.querySelector('.btn-ctrl[onclick="resetTimer()"]');if(rb2)rb2.textContent=t('resetBtn');
+  const cb=document.getElementById('cancelBtn');if(cb)cb.innerHTML=t('cancelBtn');
+  const skb=document.querySelector('.btn-ctrl[onclick="confirmSkip()"]');if(skb)skb.textContent=t('skipBtn');
+  // Task selector
+  renderSelBox();
+  // Today's flow title
+  const ft=document.querySelector('.flow-title');if(ft)ft.textContent=t('flowTitle');
+  // Tasks title
+  const tt2=document.getElementById('tasksTitle');if(tt2)tt2.textContent=t('tasksTitle');
+  const ab=document.querySelector('.add-btn');if(ab)ab.textContent=t('addBtn');
+  // History tabs
+  const htabs=document.querySelectorAll('#histTabs .hf-tab');
+  const histKeys=['histAll','histToday','histWeek','histMonth'];
+  htabs.forEach((b,i)=>{if(histKeys[i])b.textContent=t(histKeys[i]);});
+  // Analysis tabs
+  const atabs=document.querySelectorAll('#anTabs .ptab');
+  const anKeys=['anDay','anWeek','anMonth','anYear'];
+  atabs.forEach((b,i)=>{if(anKeys[i])b.textContent=t(anKeys[i]);});
+  // Group panel title
+  const gpt=document.getElementById('groupPanelTitle');if(gpt)gpt.textContent=t('groupPanel');
+  // Group page
+  const gpTitle=document.querySelector('.gpage-title');if(gpTitle)gpTitle.textContent=t('groupPageTitle');
+  const gpBack=document.querySelector('.gpage-back');if(gpBack)gpBack.textContent=t('groupBack');
+  const gpDesk=document.getElementById('gptab_desk');if(gpDesk)gpDesk.textContent=t('groupTabDesk');
+  const gpRank=document.getElementById('gptab_rank');if(gpRank)gpRank.textContent=t('groupTabRank');
+  // Ranking period tabs
+  const rptDay=document.getElementById('rptab_day');if(rptDay)rptDay.textContent=t('rankToday');
+  const rptWeek=document.getElementById('rptab_week');if(rptWeek)rptWeek.textContent=t('rankWeek');
+  const rptYear=document.getElementById('rptab_year');if(rptYear)rptYear.textContent=t('rankYear');
+  // Settings
+  const stTitle=document.querySelector('.back-title');if(stTitle)stTitle.textContent=t('settingsTitle');
+  const stBack=document.querySelector('.back-btn[onclick="closeSettings()"]');if(stBack)stBack.textContent=t('settingsBack');
+  // Sound labels
+  const sndMap={snd_none:'soundNone',snd_rain:'soundRain',snd_ocean:'soundOcean',snd_cafe:'soundCafe',snd_forest:'soundForest',snd_whitenoise:'soundWhite',snd_fireplace:'soundFire',snd_brownnoise:'soundBrown',snd_library:'soundLib'};
+  Object.entries(sndMap).forEach(([id,key])=>{const btn=document.getElementById(id);if(btn){const lbl=btn.querySelector('.snd-label');if(lbl)lbl.textContent=t(key);}});
+  // Re-render dynamic sections
+  renderDailyGoal();renderFlow();renderTaskList();renderSelBox();
+  updateTimerLabel();
+  // Rebuild repeat days with new language
+  buildRdays();
+  // Lang toggle in settings
+  updateLangToggle();
+}
+
+function updateLangToggle(){
+  const box=document.getElementById('langToggleBox');
+  if(!box)return;
+  box.querySelectorAll('button').forEach(b=>{
+    const active=b.dataset.lang===currentLang;
+    b.style.background=active?'var(--accent)':'transparent';
+    b.style.borderColor=active?'var(--accent)':'var(--border)';
+    b.style.color=active?'#fff':'var(--text-muted)';
+  });
+}
+
 // ══ STATE ══
 const LS={tasks:'ff6_t',history:'ff6_h',settings:'ff6_s',stats:'ff6_st',moods:'ff6_m',cycles:'ff6_c',dots:'ff6_d',ttime:'ff6_tt',failed:'ff6_f'};
 const ld=(k,d)=>{try{return JSON.parse(localStorage.getItem(k)??'null')??d;}catch{return d;}};
@@ -1085,6 +1552,8 @@ const TR_DAYS=['Paz','Pzt','Sal','Çar','Per','Cum','Cmt'];
 const TR_FULL=['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'];
 const MOODS=['😊','😄','😎','🤩','😌','😔','😤','😴','🤔','😰'];
 const DAY_SHORT=['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
+function getDays(){return t('days');}
+function getDaysLong(){return t('daysLong');}
 const ACOLORS=['#c8775a','#b85a4a','#5a9a6a','#b5956a','#c8855a','#5a78b8','#7a5ab8','#5a9898'];
 
 function todayKey(){const d=new Date();return`${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`;}
@@ -1120,9 +1589,9 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
 // ══ AUTH UI ══
 function setAuthTab(t){['login','register'].forEach(x=>{document.getElementById('atab_'+x).classList.toggle('active',x===t);document.getElementById('panel_'+x).style.display=x===t?'block':'none';});document.getElementById('panel_otp').classList.remove('show');clearAuthErr();}
 function clearAuthErr(){['login_err','reg_err','otp_err'].forEach(id=>{const e=document.getElementById(id);if(e){e.textContent='';e.classList.remove('show');}});}
-function doLogin(){const email=document.getElementById('login_email').value.trim(),pass=document.getElementById('login_pass').value;if(!email||!pass){showAE('login_err','E-posta ve şifre gerekli.');return;}if(window._doLogin){window._doLogin(email,pass);}else{showAE('login_err','Bağlantı kuruluyor, lütfen bekle...');}}
+function doLogin(){const email=document.getElementById('login_email').value.trim(),pass=document.getElementById('login_pass').value;if(!email||!pass){showAE('login_err',t('fbInvalidEmail'));return;}if(window._doLogin){window._doLogin(email,pass);}else{showAE('login_err',t('toastConnecting'));}}
 function doRegister(){const name=document.getElementById('reg_name').value.trim(),email=document.getElementById('reg_email').value.trim(),pass=document.getElementById('reg_pass').value;if(!name){showAE('reg_err','Ad gerekli.');return;}if(!email){showAE('reg_err','E-posta gerekli.');return;}if(pass.length<6){showAE('reg_err','Şifre en az 6 karakter olmalı.');return;}if(window._doRegister){window._doRegister(name,email,pass);}else{showAE('reg_err','Bağlantı kuruluyor, lütfen bekle...');}}
-function doGuest(){isGuest=true;window._currentUser={uid:null,email:null,name:'Misafir',color:'#b0a898',guest:true};tasks=ld(LS.tasks,[]);history=ld(LS.history,[]);settings={...{focus:25,short:5,long:15,goal:5,goalHours:0,dark:false,sound:true},...ld(LS.settings,{})};stats=ld(LS.stats,{pomo:0,min:0,task:0,cancel:0,date:''});moods=ld(LS.moods,{});cycles=ld(LS.cycles,[]);dots=ld(LS.dots,[{t:'e',c:0},{t:'e',c:0},{t:'e',c:0},{t:'e',c:0}]);ttime=ld(LS.ttime,{});failed=ld(LS.failed,[]);launchApp();}
+function doGuest(){isGuest=true;window._currentUser={uid:null,email:null,name:currentLang==='tr'?'Misafir':'Guest',color:'#b0a898',guest:true};tasks=ld(LS.tasks,[]);history=ld(LS.history,[]);settings={...{focus:25,short:5,long:15,goal:5,goalHours:0,dark:false,sound:true},...ld(LS.settings,{})};stats=ld(LS.stats,{pomo:0,min:0,task:0,cancel:0,date:''});moods=ld(LS.moods,{});cycles=ld(LS.cycles,[]);dots=ld(LS.dots,[{t:'e',c:0},{t:'e',c:0},{t:'e',c:0},{t:'e',c:0}]);ttime=ld(LS.ttime,{});failed=ld(LS.failed,[]);launchApp();}
 function showAE(id,msg){const e=document.getElementById(id);e.textContent=msg;e.classList.add('show');}
 
 // ══ LAUNCH ══
@@ -1144,7 +1613,7 @@ window.launchApp=function(){
 
 // ══ INIT ══
 function init(){
-  document.getElementById('flowDate').textContent=new Date().toLocaleDateString('tr-TR',{day:'numeric',month:'long'});
+  document.getElementById('flowDate').textContent=new Date().toLocaleDateString(currentLang==='tr'?'tr-TR':'en-US',{day:'numeric',month:'long'});
   const today=todayKey();if(stats.date!==today){stats={pomo:0,min:0,task:0,cancel:0,date:today};save();}
   applyDarkMode(settings.dark);
   document.getElementById('soundToggle').checked=settings.sound!==false;
@@ -1154,6 +1623,7 @@ function init(){
   if(!isGuest&&currentGroupCode){document.getElementById('groupPanel').style.display='block';document.getElementById('gphBadge').textContent=currentGroupCode;window._startGroupSync(currentGroupCode);}
   buildRdays();renderWeek();renderTaskList();renderCatFilter();renderSelBox();renderDots();renderDailyGoal();renderFlow();updateTDisplay();updateRing(1);updateStats();
   tSec=getAS().focus*60;totSec=tSec;updateTDisplay();
+  applyI18n();
 }
 
 // ══ PAGE ══
@@ -1174,32 +1644,98 @@ function toggleDarkMode(){settings.dark=!settings.dark;applyDarkMode(settings.da
 // ══ SETTINGS ══
 function openSettings(){
   const u=window._currentUser||{};
-  document.getElementById('sUserName').textContent=u.name||'Misafir';
-  document.getElementById('sUserEmail').textContent=u.email||(isGuest?'Misafir oturumu':'');
-  ['svf','svs','svl','svg_s','svgh'].forEach((id,i)=>{const k=['focus','short','long','goal','goalHours'][i];document.getElementById(id).textContent=settings[k]||[25,5,15,5,0][i];});
+  document.getElementById('sUserName').textContent=u.name||t('guest');
+  document.getElementById('sUserEmail').textContent=u.email||(isGuest?t('guestSession'):'');
+  // Render settings labels dynamically for i18n
+  const settingsHTML=`
+    <div class="sps"><div class="sps-title">${t('sAccount')}</div><div class="sblock">
+      <div class="srow" style="cursor:default"><div class="sr-left"><div class="sr-label" id="sUserName">${u.name||t('guest')}</div><div class="sr-sub" id="sUserEmail">${u.email||(isGuest?t('guestSession'):'')}</div></div><button style="padding:7px 14px;border-radius:8px;border:1.5px solid var(--border);background:transparent;color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:.83rem;cursor:pointer" onclick="doSignOut()">${t('sLogout')}</button></div>
+      <div class="srow" id="sGroupCodeRow" style="display:none;cursor:pointer" onclick="copyGroupCode()"><div class="sr-left"><div class="sr-label">${t('sCopyGroupCode')}</div></div><span style="font-family:'DM Mono',monospace;font-size:1.1rem;color:var(--accent);letter-spacing:3px;font-weight:700" id="sGroupCode"></span></div>
+    </div></div>
+    <div class="sps"><div class="sps-title">${t('sGroup')}</div><div class="sblock">
+      <div class="group-settings-box" id="groupSettingsBox">
+        <div id="gs_nogroup">
+          <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:11px;line-height:1.5">${t('sGroupNoGroup')}</div>
+          <div style="display:flex;gap:8px;margin-bottom:10px"><button class="gset-btn" onclick="gs_createGroup()" style="flex:1">${t('sGroupCreate')}</button><button class="gset-btn sec" onclick="gs_showJoin()" style="flex:1">${t('sGroupJoin')}</button></div>
+          <div id="gs_join_form" style="display:none"><div class="gset-row"><input class="gset-input" id="gs_join_input" placeholder="${t('sGroupCodePlaceholder')}" maxlength="6" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')"><button class="gset-btn" onclick="gs_joinGroup()">${t('sGroupJoinBtn')}</button></div></div>
+        </div>
+        <div id="gs_hasgroup" style="display:none">
+          <div class="active-group-row"><div><div class="agr-code" id="agr_code"></div><div class="agr-members" id="agr_members">0 ${t('online')}</div></div><div style="display:flex;gap:7px"><button class="gset-btn sec" onclick="copyGroupCode()" style="font-size:.73rem;padding:7px 10px">${t('sGroupCopy')}</button><button class="gset-btn" onclick="gs_leaveGroup()" style="background:var(--red);font-size:.73rem;padding:7px 10px">${t('sGroupLeave')}</button></div></div>
+          <div style="font-size:.73rem;color:var(--text-muted);margin-top:9px;line-height:1.5">${t('sGroupShareCode')}</div>
+        </div>
+      </div>
+    </div></div>
+    <div class="sps"><div class="sps-title">${t('sPomoDurations')}</div><div class="sblock">
+      <div class="srow"><div class="sr-left"><div class="sr-label">${t('sFocusMin')}</div><div class="sr-sub">${t('sMinutes')}</div></div><div class="num-wrap"><button class="num-btn" onclick="adjSS('focus',-5)">−</button><div class="num-val" id="svf">25</div><button class="num-btn" onclick="adjSS('focus',5)">+</button></div></div>
+      <div class="srow"><div class="sr-left"><div class="sr-label">${t('sShortBreak')}</div></div><div class="num-wrap"><button class="num-btn" onclick="adjSS('short',-1)">−</button><div class="num-val" id="svs">5</div><button class="num-btn" onclick="adjSS('short',1)">+</button></div></div>
+      <div class="srow"><div class="sr-left"><div class="sr-label">${t('sLongBreak')}</div></div><div class="num-wrap"><button class="num-btn" onclick="adjSS('long',-5)">−</button><div class="num-val" id="svl">15</div><button class="num-btn" onclick="adjSS('long',5)">+</button></div></div>
+      <div class="srow"><div class="sr-left"><div class="sr-label">${t('sDailyTaskGoal')}</div></div><div class="num-wrap"><button class="num-btn" onclick="adjSS('goal',-1)">−</button><div class="num-val" id="svg_s">5</div><button class="num-btn" onclick="adjSS('goal',1)">+</button></div></div>
+      <div class="srow"><div class="sr-left"><div class="sr-label">${t('sDailyFocusHour')}</div></div><div class="num-wrap"><button class="num-btn" onclick="adjSS('goalHours',-1)">−</button><div class="num-val" id="svgh">0</div><button class="num-btn" onclick="adjSS('goalHours',1)">+</button></div></div>
+    </div></div>
+    <div class="sps"><div class="sps-title">${t('sAppearance')}</div><div class="sblock">
+      <div class="srow"><div class="sr-left"><div class="sr-label">${t('sDarkMode')}</div></div><label class="toggle"><input type="checkbox" id="darkToggle" onchange="toggleDarkMode()"><span class="tslider"></span></label></div>
+      <div class="srow"><div class="sr-left"><div class="sr-label">${t('sTimerSound')}</div><div class="sr-sub">${t('sTimerSoundSub')}</div></div><label class="toggle"><input type="checkbox" id="soundToggle" checked><span class="tslider"></span></label></div>
+    </div></div>
+    <div class="sps"><div class="sps-title">${t('sAmbient')}</div><div class="sblock">
+      <div style="padding:10px 16px 4px;font-size:.72rem;color:var(--text-muted)">${t('sAmbientNote')}</div>
+      <div class="sound-grid" id="soundGrid">
+        <button class="sound-btn active" id="snd_none" onclick="selectSound('none')"><span class="snd-icon">🔇</span><span class="snd-label">${t('soundNone')}</span></button>
+        <button class="sound-btn" id="snd_rain" onclick="selectSound('rain')"><span class="snd-icon">🌧</span><span class="snd-label">${t('soundRain')}</span></button>
+        <button class="sound-btn" id="snd_ocean" onclick="selectSound('ocean')"><span class="snd-icon">🌊</span><span class="snd-label">${t('soundOcean')}</span></button>
+        <button class="sound-btn" id="snd_cafe" onclick="selectSound('cafe')"><span class="snd-icon">☕</span><span class="snd-label">${t('soundCafe')}</span></button>
+        <button class="sound-btn" id="snd_forest" onclick="selectSound('forest')"><span class="snd-icon">🌲</span><span class="snd-label">${t('soundForest')}</span></button>
+        <button class="sound-btn" id="snd_whitenoise" onclick="selectSound('whitenoise')"><span class="snd-icon">〰</span><span class="snd-label">${t('soundWhite')}</span></button>
+        <button class="sound-btn" id="snd_fireplace" onclick="selectSound('fireplace')"><span class="snd-icon">🔥</span><span class="snd-label">${t('soundFire')}</span></button>
+        <button class="sound-btn" id="snd_brownnoise" onclick="selectSound('brownnoise')"><span class="snd-icon">🟤</span><span class="snd-label">${t('soundBrown')}</span></button>
+        <button class="sound-btn" id="snd_library" onclick="selectSound('library')"><span class="snd-icon">📚</span><span class="snd-label">${t('soundLib')}</span></button>
+      </div>
+      <div class="vol-row">
+        <label>🔉 ${t('sVolume')}</label>
+        <input type="range" class="vol-slider" id="ambientVolSlider" min="0" max="1" step="0.05" value="0.55" oninput="setAmbientVolume(this.value)">
+        <label id="volPct">55%</label>
+      </div>
+    </div></div>
+    <div class="sps"><div class="sps-title">${t('sData')}</div><div class="sblock">
+      <div class="bkp-btns"><button class="bkp-btn" onclick="exportData()">${t('sExport')}</button><button class="bkp-btn" onclick="importData()">${t('sImport')}</button></div>
+      <div style="height:1px;background:var(--border)"></div>
+      <div class="srow danger-row" onclick="clearAllData()"><div class="sr-left"><div class="sr-label">${t('sDeleteAll')}</div><div class="sr-sub">${t('sDeleteSub')}</div></div><span>🗑</span></div>
+    </div></div>
+    <div class="sps"><div class="sps-title">${t('sLanguage')}</div><div class="sblock">
+      <div class="srow" style="cursor:default">
+        <div class="sr-left"><div class="sr-label">Türkçe / English</div></div>
+        <div id="langToggleBox" style="display:flex;gap:6px">
+          <button data-lang="tr" onclick="setLang('tr')" style="padding:7px 16px;border-radius:8px;border:1.5px solid var(--border);background:transparent;color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:.85rem;cursor:pointer;transition:all .18s">TR</button>
+          <button data-lang="en" onclick="setLang('en')" style="padding:7px 16px;border-radius:8px;border:1.5px solid var(--border);background:transparent;color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:.85rem;cursor:pointer;transition:all .18s">EN</button>
+        </div>
+      </div>
+    </div></div>`;
+  document.querySelector('#settingsPage .back-content').innerHTML=settingsHTML;
+  // Re-apply values
+  ['svf','svs','svl','svg_s','svgh'].forEach((id,i)=>{const k=['focus','short','long','goal','goalHours'][i];const el=document.getElementById(id);if(el)el.textContent=settings[k]||[25,5,15,5,0][i];});
   document.getElementById('darkToggle').checked=!!settings.dark;
   document.getElementById('soundToggle').checked=settings.sound!==false;
   if(currentGroupCode){document.getElementById('gs_nogroup').style.display='none';document.getElementById('gs_hasgroup').style.display='block';document.getElementById('agr_code').textContent=currentGroupCode;document.getElementById('sGroupCodeRow').style.display='flex';document.getElementById('sGroupCode').textContent=currentGroupCode;}
   else{document.getElementById('gs_nogroup').style.display='block';document.getElementById('gs_hasgroup').style.display='none';document.getElementById('sGroupCodeRow').style.display='none';}
   if(isGuest){document.getElementById('groupSettingsBox').style.opacity='.4';document.getElementById('groupSettingsBox').style.pointerEvents='none';}
   syncSoundUI();
+  updateLangToggle();
   document.getElementById('settingsPage').classList.add('active');
   document.body.style.overflow='hidden';
 }
 function closeSettings(){document.getElementById('settingsPage').classList.remove('active');document.body.style.overflow='';if(!tRunning)setMode(tMode);}
 function adjSS(k,d){const min=k==='short'?1:k==='goal'?1:k==='goalHours'?0:5;settings[k]=Math.max(min,(settings[k]||0)+d);const m={focus:'svf',short:'svs',long:'svl',goal:'svg_s',goalHours:'svgh'};if(m[k])document.getElementById(m[k]).textContent=settings[k];save();if(['focus','short','long'].includes(k)&&!tRunning)setMode(tMode);renderDailyGoal();renderGoalMini();}
 function doSignOut(){window._doSignOut();}
-function exportData(){const b=new Blob([JSON.stringify({tasks,history,settings,stats,moods,cycles,dots,ttime,failed},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`focusflow-${todayKey()}.json`;a.click();toast('📤 İndirildi!');}
-function importData(){const i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=e=>{const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(d.tasks)tasks=d.tasks;if(d.history)history=d.history;if(d.settings)settings={...settings,...d.settings};if(d.stats)stats=d.stats;if(d.moods)moods=d.moods;if(d.cycles)cycles=d.cycles;if(d.dots)dots=d.dots;if(d.ttime)ttime=d.ttime;if(d.failed)failed=d.failed;save();init();closeSettings();toast('📥 Yüklendi!');}catch{toast('❌ Hata');}};r.readAsText(e.target.files[0]);};i.click();}
-function clearAllData(){if(!confirm('Tüm veriler silinecek?'))return;tasks=[];history=[];settings={focus:25,short:5,long:15,goal:5,goalHours:0,dark:false,sound:true};stats={pomo:0,min:0,task:0,cancel:0,date:''};moods={};cycles=[];dots=[{t:'e',c:0},{t:'e',c:0},{t:'e',c:0},{t:'e',c:0}];ttime={};failed=[];save();init();closeSettings();toast('🗑 Silindi');}
+function exportData(){const b=new Blob([JSON.stringify({tasks,history,settings,stats,moods,cycles,dots,ttime,failed},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`focusflow-${todayKey()}.json`;a.click();toast(t('toastDownloaded'));}
+function importData(){const i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=e=>{const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(d.tasks)tasks=d.tasks;if(d.history)history=d.history;if(d.settings)settings={...settings,...d.settings};if(d.stats)stats=d.stats;if(d.moods)moods=d.moods;if(d.cycles)cycles=d.cycles;if(d.dots)dots=d.dots;if(d.ttime)ttime=d.ttime;if(d.failed)failed=d.failed;save();init();closeSettings();toast(t('sImport')+' ✓');}catch{toast('❌ '+(currentLang==='tr'?'Hata':'Error'));}};r.readAsText(e.target.files[0]);};i.click();}
+function clearAllData(){if(!confirm(currentLang==='tr'?'Tüm veriler silinecek?':'Delete all data?'))return;tasks=[];history=[];settings={focus:25,short:5,long:15,goal:5,goalHours:0,dark:false,sound:true};stats={pomo:0,min:0,task:0,cancel:0,date:''};moods={};cycles=[];dots=[{t:'e',c:0},{t:'e',c:0},{t:'e',c:0},{t:'e',c:0}];ttime={};failed=[];save();init();closeSettings();toast('🗑 '+(currentLang==='tr'?'Silindi':'Deleted'));}
 
 // ══ GROUP SETTINGS ══
 function gs_showJoin(){const f=document.getElementById('gs_join_form');f.style.display=f.style.display==='none'?'block':'none';}
 function gs_createGroup(){const ch='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';const code=Array.from({length:6},()=>ch[Math.floor(Math.random()*ch.length)]).join('');gs_setGroup(code);}
 function gs_joinGroup(){const code=document.getElementById('gs_join_input').value.trim().toUpperCase();if(code.length!==6){toast('⚠️ 6 haneli kod gir');return;}gs_setGroup(code);}
-function gs_setGroup(code){currentGroupCode=code;const u=window._currentUser;if(u?.uid)localStorage.setItem('ff6_grp_'+u.uid,code);document.getElementById('gs_nogroup').style.display='none';document.getElementById('gs_hasgroup').style.display='block';document.getElementById('agr_code').textContent=code;document.getElementById('gphBadge').textContent=code;document.getElementById('groupPanel').style.display='block';window._startGroupSync(code);toast('👥 Gruba katıldın: '+code);}
-function gs_leaveGroup(){if(!confirm('Gruptan ayrılmak istediğine emin misin?'))return;if(window._stopGroupListener)window._stopGroupListener();const u=window._currentUser;if(u?.uid)localStorage.removeItem('ff6_grp_'+u.uid);currentGroupCode=null;document.getElementById('gs_nogroup').style.display='block';document.getElementById('gs_hasgroup').style.display='none';document.getElementById('groupPanel').style.display='none';toast('Gruptan ayrıldın');}
-function copyGroupCode(){if(!currentGroupCode)return;navigator.clipboard?.writeText(currentGroupCode).then(()=>toast('📋 Kopyalandı: '+currentGroupCode)).catch(()=>toast('Kod: '+currentGroupCode));}
+function gs_setGroup(code){currentGroupCode=code;const u=window._currentUser;if(u?.uid)localStorage.setItem('ff6_grp_'+u.uid,code);document.getElementById('gs_nogroup').style.display='none';document.getElementById('gs_hasgroup').style.display='block';document.getElementById('agr_code').textContent=code;document.getElementById('gphBadge').textContent=code;document.getElementById('groupPanel').style.display='block';window._startGroupSync(code);toast('👥 '+t('groupPanel')+': '+code);}
+function gs_leaveGroup(){if(!confirm(currentLang==='tr'?'Gruptan ayrılmak istediğine emin misin?':'Are you sure you want to leave the group?'))return;if(window._stopGroupListener)window._stopGroupListener();const u=window._currentUser;if(u?.uid)localStorage.removeItem('ff6_grp_'+u.uid);currentGroupCode=null;document.getElementById('gs_nogroup').style.display='block';document.getElementById('gs_hasgroup').style.display='none';document.getElementById('groupPanel').style.display='none';toast(currentLang==='tr'?'Gruptan ayrıldın':'Left the group');}
+function copyGroupCode(){if(!currentGroupCode)return;navigator.clipboard?.writeText(currentGroupCode).then(()=>toast(t('toastCopied')+' '+currentGroupCode)).catch(()=>toast('Kod: '+currentGroupCode));}
 
 // ══ GROUP PANEL ══
 window.myPresencePayload=function(){const u=window._currentUser||{};
@@ -1216,7 +1752,7 @@ window.renderGroupPanel=function(members){
   if(!members.find(m=>m.id===u.uid))members.unshift(window.myPresencePayload());
   const online=members.filter(m=>m.status!=='offline').length;
   document.getElementById('gphOnline').textContent=`${online} çevrimiçi`;
-  document.getElementById('agr_members').textContent=`${online} çevrimiçi`;
+  document.getElementById('agr_members').textContent=`${online} ${t('online')}`;
   const ord={working:0,break:1,idle:2,offline:3};
   members.sort((a,b)=>(ord[a.status]??3)-(ord[b.status]??3)||(b.totalFocusSec||0)-(a.totalFocusSec||0));
   // Show max 3 (top workers) on home panel
@@ -1502,7 +2038,7 @@ function renderWeek(){
     div.onclick=()=>{selDay=key;renderWeek();renderTaskList();};
     c.appendChild(div);
   });
-  document.getElementById('tasksTitle').textContent=selDay===todayKey()?'Bugün':new Date(selDay+'T12:00:00').toLocaleDateString('tr-TR',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('tasksTitle').textContent=selDay===todayKey()?t('today'):new Date(selDay+'T12:00:00').toLocaleDateString(currentLang==='tr'?'tr-TR':'en-US',{weekday:'long',day:'numeric',month:'long'});
 }
 
 // ══ TASK LIST ══
@@ -1511,12 +2047,12 @@ function renderTaskList(){
   
   renderGoalMini();
   const c=document.getElementById('taskListWrap');c.innerHTML='';
-  if(!dt.length){c.innerHTML='<div class="empty-state"><div class="es-icon">📋</div><p>Görev yok. + Ekle butonuyla başla.</p></div>';return;}
+  if(!dt.length){c.innerHTML=`<div class="empty-state"><div class="es-icon">📋</div><p>${t('taskEmpty')}</p></div>`;return;}
   const pw={high:0,mid:1,low:2};
   const timed=dt.filter(t=>t.timeType==='range'&&t.timeStart).sort((a,b)=>a.timeStart.localeCompare(b.timeStart)||pw[a.priority]-pw[b.priority]);
   const any=dt.filter(t=>t.timeType!=='range'||!t.timeStart).sort((a,b)=>pw[a.priority]-pw[b.priority]);
-  if(timed.length){const g=document.createElement('div');g.innerHTML='<div class="task-group-lbl">🕐 Saatli Görevler</div>';timed.forEach(t=>g.appendChild(mkTaskEl(t)));c.appendChild(g);}
-  if(any.length){const g=document.createElement('div');if(timed.length)g.innerHTML='<div class="task-group-lbl">📌 Esnek Görevler</div>';any.forEach(t=>g.appendChild(mkTaskEl(t)));c.appendChild(g);}
+  if(timed.length){const g=document.createElement('div');g.innerHTML=`<div class="task-group-lbl">${t('timedTasks')}</div>`;timed.forEach(t=>g.appendChild(mkTaskEl(t)));c.appendChild(g);}
+  if(any.length){const g=document.createElement('div');if(timed.length)g.innerHTML=`<div class="task-group-lbl">${t('flexTasks')}</div>`;any.forEach(t=>g.appendChild(mkTaskEl(t)));c.appendChild(g);}
 }
 function calcTaskPomos(task){
   // Calculate how many pomodoros worth of time has been spent on this task
@@ -1534,12 +2070,12 @@ function mkTaskEl(task){
   const pc=task.pomoCount>0?`<span class="tc pomo-goal-badge">🎯 ${task.pomoCount}🍅</span>`:'';
   const sp=ttime[task.id]?`<span class="tc">⏱${fmtS(ttime[task.id])}</span>`:'';
   const rep=task.rd?.length?'<span class="tc">🔁</span>':'';
-  const pb={high:`<span class="pb pb-h">Yüksek</span>`,mid:`<span class="pb pb-m">Orta</span>`,low:''}[task.priority];
+  const pb={high:`<span class="pb pb-h">${t('prioHigh')}</span>`,mid:`<span class="pb pb-m">${t('prioMid')||'Orta'}</span>`,low:''}[task.priority];
   div.innerHTML=`<div class="tchk${task.completed?' chk':''}" onclick="event.stopPropagation();toggleTask('${task.id}')">${task.completed?'✓':''}</div><div class="tinfo"><div class="tname">${task.name}</div><div class="tmeta">${ts}${cat}${pb}${pom}${pc}${sp}${rep}</div></div><button class="t-start" onclick="event.stopPropagation();startPomo('${task.id}')">▶</button><button class="t-del" onclick="event.stopPropagation();delTask('${task.id}')">✕</button>`;
   div.onclick=()=>openTaskModal(task.id);
   return div;
 }
-function toggleTask(id){const t=tasks.find(t=>t.id===id);if(!t)return;t.completed=!t.completed;if(t.completed){if(!history.find(h=>h.id===id))history.unshift({id,name:t.name,category:t.category||'',dayKey:t.dayKey,completedAt:new Date().toISOString(),pomodoros:t.pomodoros||0,timeSpent:ttime[id]||0});if(t.dayKey===todayKey())stats.task++;toast('✅ Tamamlandı!');}else{history=history.filter(h=>h.id!==id);if(t.dayKey===todayKey())stats.task=Math.max(0,stats.task-1);}save();renderTaskList();renderTaskPicker();renderSelBox();renderDailyGoal();renderFlow();updateStats();}
+function toggleTask(id){const t=tasks.find(t=>t.id===id);if(!t)return;t.completed=!t.completed;if(t.completed){if(!history.find(h=>h.id===id))history.unshift({id,name:t.name,category:t.category||'',dayKey:t.dayKey,completedAt:new Date().toISOString(),pomodoros:t.pomodoros||0,timeSpent:ttime[id]||0});if(t.dayKey===todayKey())stats.task++;toast(t('toastCompleted'));}else{history=history.filter(h=>h.id!==id);if(t.dayKey===todayKey())stats.task=Math.max(0,stats.task-1);}save();renderTaskList();renderTaskPicker();renderSelBox();renderDailyGoal();renderFlow();updateStats();}
 function delTask(id){tasks=tasks.filter(t=>t.id!==id);history=history.filter(h=>h.id!==id);if(selId===id){selId=null;renderSelBox();}save();renderTaskList();renderTaskPicker();renderSelBox();renderWeek();renderFlow();}
 
 function renderGoalMini(){
@@ -1553,7 +2089,7 @@ function renderGoalMini(){
 }
 
 // ══ TASK MODAL (Add/Edit) ══
-function buildRdays(){const c=document.getElementById('repeatDays');c.innerHTML='';DAY_SHORT.forEach((d,i)=>{const b=document.createElement('button');b.className='rday';b.textContent=d;b.dataset.i=i;b.onclick=()=>b.classList.toggle('on');c.appendChild(b);});}
+function buildRdays(){const c=document.getElementById('repeatDays');if(!c)return;c.innerHTML='';getDays().forEach((d,i)=>{const b=document.createElement('button');b.className='rday';b.textContent=d;b.dataset.i=i;b.onclick=()=>b.classList.toggle('on');c.appendChild(b);});}
 function toggleAllDays(){const bs=[...document.querySelectorAll('.rday')];const all=bs.every(b=>b.classList.contains('on'));bs.forEach(b=>all?b.classList.remove('on'):b.classList.add('on'));}
 function getRdays(){return[...document.querySelectorAll('.rday.on')].map(b=>parseInt(b.dataset.i));}
 function onTTC(){const v=document.getElementById('tTimeType').value;const wrap=document.getElementById('timeFieldsWrap');if(wrap)wrap.style.display=v==='range'?'flex':'none';}
@@ -1564,8 +2100,38 @@ function adjCp(id,d){const el=document.getElementById(id);el.textContent=Math.ma
 function openTaskModal(idOrNull){
   editingTaskId=idOrNull;
   const task=idOrNull?tasks.find(t=>t.id===idOrNull):null;
-  document.getElementById('modalTitle').textContent=task?'Görevi Düzenle':'Görev Ekle';
-  document.getElementById('saveTaskBtn').textContent=task?'Güncelle':'Kaydet';
+  document.getElementById('modalTitle').textContent=task?t('modalEditTitle'):t('modalAddTitle');
+  document.getElementById('saveTaskBtn').textContent=task?t('updateBtn'):t('saveBtn');
+  // Apply i18n to modal labels
+  const ltn=document.getElementById('lbl_taskName');if(ltn)ltn.textContent=t('taskNameLabel');
+  const tName=document.getElementById('tName');if(tName)tName.placeholder=t('taskNamePlaceholder');
+  const ld=document.getElementById('lbl_date');if(ld)ld.textContent=t('dateLabel');
+  const dqT=document.getElementById('dqToday');if(dqT)dqT.textContent=t('today');
+  const dqTm=document.getElementById('dqTomorrow');if(dqTm)dqTm.textContent=t('tomorrow');
+  const lt=document.getElementById('lbl_time');if(lt)lt.textContent=t('timeLabel');
+  const oAny=document.getElementById('opt_timeAny');if(oAny)oAny.textContent=t('timeAny');
+  const oRange=document.getElementById('opt_timeRange');if(oRange)oRange.textContent=t('timeRange');
+  const ls=document.getElementById('lbl_timeStart');if(ls)ls.textContent=t('timeStart');
+  const le=document.getElementById('lbl_timeEnd');if(le)le.textContent=t('timeEnd');
+  const lp=document.getElementById('lbl_prio');if(lp)lp.textContent=t('prioLabel');
+  const opL=document.getElementById('opt_prioLow');if(opL)opL.textContent=t('prioLow');
+  const opM=document.getElementById('opt_prioMid');if(opM)opM.textContent=t('prioMid');
+  const opH=document.getElementById('opt_prioHigh');if(opH)opH.textContent=t('prioHigh2');
+  const lc=document.getElementById('lbl_cat');if(lc)lc.textContent=t('catLabel');
+  const tCat=document.getElementById('tCat');if(tCat)tCat.placeholder=t('catPlaceholder');
+  const lpg=document.getElementById('lbl_pomoGoal');if(lpg)lpg.textContent=t('pomoGoalLabel');
+  const opN=document.getElementById('opt_pomoNone');if(opN)opN.textContent=t('pomoGoalNone');
+  const lr=document.getElementById('lbl_repeat');if(lr)lr.textContent=t('repeatLabel');
+  const bad=document.getElementById('btn_allDays');if(bad)bad.textContent=t('repeatAll');
+  const lrem=document.getElementById('lbl_reminder');if(lrem)lrem.textContent=t('reminderLabel');
+  const oRN=document.getElementById('opt_remNone');if(oRN)oRN.textContent=t('remNone');
+  const oRS=document.getElementById('opt_remSched');if(oRS)oRS.textContent=t('remScheduled');
+  const oRC=document.getElementById('opt_remCustom');if(oRC)oRC.textContent=t('remCustom');
+  const lcp=document.getElementById('lbl_customPomo');if(lcp)lcp.textContent=t('customPomoLabel');
+  const lcpF=document.getElementById('lbl_cpFocus');if(lcpF)lcpF.textContent=t('cpFocus');
+  const lcpS=document.getElementById('lbl_cpShort');if(lcpS)lcpS.textContent=t('cpShort');
+  const lcpL=document.getElementById('lbl_cpLong');if(lcpL)lcpL.textContent=t('cpLong');
+  const mCancelBtn=document.getElementById('modalCancelBtn');if(mCancelBtn)mCancelBtn.textContent=t('confirmVazgec');
   // Fill fields
   document.getElementById('tName').value=task?.name||'';
   document.getElementById('tTimeType').value=task?.timeType||'any';
@@ -1618,9 +2184,9 @@ function onModalOverlayClick(e){if(e.target===document.getElementById('taskModal
 
 function saveTask(){
   const name=document.getElementById('tName').value.trim();
-  if(!name){toast('⚠️ Ad boş');return;}
+  if(!name){toast(t('toastNameRequired'));return;}
   const tt=document.getElementById('tTimeType').value,ts=document.getElementById('tStart').value;
-  if(tt==='range'&&!ts){toast('⚠️ Saat belirt');return;}
+  if(tt==='range'&&!ts){toast(t('toastTimeRequired'));return;}
   const rd=getRdays(),rt=document.getElementById('tRemType').value,useCP=document.getElementById('cpCheck').checked;
   // Get selected date from picker
   const chosenDay=document.getElementById('tDatePicker').value||selDay||todayKey();
@@ -1652,9 +2218,8 @@ function saveTask(){
         tasks[idx]={...tasks[idx],...base};
       }
     }
-    toast('✏️ Güncellendi');
+    toast(t('toastUpdated'));
   } else {
-    // Add new
     const newTask={...base,id:Date.now().toString(),dayKey:chosenDay,completed:false,pomodoros:0};
     if(rd.length>0){
       const sd=new Date(chosenDay+'T12:00:00'),sdow=sd.getDay(),si=sdow===0?6:sdow-1;
@@ -1662,14 +2227,14 @@ function saveTask(){
       const nx=new Date(sd);nx.setDate(nx.getDate()+1);const en=new Date(nx);en.setDate(en.getDate()+365);
       for(let d=new Date(nx);d<=en;d.setDate(d.getDate()+1)){const dow=d.getDay(),oi=dow===0?6:dow-1;if(rd.includes(oi))tasks.push({...newTask,id:Date.now()+'_'+dateKey(d)+'_'+Math.random().toString(36).slice(2),dayKey:dateKey(d)});}
     } else tasks.push(newTask);
-    toast(`✅ Eklendi${rd.length?` (${rd.length} gün tekrar)`:''}`);
+    toast(t('toastAdded')+(rd.length?t('toastRepeatDays',rd.length):''));
   }
   const savedCat=document.getElementById('tCat').value.trim();if(savedCat)saveCatHistory(savedCat);save();closeTaskModal();renderTaskList();renderWeek();renderCatFilter();renderSelBox();renderFlow();renderDailyGoal();
 }
 
 // ══ SELECTOR ══
 // renderSelBox - see new version above
-function updateTimerLabel(){const lbl=document.getElementById('timerSub');if(tMode==='short'){lbl.textContent='KISA MOLA';return;}if(tMode==='long'){lbl.textContent='UZUN MOLA';return;}const t=selId?tasks.find(t=>t.id===selId):null;lbl.textContent=t?.category?t.category.toUpperCase():'ODAK';}
+function updateTimerLabel(){const lbl=document.getElementById('timerSub');if(tMode==='short'){lbl.textContent=t('timerSubShort');return;}if(tMode==='long'){lbl.textContent=t('timerSubLong');return;}const task=selId?tasks.find(t2=>t2.id===selId):null;lbl.textContent=task?.category?task.category.toUpperCase():t('timerSubFocus');}
 function toggleTaskDrop(e){e.stopPropagation();const dd=document.getElementById('taskDrop');if(dd.style.display==='flex'){dd.style.display='none';return;}renderDropContent();dd.style.display='flex';dd.style.flexDirection='column';setTimeout(()=>{const f=(ev)=>{if(!dd.contains(ev.target)&&!document.getElementById('taskSelBox').contains(ev.target)){dd.style.display='none';}document.removeEventListener('click',f);};document.addEventListener('click',f);},20);}
 // renderDropContent - see new version above
 function switchActive(id){
@@ -1684,7 +2249,7 @@ function switchActive(id){
   }
   if(tRunning)segStart=Date.now();
 }
-function startPomo(id){selId=id;renderSelBox();renderTaskPicker();switchPage('pomodoro',document.getElementById('bn_pomodoro'));const s=getAS();tMode='focus';tSec=s.focus*60;totSec=s.focus*60;updateTimerLabel();updateTDisplay();updateRing(1);if(!tRunning)toggleTimer();toast(`▶ "${tasks.find(t=>t.id===id)?.name}" başladı`);}
+function startPomo(id){selId=id;renderSelBox();renderTaskPicker();switchPage('pomodoro',document.getElementById('bn_pomodoro'));const s=getAS();tMode='focus';tSec=s.focus*60;totSec=s.focus*60;updateTimerLabel();updateTDisplay();updateRing(1);if(!tRunning)toggleTimer();toast(t('toastStarted',tasks.find(t2=>t2.id===id)?.name||''));}
 function renderTaskPicker(){const c=document.getElementById('taskPickList')||null;if(!c)return;} // not used in this version
 
 // ══ DOTS ══
@@ -1709,22 +2274,21 @@ function setMode(mode){if(tRunning)return;tMode=mode;document.querySelectorAll('
 
 function toggleTimer(){
   if(tRunning){
-    clearInterval(tIv);tRunning=false;document.getElementById('playBtn').textContent='BAŞLAT';
+    clearInterval(tIv);tRunning=false;document.getElementById('playBtn').textContent=t('startBtn');
     commitSeg();pauseMs=Date.now();startPauseCounter();
-    pauseAmbient(); // Ambient sesi duraklat
+    pauseAmbient();
     nudgePresence();
   }else{
     if(pauseMs!==null){const dur=Math.round((Date.now()-pauseMs)/1000);sessP.push({duration:dur,at:new Date(pauseMs).toISOString()});cumulPause+=dur;pauseMs=null;freezePauseCounter();}
-    tRunning=true;document.getElementById('playBtn').textContent='DURDUR';
+    tRunning=true;document.getElementById('playBtn').textContent=t('stopBtn');
     segStart=Date.now();
-    // Ambient sesi başlat/devam et
     const selSound=settings.ambientSound||'none';
     if(selSound!=='none'){ if(!ambientActive){startAmbient(selSound);}else{resumeAmbient();} }
-    tIv=setInterval(()=>{tSec--;updateTDisplay();if(tSec<=0){clearInterval(tIv);tRunning=false;document.getElementById('playBtn').textContent='BAŞLAT';commitSeg();onTimerEnd();}},1000);
+    tIv=setInterval(()=>{tSec--;updateTDisplay();if(tSec<=0){clearInterval(tIv);tRunning=false;document.getElementById('playBtn').textContent=t('startBtn');commitSeg();onTimerEnd();}},1000);
     nudgePresence();
   }
 }
-function startPauseCounter(){const arc=document.getElementById('ringPause'),disp=document.getElementById('pauseDisp');arc.style.opacity='1';arc.style.strokeDasharray=P;disp.style.display='';pauseIv=setInterval(()=>{pauseDispSec=cumulPause+Math.round((Date.now()-pauseMs)/1000);updatePauseVisual();const pl=Math.floor((pauseDispSec-1)/60),cl=Math.floor(pauseDispSec/60);if(cl>pl){pauseCount=cl;toast(`⏸ ${pauseCount}. dakika`);playBeep();if(pauseCount>=3)document.getElementById('cancelBtn').classList.add('blink-warn');if(pauseCount>=5){toast('⚠️ 5 dakika — otomatik iptal!');setTimeout(cancelPomodoro,1000);}}},1000);updatePauseVisual();}
+function startPauseCounter(){const arc=document.getElementById('ringPause'),disp=document.getElementById('pauseDisp');arc.style.opacity='1';arc.style.strokeDasharray=P;disp.style.display='';pauseIv=setInterval(()=>{pauseDispSec=cumulPause+Math.round((Date.now()-pauseMs)/1000);updatePauseVisual();const pl=Math.floor((pauseDispSec-1)/60),cl=Math.floor(pauseDispSec/60);if(cl>pl){pauseCount=cl;toast(t('toastPauseMin',pauseCount));playBeep();if(pauseCount>=3)document.getElementById('cancelBtn').classList.add('blink-warn');if(pauseCount>=5){toast(t('toastLongComplete'));setTimeout(cancelPomodoro,1000);}}},1000);updatePauseVisual();}
 function freezePauseCounter(){clearInterval(pauseIv);pauseIv=null;pauseDispSec=cumulPause;updatePauseVisual();}
 function clearPauseRing(){clearInterval(pauseIv);pauseIv=null;pauseDispSec=0;cumulPause=0;pauseCount=0;document.getElementById('cancelBtn').classList.remove('blink-warn');document.getElementById('ringPause').style.opacity='0';document.getElementById('pauseDisp').style.display='none';}
 function updatePauseVisual(){const arc=document.getElementById('ringPause'),disp=document.getElementById('pauseDisp');arc.style.strokeDashoffset=P*(1-(pauseDispSec%60)/60);disp.textContent=`⏸ ${fmtT(pauseDispSec)}`;}
@@ -1739,16 +2303,16 @@ function resetTimer(){
   menu.style.cssText='position:fixed;inset:0;z-index:300;display:flex;align-items:flex-end;justify-content:center;background:rgba(30,20,10,.45);backdrop-filter:blur(4px);animation:fadeUp .2s ease';
   menu.innerHTML=`<div style="width:100%;max-width:500px;background:var(--surface);border-radius:22px 22px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom));box-shadow:var(--shadow-lg)">
     <div style="width:36px;height:4px;border-radius:99px;background:var(--border);margin:0 auto 18px"></div>
-    <div style="font-size:.88rem;font-weight:600;color:var(--text);margin-bottom:14px">Neyi sıfırlamak istiyorsun?</div>
+    <div style="font-size:.88rem;font-weight:600;color:var(--text);margin-bottom:14px">${t('resetDialogTitle')}</div>
     <button onclick="doResetSession()" style="width:100%;padding:13px;border-radius:12px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Outfit',sans-serif;font-size:.9rem;font-weight:500;cursor:pointer;margin-bottom:8px;text-align:left;display:flex;align-items:center;gap:10px">
       <span style="font-size:1.2rem">↺</span>
-      <div><div>Mevcut Görevi Sıfırla</div><div style="font-size:.72rem;color:var(--text-muted);margin-top:2px">Timer'ı başa sar, kaydedilmez</div></div>
+      <div><div>${t('resetSession')}</div><div style="font-size:.72rem;color:var(--text-muted);margin-top:2px">${t('resetSessionSub')}</div></div>
     </button>
     <button onclick="doResetCycle()" style="width:100%;padding:13px;border-radius:12px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Outfit',sans-serif;font-size:.9rem;font-weight:500;cursor:pointer;margin-bottom:8px;text-align:left;display:flex;align-items:center;gap:10px">
       <span style="font-size:1.2rem">🔄</span>
-      <div><div>Pomodoro Döngüsünü Sıfırla</div><div style="font-size:.72rem;color:var(--text-muted);margin-top:2px">4'lü dot sayacını sıfırla</div></div>
+      <div><div>${t('resetCycle')}</div><div style="font-size:.72rem;color:var(--text-muted);margin-top:2px">${t('resetCycleSub')}</div></div>
     </button>
-    <button onclick="document.getElementById('resetMenu').remove()" style="width:100%;padding:11px;border-radius:12px;border:none;background:transparent;color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:.88rem;cursor:pointer">İptal</button>
+    <button onclick="document.getElementById('resetMenu').remove()" style="width:100%;padding:11px;border-radius:12px;border:none;background:transparent;color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:.88rem;cursor:pointer">${t('resetCancel')}</button>
   </div>`;
   menu.addEventListener('click',e=>{if(e.target===menu)menu.remove();});
   document.body.appendChild(menu);
@@ -1759,11 +2323,11 @@ function doResetSession(){
   clearPauseRing();pauseMs=null;segStart=null;sessP=[];sessTT={};cumulPause=0;pauseDispSec=0;pauseCount=0;
   const s=getAS();const mins={focus:s.focus,short:s.short,long:s.long}[tMode];
   tSec=mins*60;totSec=mins*60;updateTDisplay();nudgePresence();
-  toast('↺ Mevcut görev sıfırlandı');
+  toast(t('toastResetSession'));
 }
 function doResetCycle(){
   const m=document.getElementById('resetMenu');if(m)m.remove();
-  resetDots();toast('🔄 Döngü sıfırlandı');
+  resetDots();toast(t('toastResetCycle'));
 }
 // ── Confirm dialogs for Skip & Cancel ──
 function showConfirmSheet(title, subtitle, confirmLabel, confirmClass, onConfirm){
@@ -1776,7 +2340,7 @@ function showConfirmSheet(title, subtitle, confirmLabel, confirmClass, onConfirm
     <div style="font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:6px">${title}</div>
     <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:22px;line-height:1.5">${subtitle}</div>
     <button id="confirmSheetYes" style="width:100%;padding:14px;border-radius:13px;border:none;background:var(--accent);color:#fff;font-family:'Outfit',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;margin-bottom:10px" class="${confirmClass}">${confirmLabel}</button>
-    <button onclick="document.getElementById('confirmSheet').remove()" style="width:100%;padding:12px;border-radius:13px;border:1.5px solid var(--border);background:transparent;color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:.88rem;cursor:pointer">Vazgeç</button>
+    <button onclick="document.getElementById('confirmSheet').remove()" style="width:100%;padding:12px;border-radius:13px;border:1.5px solid var(--border);background:transparent;color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:.88rem;cursor:pointer">${t('confirmVazgec')}</button>
   </div>`;
   sheet.addEventListener('click',e=>{if(e.target===sheet)sheet.remove();});
   document.body.appendChild(sheet);
@@ -1784,14 +2348,11 @@ function showConfirmSheet(title, subtitle, confirmLabel, confirmClass, onConfirm
 }
 
 function confirmCancel(){
-  // If timer hasn't started at all, cancel silently
   if(!tRunning&&tSec===totSec&&pauseMs===null&&cumulPause===0)return;
   const worked=Object.values(sessTT).reduce((a,v)=>a+v,0);
   const workedMin=Math.round(worked/60);
-  const subtitle=workedMin>0
-    ?`${workedMin} dakika çalışıldı olarak kaydedilecek ve bu pomodoro iptal edilecek.`
-    :'Hiç çalışmadan iptal edilecek. Süre kaydedilmeyecek.';
-  showConfirmSheet('Bu pomodoro iptal edilecek',subtitle,'✕ Evet, İptal Et','',cancelPomodoro);
+  const subtitle=workedMin>0?t('confirmCancelSubWorked',workedMin):t('confirmCancelSubEmpty');
+  showConfirmSheet(t('confirmCancelTitle'),subtitle,t('confirmCancelBtn'),'',cancelPomodoro);
 }
 
 function confirmSkip(){
@@ -1799,16 +2360,14 @@ function confirmSkip(){
   const workedMin=Math.round(worked/60);
   let subtitle='';
   if(tMode==='focus'){
-    subtitle=workedMin>0
-      ?`${workedMin} dakika çalışıldı olarak kaydedilecek ve bir sonraki molaya geçilecek.`
-      :'Hiç çalışılmadı olarak atlanacak, süre kaydedilmeyecek.';
+    subtitle=workedMin>0?t('confirmSkipFocusWorked',workedMin):t('confirmSkipFocusEmpty');
   } else {
-    subtitle='Mola atlanacak ve odak moduna geçilecek.';
+    subtitle=t('confirmSkipBreak');
   }
-  showConfirmSheet('Bu aşama atlanacak',subtitle,'⏭ Evet, Atla','',skipForward);
+  showConfirmSheet(t('confirmSkipTitle'),subtitle,t('confirmSkipBtn'),'',skipForward);
 }
 
-function cancelPomodoro(){if(!tRunning&&tSec===totSec&&pauseMs===null&&cumulPause===0)return;clearInterval(tIv);tRunning=false;document.getElementById('playBtn').textContent='BAŞLAT';commitSeg();if(pauseMs!==null){const dur=Math.round((Date.now()-pauseMs)/1000);sessP.push({duration:dur,at:new Date(pauseMs).toISOString()});cumulPause+=dur;pauseMs=null;}clearPauseRing();const totalP=sessP.reduce((a,p)=>a+p.duration,0),worked=Object.values(sessTT).reduce((a,v)=>a+v,0);dotCancel();stats.cancel++;const rec={type:'cancelled',mode:tMode,taskId:selId,taskName:selId?(tasks.find(t=>t.id===selId)?.name||''):'',category:selId?(tasks.find(t=>t.id===selId)?.category||''):(selCat||''),taskTimes:{...sessTT},pauseTotal:totalP,workedSec:worked,totalSec:worked+totalP,pauses:[...sessP],dayKey:todayKey(),at:new Date().toISOString()};cycles.push(rec);failed.unshift({...rec});sessP=[];sessTT={};cumulPause=0;pauseDispSec=0;pauseCount=0;save();renderDots();updateStats();renderDailyGoal();nudgePresence();const s=getAS();const mins={focus:s.focus,short:s.short,long:s.long}[tMode];tSec=mins*60;totSec=mins*60;updateTDisplay();pauseAmbient();toast('❌ İptal edildi');}
+function cancelPomodoro(){if(!tRunning&&tSec===totSec&&pauseMs===null&&cumulPause===0)return;clearInterval(tIv);tRunning=false;document.getElementById('playBtn').textContent='BAŞLAT';commitSeg();if(pauseMs!==null){const dur=Math.round((Date.now()-pauseMs)/1000);sessP.push({duration:dur,at:new Date(pauseMs).toISOString()});cumulPause+=dur;pauseMs=null;}clearPauseRing();const totalP=sessP.reduce((a,p)=>a+p.duration,0),worked=Object.values(sessTT).reduce((a,v)=>a+v,0);dotCancel();stats.cancel++;const rec={type:'cancelled',mode:tMode,taskId:selId,taskName:selId?(tasks.find(t=>t.id===selId)?.name||''):'',category:selId?(tasks.find(t=>t.id===selId)?.category||''):(selCat||''),taskTimes:{...sessTT},pauseTotal:totalP,workedSec:worked,totalSec:worked+totalP,pauses:[...sessP],dayKey:todayKey(),at:new Date().toISOString()};cycles.push(rec);failed.unshift({...rec});sessP=[];sessTT={};cumulPause=0;pauseDispSec=0;pauseCount=0;save();renderDots();updateStats();renderDailyGoal();nudgePresence();const s=getAS();const mins={focus:s.focus,short:s.short,long:s.long}[tMode];tSec=mins*60;totSec=mins*60;updateTDisplay();pauseAmbient();toast(t('toastCancelled'));}
 function skipForward(){
   clearInterval(tIv);tRunning=false;document.getElementById('playBtn').textContent='BAŞLAT';
   commitSeg();
@@ -1833,12 +2392,12 @@ function skipForward(){
     sessP=[];sessTT={};cumulPause=0;pauseDispSec=0;pauseCount=0;
     save();updateStats();renderDots();renderDailyGoal();renderFlow();nudgePresence();
     const gc=dots.filter(s=>s.t==='g').length;
-    if(gc>=4){toast('⏭ Uzun molaya');setMode('long');}else{toast('⏭ Kısa molaya');setMode('short');}
-  }else if(tMode==='long'){sessP=[];sessTT={};cumulPause=0;pauseDispSec=0;pauseCount=0;resetDots();save();toast('⏭ Yeni döngü');setMode('focus');nudgePresence();}
-  else{sessP=[];sessTT={};cumulPause=0;pauseDispSec=0;pauseCount=0;save();toast('⏭ Odağa');setMode('focus');nudgePresence();}
+    if(gc>=4){toast(t('toastBreakLong'));setMode('long');}else{toast(t('toastBreakShort'));setMode('short');}
+  }else if(tMode==='long'){sessP=[];sessTT={};cumulPause=0;pauseDispSec=0;pauseCount=0;resetDots();save();toast(t('toastNewCycle'));setMode('focus');nudgePresence();}
+  else{sessP=[];sessTT={};cumulPause=0;pauseDispSec=0;pauseCount=0;save();toast(t('toastFocus'));setMode('focus');nudgePresence();}
   pauseAmbient();
 }
-function onTimerEnd(){const s=getAS();if(tMode==='focus'){stats.pomo++;stats.min+=s.focus;if(selId){const t=tasks.find(t=>t.id===selId);if(t)t.pomodoros=(t.pomodoros||0)+1;}const totalP=sessP.reduce((a,p)=>a+p.duration,0);dotDone();cycles.push({type:'completed',mode:'focus',taskId:selId,taskName:selId?(tasks.find(t=>t.id===selId)?.name||''):'',category:selId?(tasks.find(t=>t.id===selId)?.category||''):(selCat||''),taskTimes:{...sessTT},pauseTotal:totalP,focusDuration:s.focus*60,totalDuration:s.focus*60+totalP,pauses:[...sessP],dayKey:todayKey(),at:new Date().toISOString()});sessP=[];sessTT={};cumulPause=0;pauseDispSec=0;pauseCount=0;clearPauseRing();save();updateStats();renderDailyGoal();renderFlow();const gc=dots.filter(x=>x.t==='g').length;if(gc>=4){playBeep();toast('🎉 4 Pomodoro! Uzun mola.');setTimeout(()=>{setMode('long');toggleTimer();},600);}else{playBeep();toast('🍅 Tamamlandı! Kısa mola.');setTimeout(()=>setMode('short'),500);}renderDots();nudgePresence();}else if(tMode==='long'){playBeep();toast('☀️ Uzun mola bitti!');resetDots();save();setTimeout(()=>setMode('focus'),500);nudgePresence();}else{playBeep();toast('⏰ Mola bitti!');setTimeout(()=>setMode('focus'),500);nudgePresence();}}
+function onTimerEnd(){const s=getAS();if(tMode==='focus'){stats.pomo++;stats.min+=s.focus;if(selId){const t=tasks.find(t=>t.id===selId);if(t)t.pomodoros=(t.pomodoros||0)+1;}const totalP=sessP.reduce((a,p)=>a+p.duration,0);dotDone();cycles.push({type:'completed',mode:'focus',taskId:selId,taskName:selId?(tasks.find(t=>t.id===selId)?.name||''):'',category:selId?(tasks.find(t=>t.id===selId)?.category||''):(selCat||''),taskTimes:{...sessTT},pauseTotal:totalP,focusDuration:s.focus*60,totalDuration:s.focus*60+totalP,pauses:[...sessP],dayKey:todayKey(),at:new Date().toISOString()});sessP=[];sessTT={};cumulPause=0;pauseDispSec=0;pauseCount=0;clearPauseRing();save();updateStats();renderDailyGoal();renderFlow();const gc=dots.filter(x=>x.t==='g').length;if(gc>=4){playBeep();toast(t('toast4Pomo'));setTimeout(()=>{setMode('long');toggleTimer();},600);}else{playBeep();toast(t('toastPomoComplete'));setTimeout(()=>setMode('short'),500);}renderDots();nudgePresence();}else if(tMode==='long'){playBeep();toast(t('toastLongBreakEnd'));resetDots();save();setTimeout(()=>setMode('focus'),500);nudgePresence();}else{playBeep();toast(t('toastShortBreakEnd'));setTimeout(()=>setMode('focus'),500);nudgePresence();}}
 function playBeep(){if(settings.sound===false||!document.getElementById('soundToggle').checked)return;try{const ctx=new(window.AudioContext||window.webkitAudioContext)();[0,.15,.3].forEach((t,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=i===2?880:660;g.gain.setValueAtTime(.25,ctx.currentTime+t);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+t+.25);o.start(ctx.currentTime+t);o.stop(ctx.currentTime+t+.25);});}catch(e){}}
 function updateStats(){renderDailyGoal();}
 
@@ -1849,9 +2408,9 @@ function renderHistPage(){
   const now=new Date(),today=todayKey();
   let entries=[...history.map(h=>({...h,_t:'task'})),...cycles.filter(cy=>cy.type==='completed'||cy.type==='cancelled').map(cy=>({...cy,_t:'pomo'}))];
   entries=entries.filter(e=>{const dk=e.dayKey||e.completedAt?.slice(0,10)||'';if(histP==='today')return dk===today;if(histP==='week'){const d=new Date(dk+'T12:00:00');return(now-d)/(864e5)<7&&d<=now;}if(histP==='month'){const d=new Date(dk+'T12:00:00');return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();}return true;});
-  if(!entries.length){c.innerHTML='<div class="empty-state"><div class="es-icon">📊</div><p>Kayıt yok</p></div>';return;}
+  if(!entries.length){c.innerHTML=`<div class="empty-state"><div class="es-icon">📊</div><p>${t('histEmpty')}</p></div>`;return;}
   const grps={};entries.forEach(e=>{const dk=e.dayKey||e.completedAt?.slice(0,10)||'?';if(!grps[dk])grps[dk]=[];grps[dk].push(e);});
-  Object.keys(grps).sort((a,b)=>b.localeCompare(a)).forEach(dk=>{const group=grps[dk],d=new Date(dk+'T12:00:00'),isToday=dk===today;const label=isToday?'Bugün':d.toLocaleDateString('tr-TR',{weekday:'long',day:'numeric',month:'long'});const td=group.filter(e=>e._t==='task').length,pd=group.filter(e=>e._t==='pomo'&&e.type==='completed').length,pf=group.filter(e=>e._t==='pomo'&&e.type==='cancelled').length;const outer=document.createElement('div');outer.className='hdg-group';const hdr=document.createElement('div');hdr.className='hdg-hdr';hdr.innerHTML=`<span class="hdg-title">${label}</span><span class="hdg-meta">${td} görev · ${pd}🍅${pf?' · '+pf+'✕':''}</span>`;const body=document.createElement('div');body.className='hdg-body';let open=isToday;if(!open)body.style.display='none';hdr.onclick=()=>{open=!open;body.style.display=open?'':'none';};group.sort((a,b)=>{const at=a.completedAt||a.at||'',bt=b.completedAt||b.at||'';return bt.localeCompare(at);}).forEach(e=>{const row=document.createElement('div');row.className='he';if(e._t==='pomo'){const ok=e.type==='completed';row.innerHTML=`<div class="he-dot" style="background:${ok?'var(--accent)':'var(--red)'}"></div><div class="he-name">${ok?'🍅':'✕'} ${e.taskName||'Görevsiz'}</div><div class="he-chips">${ok?`<span class="he-chip g">⏱ ${fmtS(e.focusDuration||0)}</span>`:`<span class="he-chip r">✕ iptal</span>`}${e.pauseTotal>0?`<span class="he-chip r">⏸ ${fmtS(e.pauseTotal)}</span>`:''}${ok&&e.totalDuration?`<span class="he-chip v">∑ ${fmtS(e.totalDuration)}</span>`:''}</div>`;}else{row.innerHTML=`<div class="he-dot" style="background:var(--green)"></div><div class="he-name">${e.name}</div><div class="he-chips"><span class="he-chip g">✓ tamamlandı</span>${e.pomodoros>0?`<span class="he-chip v">🍅×${e.pomodoros}</span>`:''}${e.timeSpent>0?`<span class="he-chip v">⏱ ${fmtS(e.timeSpent)}</span>`:''}</div>`;}body.appendChild(row);});outer.appendChild(hdr);outer.appendChild(body);c.appendChild(outer);});
+  Object.keys(grps).sort((a,b)=>b.localeCompare(a)).forEach(dk=>{const group=grps[dk],d=new Date(dk+'T12:00:00'),isToday=dk===today;const label=isToday?t('today'):d.toLocaleDateString(currentLang==='tr'?'tr-TR':'en-US',{weekday:'long',day:'numeric',month:'long'});const td=group.filter(e=>e._t==='task').length,pd=group.filter(e=>e._t==='pomo'&&e.type==='completed').length,pf=group.filter(e=>e._t==='pomo'&&e.type==='cancelled').length;const outer=document.createElement('div');outer.className='hdg-group';const hdr=document.createElement('div');hdr.className='hdg-hdr';hdr.innerHTML=`<span class="hdg-title">${label}</span><span class="hdg-meta">${td} ${t('navTasks').toLowerCase()} · ${pd}🍅${pf?' · '+pf+'✕':''}</span>`;const body=document.createElement('div');body.className='hdg-body';let open=isToday;if(!open)body.style.display='none';hdr.onclick=()=>{open=!open;body.style.display=open?'':'none';};group.sort((a,b)=>{const at=a.completedAt||a.at||'',bt=b.completedAt||b.at||'';return bt.localeCompare(at);}).forEach(e=>{const row=document.createElement('div');row.className='he';if(e._t==='pomo'){const ok=e.type==='completed';row.innerHTML=`<div class="he-dot" style="background:${ok?'var(--accent)':'var(--red)'}"></div><div class="he-name">${ok?'🍅':'✕'} ${e.taskName||t('noTask')}</div><div class="he-chips">${ok?`<span class="he-chip g">⏱ ${fmtS(e.focusDuration||0)}</span>`:`<span class="he-chip r">✕ ${t('histCancelled').replace('✕ ','')}</span>`}${e.pauseTotal>0?`<span class="he-chip r">⏸ ${fmtS(e.pauseTotal)}</span>`:''}${ok&&e.totalDuration?`<span class="he-chip v">∑ ${fmtS(e.totalDuration)}</span>`:''}</div>`;}else{row.innerHTML=`<div class="he-dot" style="background:var(--green)"></div><div class="he-name">${e.name}</div><div class="he-chips"><span class="he-chip g">${t('histCompleted')}</span>${e.pomodoros>0?`<span class="he-chip v">🍅×${e.pomodoros}</span>`:''}${e.timeSpent>0?`<span class="he-chip v">⏱ ${fmtS(e.timeSpent)}</span>`:''}</div>`;}body.appendChild(row);});outer.appendChild(hdr);outer.appendChild(body);c.appendChild(outer);});
 }
 
 // ══ ANALYSIS ══
@@ -1907,7 +2466,7 @@ function renderCatFilter(){
   const row=document.getElementById('catFilterRow');
   if(!row)return;
   const cats=getAllCats();
-  let html=`<button class="filter-chip${!selCat?' active':''}" onclick="setCatFilter(null)">Tümü</button>`;
+  let html=`<button class="filter-chip${!selCat?' active':''}" onclick="setCatFilter(null)">${t('histAll')}</button>`;
   cats.forEach(cat=>{
     html+=`<button class="filter-chip cat-chip${selCat===cat?' active':''}" onclick="setCatFilter('${cat}')">${cat}</button>`;
   });
@@ -1975,21 +2534,21 @@ function renderDailyGoal(){
   const c=document.getElementById('dailyGoalCard');
   c.innerHTML=`
     <div class="dgc-header">
-      <div class="dgc-title">Günlük Hedef</div>
+      <div class="dgc-title">${t('dailyGoal')}</div>
       <div style="display:flex;align-items:center;gap:8px">
         <span class="dgc-ratio">${ratio}</span>
         <div class="dgc-mode-toggle">
-          <button class="dgm-btn${goalMode==='task'?' active':''}" onclick="setGoalMode('task')">Görev</button>
-          <button class="dgm-btn${goalMode==='hour'?' active':''}" onclick="setGoalMode('hour')">Saat</button>
+          <button class="dgm-btn${goalMode==='task'?' active':''}" onclick="setGoalMode('task')">${t('goalTask')}</button>
+          <button class="dgm-btn${goalMode==='hour'?' active':''}" onclick="setGoalMode('hour')">${t('goalHour')}</button>
         </div>
       </div>
     </div>
     <div class="dgc-bars">${bars}</div>
     <div class="dgc-stats">
-      <div class="dgs"><div class="dgs-val">${todayPomos}</div><div class="dgs-lbl">Pomodoro</div></div>
-      <div class="dgs"><div class="dgs-val">${todayMin}</div><div class="dgs-lbl">Dk Odak</div></div>
-      <div class="dgs"><div class="dgs-val">${done}/${total}</div><div class="dgs-lbl">Tamamlanan</div></div>
-      ${hourGoal>0?`<div class="dgs"><div class="dgs-val">${Math.round(todayMin/60*10)/10}sa</div><div class="dgs-lbl">Toplam</div></div>`:''}
+      <div class="dgs"><div class="dgs-val">${todayPomos}</div><div class="dgs-lbl">${t('statPomodoro')}</div></div>
+      <div class="dgs"><div class="dgs-val">${todayMin}</div><div class="dgs-lbl">${t('statFocusMin')}</div></div>
+      <div class="dgs"><div class="dgs-val">${done}/${total}</div><div class="dgs-lbl">${t('statCompleted')}</div></div>
+      ${hourGoal>0?`<div class="dgs"><div class="dgs-val">${Math.round(todayMin/60*10)/10}sa</div><div class="dgs-lbl">${t('statTotal')}</div></div>`:''}
     </div>`;
 }
 
@@ -2003,7 +2562,7 @@ function renderFlow(){
   const todayTasks=tasks.filter(t=>t.dayKey===today);
   const timeline=document.getElementById('flowTimeline');
   if(!todayTasks.length){
-    timeline.innerHTML=`<div class="flow-empty">Bugün için görev yok.<br>Görevler sekmesinden ekleyebilirsin.</div>`;
+    timeline.innerHTML=`<div class="flow-empty">${t('flowEmpty')}</div>`;
     return;
   }
 
@@ -2102,7 +2661,7 @@ function renderFlow(){
 
     let chips='';
     if(t.category)chips+=`<span class="flow-chip cat">${t.category}</span>`;
-    if(t.priority==='high')chips+=`<span class="flow-chip prio-h">Yüksek</span>`;
+    if(t.priority==='high')chips+=`<span class="flow-chip prio-h">${t('prioHigh')}</span>`;
     chips+=flowPomoLabel;
 
     const row=document.createElement('div');
@@ -2130,7 +2689,7 @@ function renderFlow(){
         <div class="flow-task-name">
           ${t.completed?'<span class="done-check">✓</span>':''}
           ${t.name}
-          ${!item.isTimed?'<span class="untimed-label">esnek</span>':''}
+          ${!item.isTimed?`<span class="untimed-label">${t('untimedLabel')}</span>`:''}
         </div>
         ${chips?`<div class="flow-task-meta">${chips}</div>`:''}
         ${segBarsHTML}
@@ -2145,11 +2704,11 @@ function renderDropContent(){
   // Filter by selCat if set
   let pending=tasks.filter(t=>!t.completed);
   if(selCat)pending=pending.filter(t=>t.category===selCat);
-  if(!pending.length){dd.innerHTML=`<div style="padding:10px;font-size:.8rem;color:var(--text-muted)">${selCat?`"${selCat}" kategorisinde görev yok`:'Görev yok'}</div>`;return;}
+  if(!pending.length){dd.innerHTML=`<div style="padding:10px;font-size:.8rem;color:var(--text-muted)">${selCat?t('catNoTask',selCat):t('noTask')}</div>`;return;}
   const today=todayKey(),grps={},pw={high:0,mid:1,low:2};
   pending.forEach(t=>{if(!grps[t.dayKey])grps[t.dayKey]=[];grps[t.dayKey].push(t);});
   Object.keys(grps).sort((a,b)=>{if(a===today)return -1;if(b===today)return 1;return a.localeCompare(b);}).forEach(dk=>{
-    const d=new Date(dk+'T12:00:00'),lbl=dk===today?'📅 Bugün':d.toLocaleDateString('tr-TR',{weekday:'short',day:'numeric',month:'short'});
+    const d=new Date(dk+'T12:00:00'),lbl=dk===today?`📅 ${t('today')}`:d.toLocaleDateString(currentLang==='tr'?'tr-TR':'en-US',{weekday:'short',day:'numeric',month:'short'});
     const hdr=document.createElement('div');hdr.className='td-hdr';hdr.textContent=lbl;dd.appendChild(hdr);
     grps[dk].sort((a,b)=>pw[a.priority]-pw[b.priority]).forEach(t=>{
       const it=document.createElement('div');it.className='td-item'+(t.id===selId?' cur':'');
@@ -2162,19 +2721,18 @@ function renderDropContent(){
 
 // ══ RENDER SEL BOX (with clear button) ══
 function renderSelBox(){
-  const t=selId?tasks.find(t=>t.id===selId):null;
+  const task=selId?tasks.find(t2=>t2.id===selId):null;
   const box=document.getElementById('tsbText');
   const clearBtn=document.getElementById('selClearBtn');
-  if(t){
-    box.textContent=t.name;box.classList.add('sel');
-    // Auto-set cat filter if task has category
-    if(t.category&&selCat!==t.category){selCat=t.category;renderCatFilter();}
+  if(task){
+    box.textContent=task.name;box.classList.add('sel');
+    if(task.category&&selCat!==task.category){selCat=task.category;renderCatFilter();}
     if(clearBtn)clearBtn.style.display='flex';
   } else if(selCat){
-    box.textContent=`"${selCat}" etiketiyle çalış`;box.classList.add('sel');
+    box.textContent=`"${selCat}" ${currentLang==='en'?'label':'etiketiyle çalış'}`;box.classList.add('sel');
     if(clearBtn)clearBtn.style.display='flex';
   } else {
-    box.textContent='Görev seç';box.classList.remove('sel');
+    box.textContent=t('selectTask');box.classList.remove('sel');
     if(clearBtn)clearBtn.style.display='none';
   }
   updateTimerLabel();
@@ -2201,16 +2759,16 @@ function renderAnalysis(){
   history.filter(h=>inRange(h.dayKey)).forEach(h=>{if(h.timeSpent>0){if(!taskMap[h.name])taskMap[h.name]=0;taskMap[h.name]+=h.timeSpent;}});
   const tE=Object.entries(taskMap).sort((a,b)=>b[1]-a[1]).slice(0,8),maxT=tE[0]?.[1]||1;
   
-  const c1=document.createElement('div');c1.className='an-card';c1.innerHTML='<h3>📋 Görev Bazlı Süre</h3>';
-  if(!tE.length)c1.innerHTML+='<div style="color:var(--text-muted);font-size:.8rem">Kayıt yok</div>';
+  const c1=document.createElement('div');c1.className='an-card';c1.innerHTML=`<h3>${t('anTaskTime')}</h3>`;
+  if(!tE.length)c1.innerHTML+=`<div style="color:var(--text-muted);font-size:.8rem">${t('anNoRecord')}</div>`;
   else tE.forEach(([n,s])=>{const r=document.createElement('div');r.className='bar-row';r.innerHTML=`<div class="bar-lbl">${n}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(s/maxT*100)}%;background:var(--accent)"></div></div><div class="bar-val">${fmtS(s)}</div>`;c1.appendChild(r);});
   page1.appendChild(c1);
 
   const byDay={};cycles.filter(c=>c.type==='completed'&&c.mode==='focus'&&inRange(c.dayKey)).forEach(c=>{if(!byDay[c.dayKey])byDay[c.dayKey]=0;byDay[c.dayKey]++;});
   const dE=Object.entries(byDay).sort((a,b)=>a[0].localeCompare(b[0])),maxD=dE.reduce((m,[,v])=>Math.max(m,v),1);
-  const c3=document.createElement('div');c3.className='an-card';c3.innerHTML='<h3>🍅 Günlük Pomodoro</h3>';
-  if(!dE.length)c3.innerHTML+='<div style="color:var(--text-muted);font-size:.8rem">Kayıt yok</div>';
-  else dE.forEach(([dk,cnt])=>{const d=new Date(dk+'T12:00:00'),lbl=d.toLocaleDateString('tr-TR',{weekday:'short',day:'numeric'});const r=document.createElement('div');r.className='bar-row';r.innerHTML=`<div class="bar-lbl">${lbl}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(cnt/maxD*100)}%;background:var(--accent2)"></div></div><div class="bar-val">${cnt}🍅</div>`;c3.appendChild(r);});
+  const c3=document.createElement('div');c3.className='an-card';c3.innerHTML=`<h3>${t('anDailyPomo')}</h3>`;
+  if(!dE.length)c3.innerHTML+=`<div style="color:var(--text-muted);font-size:.8rem">${t('anNoRecord')}</div>`;
+  else dE.forEach(([dk,cnt])=>{const d=new Date(dk+'T12:00:00'),lbl=d.toLocaleDateString(currentLang==='tr'?'tr-TR':'en-US',{weekday:'short',day:'numeric'});const r=document.createElement('div');r.className='bar-row';r.innerHTML=`<div class="bar-lbl">${lbl}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(cnt/maxD*100)}%;background:var(--accent2)"></div></div><div class="bar-val">${cnt}🍅</div>`;c3.appendChild(r);});
   page1.appendChild(c3);
 
   const totCyc=cycles.filter(c=>(c.type==='completed'||c.type==='cancelled')&&c.mode==='focus'&&inRange(c.dayKey)).length;
@@ -2219,7 +2777,7 @@ function renderAnalysis(){
   const totPause=cycles.filter(c=>inRange(c.dayKey)).reduce((a,c)=>a+(c.pauseTotal||0),0);
   const totWorked=cycles.filter(c=>inRange(c.dayKey)).reduce((a,c)=>a+(c.focusDuration||c.workedSec||0),0);
   const c4=document.createElement('div');c4.className='an-card';
-  c4.innerHTML=`<h3>📊 Özet</h3><div class="summary-grid"><div class="stat-box"><div class="stat-val" style="color:var(--green)">${rate}%</div><div class="stat-lbl">Başarı ${sucCyc}/${totCyc}</div></div><div class="stat-box"><div class="stat-val">${sucCyc}</div><div class="stat-lbl">Tamamlanan</div></div><div class="stat-box"><div class="stat-val" style="color:var(--red)">${totCyc-sucCyc}</div><div class="stat-lbl">İptal</div></div><div class="stat-box"><div class="stat-val" style="color:var(--accent2)">${fmtS(totPause)}</div><div class="stat-lbl">Duraklama</div></div><div class="stat-box" style="grid-column:span 2"><div class="stat-val" style="font-size:1.2rem">${fmtS(totWorked)}</div><div class="stat-lbl">Toplam çalışılan</div></div></div>`;
+  c4.innerHTML=`<h3>${t('anSummary')}</h3><div class="summary-grid"><div class="stat-box"><div class="stat-val" style="color:var(--green)">${rate}%</div><div class="stat-lbl">${t('anSuccess')} ${sucCyc}/${totCyc}</div></div><div class="stat-box"><div class="stat-val">${sucCyc}</div><div class="stat-lbl">${t('anCompleted')}</div></div><div class="stat-box"><div class="stat-val" style="color:var(--red)">${totCyc-sucCyc}</div><div class="stat-lbl">${t('anCancelled')}</div></div><div class="stat-box"><div class="stat-val" style="color:var(--accent2)">${fmtS(totPause)}</div><div class="stat-lbl">${t('anPause')}</div></div><div class="stat-box" style="grid-column:span 2"><div class="stat-val" style="font-size:1.2rem">${fmtS(totWorked)}</div><div class="stat-lbl">${t('anTotalWorked')}</div></div></div>`;
   page1.appendChild(c4);
   slider.appendChild(page1);
 
@@ -2232,7 +2790,7 @@ function renderAnalysis(){
 
   // Task ring - pass all entries, makeRingChart groups others
   if(tE.length){
-    const rc1=document.createElement('div');rc1.className='ring-chart-card';rc1.innerHTML='<h3>📋 Görev Dağılımı</h3>';
+    const rc1=document.createElement('div');rc1.className='ring-chart-card';rc1.innerHTML=`<h3>${t('anTaskDist')}</h3>`;
     const total_t=tE.reduce((a,[,v])=>a+v,0);
     rc1.appendChild(makeRingChart(tE.map(([n,v],i)=>({label:n,value:v,color:RING_COLORS[i%RING_COLORS.length]})),total_t,'süre'));
     page2.appendChild(rc1);
@@ -2240,17 +2798,17 @@ function renderAnalysis(){
 
   // Category ring
   const catMap={};
-  cycles.filter(c=>inRange(c.dayKey)).forEach(c=>{const cat=c.category||'Kategorisiz';if(!catMap[cat])catMap[cat]=0;if(c.type==='completed')catMap[cat]+=(c.focusDuration||0);if(c.type==='cancelled')catMap[cat]+=(c.workedSec||0);});
+  cycles.filter(c=>inRange(c.dayKey)).forEach(c=>{const cat=c.category||t('anUncategorized');if(!catMap[cat])catMap[cat]=0;if(c.type==='completed')catMap[cat]+=(c.focusDuration||0);if(c.type==='cancelled')catMap[cat]+=(c.workedSec||0);});
   const catEntries=Object.entries(catMap).sort((a,b)=>b[1]-a[1]);
   if(catEntries.length){
-    const rc2=document.createElement('div');rc2.className='ring-chart-card';rc2.innerHTML='<h3>🏷 Etiket Dağılımı</h3>';
+    const rc2=document.createElement('div');rc2.className='ring-chart-card';rc2.innerHTML=`<h3>${t('anCatDist')}</h3>`;
     const total_c=catEntries.reduce((a,[,v])=>a+v,0);
     rc2.appendChild(makeRingChart(catEntries.map(([n,v],i)=>({label:n,value:v,color:RING_COLORS[i%RING_COLORS.length]})),total_c,'süre'));
     page2.appendChild(rc2);
   }
 
   if(!tE.length&&!catEntries.length){
-    page2.innerHTML='<div class="an-card"><div style="color:var(--text-muted);font-size:.8rem;text-align:center;padding:20px">Kayıt yok</div></div>';
+    page2.innerHTML=`<div class="an-card"><div style="color:var(--text-muted);font-size:.8rem;text-align:center;padding:20px">${t('anNoRecord')}</div></div>`;
   }
 
   slider.appendChild(page2);
@@ -2266,7 +2824,7 @@ function renderAnalysis(){
   // Swipe hint text
   const hint=document.createElement('div');
   hint.style.cssText='text-align:center;font-size:.7rem;color:var(--text-dim);margin-top:4px';
-  hint.textContent='← Kaydır: Halka Grafikler →';
+  hint.textContent=t('anSwipeHint');
   layout.appendChild(hint);
 
   // Touch swipe
@@ -2293,7 +2851,7 @@ function makeRingChart(items, total, unit){
   if(items.length>MAX_SHOW){
     const shown=items.slice(0,MAX_SHOW-1);
     const otherVal=items.slice(MAX_SHOW-1).reduce((a,i)=>a+i.value,0);
-    displayItems=[...shown,{label:'Diğerleri',value:otherVal,color:'#b0a088'}];
+    displayItems=[...shown,{label:t('anOthers'),value:otherVal,color:'#b0a088'}];
   }
 
   const size=160,stroke=24,r=(size-stroke)/2,cx=size/2,cy=size/2;
@@ -2348,16 +2906,15 @@ function selectSound(type){
   save();
   if(type === 'none'){
     stopAmbient();
-    toast('🔇 Ses kapatıldı');
+    toast(t('toastSoundOff'));
   } else {
     stopAmbient();
-    // Preview: kısa süre çal sonra duraklat (timer çalışmıyorsa preview)
     startAmbient(type);
     if(!tRunning){
       setTimeout(()=>{ if(!tRunning) pauseAmbient(); }, 3000);
     }
-    const names={rain:'🌧 Yağmur',ocean:'🌊 Okyanus',cafe:'☕ Kafe',forest:'🌲 Orman',whitenoise:'〰 Beyaz Gürültü',fireplace:'🔥 Şömine'};
-    toast((names[type]||type)+' seçildi — timer başlayınca aktif olur');
+    const names={rain:t('soundRain'),ocean:t('soundOcean'),cafe:t('soundCafe'),forest:t('soundForest'),whitenoise:t('soundWhite'),fireplace:t('soundFire'),brownnoise:t('soundBrown'),library:t('soundLib')};
+    toast((names[type]||type)+' '+t('toastTimerActive',type));
   }
 }
 
@@ -2571,6 +3128,8 @@ function buildFireplace(ctx,master){
 
 // ══ BOOT ══
 buildRdays();
+// Apply language on initial load (auth screen)
+document.addEventListener('DOMContentLoaded',()=>{applyI18n();});
 </script>
 </body>
 </html>
