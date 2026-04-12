@@ -993,8 +993,8 @@ header{display:flex;align-items:center;justify-content:space-between;padding:max
 <!-- ══ STREAK PAGE ══ -->
 <div class="streak-page" id="streakPage">
   <div class="streak-header">
-    <button class="streak-back" onclick="closeStreakPage()">← Geri</button>
-    <div class="streak-title">🔥 Streak</div>
+    <button class="streak-back" onclick="closeStreakPage()" id="streakBackBtn">← Geri</button>
+    <div class="streak-title" id="streakPageTitle">🔥 Streak</div>
     <div style="width:60px"></div>
   </div>
   <div class="streak-content" id="streakContent">
@@ -1395,6 +1395,35 @@ const I18N={
     catNoTask:(cat)=>`"${cat}" kategorisinde görev yok`,
     noTask:'Görev yok',
     guestSession:'Misafir oturumu',
+    noMembersYet:'Henüz kimse yok',
+    streakTitle:'🔥 Streak',
+    streakBack:'← Geri',
+    streakDailyStreak:'🔥 Günlük Seri',
+    streakToTarget:'🎯 Hedefe Kalan',
+    streakRoadTitle:'Streak Yolculuğu',
+    streakEncourageTitle:(m)=>`💪 ${m}. Streak'i yapabilirsin!`,
+    streakEncourageSub:(s,m)=>`Şu an ${s} gündesin. ${m} gün daha!`,
+    streakEncouragePct:(p,m)=>`${p}% → ${m} gün`,
+    streakTargetDays:'gün',
+    streakTargetHint:'hedefe sürükle',
+    streakNextGoal:'sonraki hedef',
+    streakDoneDays:(m)=>`✓ ${m} Gün`,
+    streakGoalDays:(m)=>`🎯 ${m} Gün`,
+    streakGoalDesc_task:(g)=>`${g} görev tamamlama`,
+    streakGoalDesc_hour:(h)=>`${h} saat odak`,
+    streakCongratsTitle:(m)=>`${m}. Streak'ine Ulaştın!`,
+    streakCongratsMsgs:{1:'İlk gününü tamamladın!',3:'3 günlük seri!',5:'5 günlük seri — harika!',10:'10. günün! İnanılmaz!',20:'20 gün! Sen bir fırıldaksın!',30:'30 günlük seri! Efsane!',50:'50 gün! Destansı!',100:'100 gün! Söz yok!',200:'200 gün! Gelmiş geçmiş en iyisi!'},
+    streakCongrats:'Tebrikler!',
+    streakPowerLbl:(p,m)=>`${p}% → ${m} gün`,
+    streakNextTo:(m)=>`⏭ ${m}. Streak'e doğru!`,
+    streakKeepGoing:'Devam ediyorsun!',
+    streakFigLbl:(s)=>`${s}🔥 sen`,
+    moodChange:'değiştir',
+    moodSelectTitle:'Mood Seç',
+    moodClear:'Temizle',
+    moodSectionMood:'Ruh Hali',
+    moodSectionWork:'Çalışma Figürü',
+    moodSectionMotiv:'Motivasyon',
     // Firebase errors
     fbEmailUsed:'Bu e-posta zaten kayıtlı.',
     fbInvalidEmail:'Geçersiz e-posta.',
@@ -1566,6 +1595,35 @@ const I18N={
     catNoTask:(cat)=>`No tasks in "${cat}"`,
     noTask:'No tasks',
     guestSession:'Guest session',
+    noMembersYet:'No members yet',
+    streakTitle:'🔥 Streak',
+    streakBack:'← Back',
+    streakDailyStreak:'🔥 Daily Streak',
+    streakToTarget:'🎯 Left to Target',
+    streakRoadTitle:'Streak Journey',
+    streakEncourageTitle:(m)=>`💪 You can reach streak ${m}!`,
+    streakEncourageSub:(s,m)=>`You're at ${s} days. ${m} more to go!`,
+    streakEncouragePct:(p,m)=>`${p}% → ${m} days`,
+    streakTargetDays:'days',
+    streakTargetHint:'drag to target',
+    streakNextGoal:'next goal',
+    streakDoneDays:(m)=>`✓ ${m} Days`,
+    streakGoalDays:(m)=>`🎯 ${m} Days`,
+    streakGoalDesc_task:(g)=>`Complete ${g} tasks`,
+    streakGoalDesc_hour:(h)=>`${h} hours of focus`,
+    streakCongratsTitle:(m)=>`You reached Streak ${m}!`,
+    streakCongratsMsgs:{1:'First day done!',3:'3-day streak!',5:'5 days — great!',10:'Day 10! Incredible!',20:'20 days! You\'re on fire!',30:'30-day streak! Legendary!',50:'50 days! Epic!',100:'100 days! Speechless!',200:'200 days! Greatest of all time!'},
+    streakCongrats:'Congratulations!',
+    streakPowerLbl:(p,m)=>`${p}% → ${m} days`,
+    streakNextTo:(m)=>`⏭ Towards streak ${m}!`,
+    streakKeepGoing:'Keep going!',
+    streakFigLbl:(s)=>`${s}🔥 you`,
+    moodChange:'change',
+    moodSelectTitle:'Select Mood',
+    moodClear:'Clear',
+    moodSectionMood:'Mood',
+    moodSectionWork:'Work Figure',
+    moodSectionMotiv:'Motivation',
     fbEmailUsed:'This email is already registered.',
     fbInvalidEmail:'Invalid email.',
     fbWeakPass:'Password must be at least 6 characters.',
@@ -1692,6 +1750,15 @@ function applyI18n(){
   buildRdays();
   // Lang toggle in settings
   updateLangToggle();
+  // Flow date
+  const fdEl=document.getElementById('flowDate');if(fdEl)fdEl.textContent=new Date().toLocaleDateString(currentLang==='tr'?'tr-TR':'en-US',{day:'numeric',month:'long'});
+  // Streak page header
+  const spTitle=document.getElementById('streakPageTitle');if(spTitle)spTitle.textContent=t('streakTitle');
+  const spBack=document.getElementById('streakBackBtn');if(spBack)spBack.textContent=t('streakBack');
+  // Streak access button tooltip
+  updateStreakBtn();
+  // Week strip day names update
+  renderWeek();
 }
 
 function updateLangToggle(){
@@ -1798,6 +1865,19 @@ function init(){
   buildRdays();renderWeek();renderTaskList();renderCatFilter();renderSelBox();renderDots();renderDailyGoal();renderFlow();updateTDisplay();updateRing(1);updateStats();updateStreakBtn();
   tSec=getAS().focus*60;totSec=tSec;updateTDisplay();
   applyI18n();
+  // Midnight auto-update: check every minute if day changed
+  if(window._midnightChecker)clearInterval(window._midnightChecker);
+  let _lastDay=todayKey();
+  window._midnightChecker=setInterval(()=>{
+    const nowDay=todayKey();
+    if(nowDay!==_lastDay){
+      _lastDay=nowDay;
+      // New day: reset stats, update flow date, refresh UI
+      if(stats.date!==nowDay){stats={pomo:0,min:0,task:0,cancel:0,date:nowDay};save();}
+      document.getElementById('flowDate').textContent=new Date().toLocaleDateString(currentLang==='tr'?'tr-TR':'en-US',{day:'numeric',month:'long'});
+      renderDailyGoal();renderFlow();renderWeek();renderTaskList();updateStreakBtn();
+    }
+  },60000);
 }
 
 // ══ PAGE ══
@@ -1936,14 +2016,19 @@ window.renderGroupPanel=function(members){
   const u=window._currentUser||{};
   if(!members.find(m=>m.id===u.uid))members.unshift(window.myPresencePayload());
   const online=members.filter(m=>m.status!=='offline').length;
-  document.getElementById('gphOnline').textContent=`${online} çevrimiçi`;
+  document.getElementById('gphOnline').textContent=`${online} ${t('online')}`;
   document.getElementById('agr_members').textContent=`${online} ${t('online')}`;
   const ord={working:0,break:1,idle:2,offline:3};
   members.sort((a,b)=>(ord[a.status]??3)-(ord[b.status]??3)||(b.totalFocusSec||0)-(a.totalFocusSec||0));
   // Show max 3 (top workers) on home panel
   const toShow=members.slice(0,3);
-  const SI={working:{cls:'sw',text:'🟢 Çalışıyor'},break:{cls:'sb',text:'🟡 Mola'},idle:{cls:'si',text:'⚫ Boşta'},offline:{cls:'so',text:'○ Çevrimdışı'}};
-  toShow.forEach(m=>{const si=SI[m.status]||SI.offline,isMe=m.id===u.uid;const row=document.createElement('div');row.className=`member-row ${si.cls}`;row.innerHTML=`<div class="mavatar" style="background:${m.color||'#c8775a'}">${aLetter(m.name)}<div class="msd"></div></div><div class="minfo"><div class="mname">${m.name}${isMe?'<span class="me-tag">sen</span>':''}</div><div class="mstxt">${si.text}</div>${m.taskName&&m.status==='working'?`<div class="mtask">📌 ${m.taskName}</div>`:''}</div><div class="mstats"><div class="mstat"><div class="mstat-val" style="color:var(--accent)">${m.todayPomos||0}🍅</div><div class="mstat-lbl">bugün</div></div><div class="mstat"><div class="mstat-val">${fmtH(m.totalFocusSec||0)}</div><div class="mstat-lbl">toplam</div></div></div>`;body.appendChild(row);});
+  const SI={
+    working:{cls:'sw',text:`🟢 ${currentLang==='tr'?'Çalışıyor':'Working'}`},
+    break:{cls:'sb',text:`🟡 ${currentLang==='tr'?'Mola':'Break'}`},
+    idle:{cls:'si',text:`⚫ ${currentLang==='tr'?'Boşta':'Idle'}`},
+    offline:{cls:'so',text:`○ ${currentLang==='tr'?'Çevrimdışı':'Offline'}`}
+  };
+  toShow.forEach(m=>{const si=SI[m.status]||SI.offline,isMe=m.id===u.uid;const row=document.createElement('div');row.className=`member-row ${si.cls}`;row.innerHTML=`<div class="mavatar" style="background:${m.color||'#c8775a'}">${aLetter(m.name)}<div class="msd"></div></div><div class="minfo"><div class="mname">${m.name}${isMe?`<span class="me-tag">${currentLang==='tr'?'sen':'you'}</span>`:''}</div><div class="mstxt">${si.text}</div>${m.taskName&&m.status==='working'?`<div class="mtask">📌 ${m.taskName}</div>`:''}</div><div class="mstats"><div class="mstat"><div class="mstat-val" style="color:var(--accent)">${m.todayPomos||0}🍅</div><div class="mstat-lbl">${currentLang==='tr'?'bugün':'today'}</div></div><div class="mstat"><div class="mstat-val">${fmtH(m.totalFocusSec||0)}</div><div class="mstat-lbl">${currentLang==='tr'?'toplam':'total'}</div></div></div>`;body.appendChild(row);});
   if(members.length>3){const more=document.createElement('div');more.style.cssText='text-align:center;font-size:.7rem;color:var(--text-muted);padding:6px 0 10px';more.textContent=`+${members.length-3} kişi daha → Tümünü gör`;body.appendChild(more);}
   // Also refresh desk if group page is open
   if(document.getElementById('groupFullPage').classList.contains('active'))renderDeskView();
@@ -2097,11 +2182,13 @@ function renderDeskView(){
     else figure=deskFigureWorking(m.color||'#c8775a');
     
     const mood=m.mood||'';
-    const moodDisplay=mood?`<span style="font-size:1rem">${mood}</span>`:`<span class="mood-slot empty">?</span>`;
-    
-    let moodBtn='';
+    // For self: show clickable mood button with current mood (single display)
+    // For others: show just the mood emoji or placeholder
+    let moodRow='';
     if(isMe){
-      moodBtn=`<button class="mood-me-btn" onclick="openMoodPicker(event,'${m.id}')">mood ${mood||'?'}</button>`;
+      moodRow=`<button class="mood-me-btn" onclick="openMoodPicker(event,'${m.id}')" style="font-size:.85rem;padding:4px 10px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);cursor:pointer;font-family:'Outfit',sans-serif;color:var(--text);transition:all .18s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">${mood||'😊'} <span style="font-size:.6rem;color:var(--text-muted)">${t('moodChange')}</span></button>`;
+    } else if(mood){
+      moodRow=`<span style="font-size:1.1rem" title="${mood}">${mood}</span>`;
     }
     
     card.innerHTML=`
@@ -2109,17 +2196,14 @@ function renderDeskView(){
       ${figure}
       <div class="desk-name">${m.name}${isMe?' 👤':''}</div>
       ${m.taskName&&m.status==='working'?`<div class="desk-task">📌 ${m.taskName.slice(0,20)}</div>`:''}
-      <div style="display:flex;align-items:center;gap:6px;margin-top:2px">
-        ${moodDisplay}
-        ${moodBtn}
-      </div>
-      <div class="desk-stat">${m.todayPomos||0}🍅 <span class="desk-time">${fmtH(m.totalFocusSec||0)}</span></div>
+      ${moodRow?`<div style="margin-top:4px">${moodRow}</div>`:''}
+      <div class="desk-stat" style="margin-top:4px">${m.todayPomos||0}🍅 <span class="desk-time">${fmtH(m.totalFocusSec||0)}</span></div>
     `;
     grid.appendChild(card);
   });
   
   if(!allMembers.length){
-    grid.innerHTML='<div style="grid-column:span 2;text-align:center;color:var(--text-muted);font-size:.85rem;padding:30px">Henüz kimse yok</div>';
+    grid.innerHTML=`<div style="grid-column:span 2;text-align:center;color:var(--text-muted);font-size:.85rem;padding:30px">${t('noMembersYet')}</div>`;
   }
 }
 
@@ -2130,22 +2214,40 @@ function openMoodPicker(e,uid){
   if(existing){existing.remove();return;}
   
   const picker=document.createElement('div');
-  picker.className='mood-picker';
   picker.id='moodPickerPop';
+  picker.style.cssText='position:fixed;z-index:350;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:12px;box-shadow:var(--shadow-lg);max-width:260px;animation:fadeUp .18s ease';
   
-  const moods=['😊','😄','😎','🤩','😌','😔','😤','😴','🤔','😰','💪','🧠'];
-  moods.forEach(em=>{
-    const btn=document.createElement('div');
-    btn.className='mood-option';
-    btn.textContent=em;
-    btn.onclick=()=>{setMyMood(em);picker.remove();};
-    picker.appendChild(btn);
+  const sections=[
+    {label:t('moodSectionMood'),items:['😊','😄','🤩','😎','😌','😴','😔','😤','😰','🤔','😤','🥱']},
+    {label:t('moodSectionWork'),items:['👨‍💻','👩‍💻','👨‍🎨','👩‍🎨','👨‍🏫','👩‍🏫','👨‍🔬','👩‍🔬','👨‍⚕️','👩‍⚕️','👨‍🍳','👩‍🍳']},
+    {label:t('moodSectionMotiv'),items:['💪','🔥','⚡','🎯','✨','🧠','📚','☕','🎵','🏆','🚀','💡']}
+  ];
+  
+  let html=`<div style="font-size:.62rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:8px;font-weight:700">${t('moodSelectTitle')}</div>`;
+  sections.forEach(sec=>{
+    html+=`<div style="font-size:.62rem;color:var(--text-dim);margin:6px 0 4px;letter-spacing:.8px">${sec.label}</div>`;
+    html+=`<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-bottom:4px">`;
+    sec.items.forEach(em=>{
+      html+=`<div class="mood-option" title="${em}" onclick="setMyMood('${em}');document.getElementById('moodPickerPop').remove()">${em}</div>`;
+    });
+    html+=`</div>`;
   });
   
+  // Clear option
+  html+=`<button onclick="setMyMood('');document.getElementById('moodPickerPop').remove()" style="width:100%;margin-top:6px;padding:6px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:.72rem;cursor:pointer">${t('moodClear')}</button>`;
+  
+  picker.innerHTML=html;
+  
   const rect=e.currentTarget.getBoundingClientRect();
-  picker.style.cssText+=`top:${rect.bottom+6}px;left:${Math.min(rect.left,window.innerWidth-210)}px`;
+  const pickerW=260;
+  let left=rect.left;
+  if(left+pickerW>window.innerWidth-10)left=window.innerWidth-pickerW-10;
+  let top=rect.bottom+6;
+  if(top+320>window.innerHeight)top=rect.top-326;
+  picker.style.top=top+'px';
+  picker.style.left=left+'px';
   document.body.appendChild(picker);
-  setTimeout(()=>document.addEventListener('click',function h(){picker.remove();document.removeEventListener('click',h);}),100);
+  setTimeout(()=>document.addEventListener('click',function h(ev){if(!picker.contains(ev.target)){picker.remove();document.removeEventListener('click',h);}},),100);
 }
 
 function setMyMood(emoji){
@@ -2193,8 +2295,8 @@ function renderRanking(){
       <div class="rank-num ${numCls}">${medal||('#'+(i+1))}</div>
       <div class="rank-avatar" style="background:${m.color||'#c8775a'}">${aLetter(m.name)}</div>
       <div class="rank-info">
-        <div class="rank-name">${m.name}${isMe?'<span class="rank-me-tag">sen</span>':''}</div>
-        <div class="rank-sub">${rankPeriod==='day'?'Bugün':rankPeriod==='week'?'Bu Hafta':'Bu Yıl'}</div>
+        <div class="rank-name">${m.name}${isMe?`<span class="rank-me-tag">${currentLang==='tr'?'sen':'you'}</span>`:''}</div>
+        <div class="rank-sub">${rankPeriod==='day'?t('rankToday'):rankPeriod==='week'?t('rankWeek'):t('rankYear')}</div>
       </div>
       <div>
         <div class="rank-time">${fmtH(m.rankSec)}</div>
@@ -2278,7 +2380,7 @@ function mkTaskEl(task){
   div.onclick=()=>openTaskModal(task.id);
   return div;
 }
-function toggleTask(id){const task=tasks.find(tk=>tk.id===id);if(!task)return;task.completed=!task.completed;if(task.completed){if(!history.find(h=>h.id===id))history.unshift({id,name:task.name,category:task.category||'',dayKey:task.dayKey,completedAt:new Date().toISOString(),pomodoros:task.pomodoros||0,timeSpent:ttime[id]||0});if(task.dayKey===todayKey())stats.task++;toast(t('toastCompleted'));}else{history=history.filter(h=>h.id!==id);if(task.dayKey===todayKey())stats.task=Math.max(0,stats.task-1);}save();renderTaskList();renderTaskPicker();renderSelBox();renderDailyGoal();renderFlow();updateStats();
+function toggleTask(id){const task=tasks.find(tk=>tk.id===id);if(!task)return;task.completed=!task.completed;if(task.completed){if(!history.find(h=>h.id===id))history.unshift({id,name:task.name,category:task.category||'',dayKey:task.dayKey,completedAt:new Date().toISOString(),pomodoros:task.pomodoros||0,timeSpent:ttime[id]||0});if(task.dayKey===todayKey())stats.task++;toast(t('toastCompleted'));}else{history=history.filter(h=>h.id!==id);if(task.dayKey===todayKey())stats.task=Math.max(0,stats.task-1);}save();renderTaskList();renderTaskPicker();renderSelBox();renderDailyGoal();renderFlow();updateStats();updateStreakBtn();renderWeek();
   // Check if today's goal just met
   if(task.completed&&task.dayKey===todayKey())checkStreakAutoOpen();
 }
@@ -2290,13 +2392,18 @@ function delTask(id){
   const ex=document.getElementById('delTaskDialog');if(ex)ex.remove();
 
   function doRemove(idsToRemove){
-    // Remove tasks but KEEP history, ttime, cycles (analysis stays intact)
-    idsToRemove.forEach(rid=>{
-      tasks=tasks.filter(t=>t.id!==rid);
-      // Don't remove from history or ttime — analysis preserved
-      if(selId===rid){selId=null;}
-    });
-    save();renderTaskList();renderTaskPicker();renderSelBox();renderWeek();renderFlow();renderDailyGoal();
+    const removeSet=new Set(idsToRemove);
+    // Clear selId if it's being deleted
+    if(selId&&removeSet.has(selId)){selId=null;}
+    // Single-pass filter — remove all deleted IDs at once
+    tasks=tasks.filter(t=>!removeSet.has(t.id));
+    // Extra safety: clear selId if it still points to a missing task
+    if(selId&&!tasks.find(t=>t.id===selId)){selId=null;}
+    save();
+    renderTaskList();renderTaskPicker();renderSelBox();renderWeek();renderFlow();renderDailyGoal();renderCatFilter();
+    // Always fully close and clear dropdown — deleted tasks must not linger
+    const dd=document.getElementById('taskDrop');
+    if(dd){dd.style.display='none';dd.innerHTML='';}
   }
 
   function showDialog(html,onClose){
@@ -2397,10 +2504,13 @@ function delTask(id){
 }
 
 function getBaseId(id){
-  // IDs are: "base_s", "base_YYYY-MM-DD_xyz", or just "base"
-  // Strip _s or _YYYY-MM-DD_xxx suffix
-  const m=id.match(/^(\d+)(?:_s|_\d{4}-\d{2}-\d{2}_[a-z0-9]+)?$/);
-  return m?m[1]:id;
+  // IDs can be:
+  // "1234567890"           → base only
+  // "1234567890_s"         → base + _s (starting day repeat)
+  // "1234567890_2025-01-15_abc123"  → base + date + random
+  // Strip everything after the first _
+  const underscoreIdx = id.indexOf('_');
+  return underscoreIdx === -1 ? id : id.slice(0, underscoreIdx);
 }
 
 function renderGoalMini(){
@@ -2408,8 +2518,8 @@ function renderGoalMini(){
   const hourGoal=settings.goalHours||0,todayMin=stats.date===todayKey()?stats.min:0;
   const c=document.getElementById('goalMini');
   c.innerHTML=`<div class="goal-mini">
-    <div class="goal-row"><div class="goal-lbl">📋 Görev</div><div class="goal-bar-track"><div class="goal-bar-fill" style="width:${Math.min(100,done/Math.max(1,goal)*100)}%;background:var(--accent)"></div></div><div class="goal-txt">${done}/${goal}</div></div>
-    ${hourGoal>0?`<div class="goal-row"><div class="goal-lbl">⏱ Odak</div><div class="goal-bar-track"><div class="goal-bar-fill" style="width:${Math.min(100,todayMin/(hourGoal*60)*100)}%;background:var(--green)"></div></div><div class="goal-txt">${Math.round(todayMin/60*10)/10}/${hourGoal}sa</div></div>`:''}
+    <div class="goal-row"><div class="goal-lbl">📋 ${t('goalTask')}</div><div class="goal-bar-track"><div class="goal-bar-fill" style="width:${Math.min(100,done/Math.max(1,goal)*100)}%;background:var(--accent)"></div></div><div class="goal-txt">${done}/${goal}</div></div>
+    ${hourGoal>0?`<div class="goal-row"><div class="goal-lbl">⏱ ${t('goalHour')}</div><div class="goal-bar-track"><div class="goal-bar-fill" style="width:${Math.min(100,todayMin/(hourGoal*60)*100)}%;background:var(--green)"></div></div><div class="goal-txt">${Math.round(todayMin/60*10)/10}/${hourGoal}${currentLang==='tr'?'sa':'h'}</div></div>`:''}
   </div>`;
 }
 
@@ -2639,6 +2749,9 @@ function toggleTimer(){
         save();
         renderDailyGoal();
         renderFlow();
+        // Reset streak shown flag for new day and update UI
+        updateStreakBtn();
+        renderWeek();
       }
       tSec--;updateTDisplay();if(tSec<=0){clearInterval(tIv);tRunning=false;document.getElementById('playBtn').textContent=t('startBtn');commitSeg();onTimerEnd();}},1000);
     nudgePresence();
@@ -2971,7 +3084,7 @@ function renderDailyGoal(){
       const cls=i<filledSeg?'done':i===filledSeg?'current':'';
       bars+=`<div class="dgc-bar ${cls}"></div>`;
     }
-    ratio=`${Math.round(todayMin/60*10)/10}sa/${hg}sa`;
+    ratio=`${Math.round(todayMin/60*10)/10}${currentLang==='tr'?'sa':'h'}/${hg}${currentLang==='tr'?'sa':'h'}`;
     progressPct=Math.min(100,todayMin/(hg*60)*100);
   }
 
@@ -3112,19 +3225,19 @@ function openStreakPage(autoTriggered){
 
   let congratsHTML='';
   if(autoTriggered&&prevM){
-    const msgs={1:'İlk gününü tamamladın!',3:'3 günlük seri!',5:'5 günlük seri — harika!',10:'10. günün! İnanılmaz!',20:'20 gün! Sen bir fırıldaksın!',30:'30 günlük seri! Efsane!',50:'50 gün! Destansı!',100:'100 gün! Söz yok!',200:'200 gün! Gelmiş geçmiş en iyisi!'};
+    const msgs=t('streakCongratsMsgs');
     congratsHTML=`
       <div class="streak-congrats">
         <span class="streak-congrats-emoji">🎉</span>
-        <div class="streak-congrats-title">${prevM}. Streak'ine Ulaştın!</div>
-        <div class="streak-congrats-sub">${msgs[prevM]||'Tebrikler!'}</div>
+        <div class="streak-congrats-title">${t('streakCongratsTitle',prevM)}</div>
+        <div class="streak-congrats-sub">${msgs[prevM]||t('streakCongrats')}</div>
       </div>`;
   }
 
   // Road milestones — not used for old layout, kept for reference
 
   const sgt=settings.streakGoalType||'task';
-  const goalDesc=sgt==='task'?`${settings.goal||5} görev tamamlama`:`${settings.goalHours||0} saat odak`;
+  const goalDesc=sgt==='task'?t('streakGoalDesc_task',settings.goal||5):t('streakGoalDesc_hour',settings.goalHours||0);
 
   // Row order (top → bottom): figure floats at top, then target (dashed), then nextAfterTarget (plain), then done (green newest first)
   const doneMs=[...STREAK_MILESTONES].filter(m=>m<=streak).reverse();
@@ -3149,11 +3262,11 @@ function openStreakPage(autoTriggered){
             <div class="sr-node target" id="streakDropZone"
               ondragover="event.preventDefault();this.classList.add('over-target')"
               ondragleave="this.classList.remove('over-target')"
-              ondrop="streakDropped(event)"><span>${m}</span><span style="font-size:.45rem;opacity:.6;display:block;font-weight:400">gün</span></div>
+              ondrop="streakDropped(event)"><span>${m}</span><span style="font-size:.45rem;opacity:.6;display:block;font-weight:400">${t('streakTargetDays')}</span></div>
           </div>
           <div style="position:absolute;right:calc(50% + 42px);text-align:right;max-width:calc(50% - 46px)">
-            <div class="sr-label-val" style="color:var(--accent)">🎯 ${m} Gün</div>
-            <div class="sr-label-sub" style="color:var(--accent)">hedefe sürükle</div>
+            <div class="sr-label-val" style="color:var(--accent)">${t('streakGoalDays',m)}</div>
+            <div class="sr-label-sub" style="color:var(--accent)">${t('streakTargetHint')}</div>
           </div>
         </div>`;
     } else {
@@ -3163,8 +3276,8 @@ function openStreakPage(autoTriggered){
       else nodeStyle='background:var(--surface);border:2px solid var(--border);color:var(--text-muted)';
 
       let labelHTML='';
-      if(type==='done') labelHTML=`<div class="sr-label-val" style="color:var(--green)">✓ ${m} Gün</div>`;
-      else labelHTML=`<div class="sr-label-val">${m} Gün</div><div class="sr-label-sub">sonraki hedef</div>`;
+      if(type==='done') labelHTML=`<div class="sr-label-val" style="color:var(--green)">${t('streakDoneDays',m)}</div>`;
+      else labelHTML=`<div class="sr-label-val">${m} ${t('streakTargetDays')}</div><div class="sr-label-sub">${t('streakNextGoal')}</div>`;
 
       const unitStyle=isLeft
         ?'position:absolute;right:calc(50% + 30px);display:flex;align-items:center;gap:10px;flex-direction:row-reverse'
@@ -3184,10 +3297,10 @@ function openStreakPage(autoTriggered){
   const progressToTarget=targetM?Math.min(100,Math.round(streak/targetM*100)):100;
   const encourageHTML=!autoTriggered&&targetM?`
     <div class="streak-encourage">
-      <div class="streak-encourage-title">💪 ${targetM}. Streak'i yapabilirsin!</div>
-      <div class="streak-encourage-sub">Şu an ${streak} gündesin. ${targetM-streak} gün daha!</div>
+      <div class="streak-encourage-title">${t('streakEncourageTitle',targetM)}</div>
+      <div class="streak-encourage-sub">${t('streakEncourageSub',streak,targetM-streak)}</div>
       <div class="streak-power-bar-wrap"><div class="streak-power-bar-fill" style="width:${progressToTarget}%"></div></div>
-      <div class="streak-power-lbl">${progressToTarget}% → ${targetM} gün</div>
+      <div class="streak-power-lbl">${t('streakPowerLbl',progressToTarget,targetM)}</div>
     </div>`:'';
 
   document.getElementById('streakContent').innerHTML=`
@@ -3196,20 +3309,20 @@ function openStreakPage(autoTriggered){
     <div style="display:flex;gap:10px;margin:0 16px 20px">
       <div class="streak-stat-box">
         <div class="streak-stat-val">${streak}</div>
-        <div class="streak-stat-lbl">🔥 Günlük Seri</div>
+        <div class="streak-stat-lbl">${t('streakDailyStreak')}</div>
       </div>
       ${targetM?`<div class="streak-stat-box">
         <div class="streak-stat-val" style="color:var(--accent);font-size:1.3rem">${targetM-streak}</div>
-        <div class="streak-stat-lbl">🎯 Hedefe Kalan</div>
+        <div class="streak-stat-lbl">${t('streakToTarget')}</div>
       </div>`:''}
     </div>
     <div class="streak-road-section" id="streakRoadSection" style="position:relative">
-      <div class="streak-road-title">Streak Yolculuğu</div>
+      <div class="streak-road-title">${t('streakRoadTitle')}</div>
       <div class="streak-road-line"></div>
       <!-- Figure: absolute inside road section, starts near top -->
       <div class="sr-figure" id="streakFigure" style="top:52px">
         <div class="sr-fig-img" id="streakFigImg">${streakFigureSVG(color)}</div>
-        <div class="sr-fig-lbl">${streak}🔥 sen</div>
+        <div class="sr-fig-lbl">${t('streakFigLbl',streak)}</div>
       </div>
       <!-- Empty row to reserve space for figure -->
       <div style="height:120px"></div>
@@ -3355,7 +3468,7 @@ function streakDropConfirm(){
       ${streakFigureSVG(color)}
     </div>
     <div style="background:var(--green);color:#fff;font-family:'DM Serif Display',serif;font-size:1.15rem;padding:8px 20px;border-radius:99px;box-shadow:0 4px 16px rgba(90,154,106,0.5);white-space:nowrap">
-      💪 ${nextM?nextM+'. Streak\'e doğru!':'Devam ediyorsun!'}
+      ${nextM?t('streakNextTo',nextM):t('streakKeepGoing')}
     </div>
   `;
   cel.appendChild(msg);
@@ -3394,6 +3507,9 @@ function checkStreakAutoOpen(){
   if(isDayGoalMet(today)){
     const streak=calcStreak();
     const prevM=getPrevMilestone(streak);
+    // Always update streak UI when goal is met
+    updateStreakBtn();
+    renderWeek();
     // Only auto-open on milestone or first time today
     const isNewMilestone=prevM&&!localStorage.getItem('ff6_streak_ms_'+today+'_'+prevM);
     if(isNewMilestone){
@@ -3405,6 +3521,10 @@ function checkStreakAutoOpen(){
       localStorage.setItem('ff6_streak_shown_'+today,'1');
       setTimeout(()=>openStreakPage(true),600);
     }
+  } else {
+    // Goal not met yet — still update the UI
+    updateStreakBtn();
+    renderWeek();
   }
 }
 
@@ -3416,13 +3536,13 @@ function updateStreakBtn(){
   btn.style.display='flex';
   if(streak>0){
     btn.title=`${streak} günlük streak 🔥`;
-    btn.textContent='🔥';
+    btn.innerHTML=`🔥<span style="font-size:.75rem;font-weight:700;margin-left:2px">${streak}</span>`;
     btn.style.background='var(--green-bg)';
     btn.style.borderColor='var(--green)';
     btn.style.color='var(--green)';
   } else {
     btn.title='Streak sayfası';
-    btn.textContent='🔥';
+    btn.innerHTML='🔥';
     btn.style.background='var(--surface2)';
     btn.style.borderColor='var(--border)';
     btn.style.color='var(--text-dim)';
@@ -3574,19 +3694,20 @@ function renderFlow(){
 // ══ CATEGORY-AWARE TASK DROP ══
 function renderDropContent(){
   const dd=document.getElementById('taskDrop');dd.innerHTML='';
-  // Filter by selCat if set
-  let pending=tasks.filter(t=>!t.completed);
+  const today=todayKey();
+  // Only show today's and future tasks — past-date tasks are irrelevant for timer selection
+  let pending=tasks.filter(t=>!t.completed && t.dayKey>=today);
   if(selCat)pending=pending.filter(t=>t.category===selCat);
   if(!pending.length){dd.innerHTML=`<div style="padding:10px;font-size:.8rem;color:var(--text-muted)">${selCat?t('catNoTask',selCat):t('noTask')}</div>`;return;}
-  const today=todayKey(),grps={},pw={high:0,mid:1,low:2};
+  const grps={},pw={high:0,mid:1,low:2};
   pending.forEach(t=>{if(!grps[t.dayKey])grps[t.dayKey]=[];grps[t.dayKey].push(t);});
   Object.keys(grps).sort((a,b)=>{if(a===today)return -1;if(b===today)return 1;return a.localeCompare(b);}).forEach(dk=>{
     const d=new Date(dk+'T12:00:00'),lbl=dk===today?`📅 ${t('today')}`:d.toLocaleDateString(currentLang==='tr'?'tr-TR':'en-US',{weekday:'short',day:'numeric',month:'short'});
     const hdr=document.createElement('div');hdr.className='td-hdr';hdr.textContent=lbl;dd.appendChild(hdr);
-    grps[dk].sort((a,b)=>pw[a.priority]-pw[b.priority]).forEach(t=>{
-      const it=document.createElement('div');it.className='td-item'+(t.id===selId?' cur':'');
-      it.innerHTML=`<span style="font-size:.75rem">${{high:'🔴',mid:'🟡',low:'🟢'}[t.priority]}</span><span style="flex:1">${t.name}</span>${t.category?`<span style="font-size:.65rem;color:var(--text-muted)">${t.category}</span>`:''}`;
-      it.onclick=(e)=>{e.stopPropagation();switchActive(t.id);dd.style.display='none';};
+    grps[dk].sort((a,b)=>pw[a.priority]-pw[b.priority]).forEach(task=>{
+      const it=document.createElement('div');it.className='td-item'+(task.id===selId?' cur':'');
+      it.innerHTML=`<span style="font-size:.75rem">${{high:'🔴',mid:'🟡',low:'🟢'}[task.priority]}</span><span style="flex:1">${task.name}</span>${task.category?`<span style="font-size:.65rem;color:var(--text-muted)">${task.category}</span>`:''}`;
+      it.onclick=(e)=>{e.stopPropagation();switchActive(task.id);dd.style.display='none';};
       dd.appendChild(it);
     });
   });
@@ -3594,8 +3715,12 @@ function renderDropContent(){
 
 // ══ RENDER SEL BOX (with clear button) ══
 function renderSelBox(){
-  // If selId points to a deleted task, clear it
-  if(selId&&!tasks.find(t2=>t2.id===selId)){selId=null;}
+  const today=todayKey();
+  // Clear selId if it points to a deleted task OR a past-date task
+  if(selId){
+    const t2=tasks.find(t=>t.id===selId);
+    if(!t2||t2.dayKey<today){selId=null;}
+  }
   const task=selId?tasks.find(t2=>t2.id===selId):null;
   const box=document.getElementById('tsbText');
   const clearBtn=document.getElementById('selClearBtn');
