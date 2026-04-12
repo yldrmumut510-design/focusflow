@@ -688,7 +688,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:max
       <div id="panel_login">
         <div class="auth-field"><label class="auth-label">E-posta</label><input class="auth-input" id="login_email" type="email" placeholder="ornek@mail.com" oninput="clearAuthErr()" onkeydown="if(event.key==='Enter')doLogin()"></div>
         <div class="auth-field"><label class="auth-label">Şifre</label><input class="auth-input" id="login_pass" type="password" placeholder="••••••••" oninput="clearAuthErr()" onkeydown="if(event.key==='Enter')doLogin()"></div>
-        <a href="javascript:void(0)" class="forgot-link" id="forgotBtn">Şifremi unuttum</a>
+        <a href="javascript:void(0)" class="forgot-link" id="forgotBtn" onclick="window.showResetPanel&&window.showResetPanel()">Şifremi unuttum</a>
         <div class="auth-err" id="login_err"></div>
         <button class="auth-btn" id="login_btn" onclick="doLogin()" style="margin-top:14px">Giriş Yap</button>
         <div class="auth-divider"><span>veya</span></div>
@@ -701,7 +701,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:max
         <div class="auth-err" id="reset_err"></div>
         <div class="reset-success" id="reset_success">📧 Şifre sıfırlama bağlantısı e-postana gönderildi. Maildeki bağlantıya tıkla ve yeni şifreni belirle.</div>
         <button class="auth-btn" id="reset_btn" onclick="doPasswordReset()" style="margin-top:4px">Sıfırlama Bağlantısı Gönder</button>
-        <button class="guest-btn" id="resetBackBtn" style="margin-top:8px">← Giriş ekranına dön</button>
+        <button class="guest-btn" id="resetBackBtn" onclick="window.showLoginPanel&&window.showLoginPanel()" style="margin-top:8px">← Giriş ekranına dön</button>
       </div>
       <div id="panel_register" style="display:none">
         <div class="auth-field"><label class="auth-label">Adın</label><input class="auth-input" id="reg_name" type="text" placeholder="Adın veya takma adın" maxlength="24" oninput="clearAuthErr()"></div>
@@ -4006,18 +4006,6 @@ document.addEventListener('DOMContentLoaded',()=>{applyI18n();});
 window.showResetPanel=function(){document.getElementById('panel_login').style.display='none';document.getElementById('panel_reset').style.display='block';document.getElementById('reset_success').style.display='none';};
 window.showLoginPanel=function(){document.getElementById('panel_reset').style.display='none';document.getElementById('panel_login').style.display='block';};
 window.doPasswordReset=function(){var email=document.getElementById('reset_email').value.trim();if(!email)return;var btn=document.getElementById('reset_btn');btn.disabled=true;if(window._doPasswordReset){window._doPasswordReset(email,btn);}else{btn.disabled=false;}};
-document.addEventListener('DOMContentLoaded',function(){
-  var fb=document.getElementById('forgotBtn');
-  if(fb){
-    fb.addEventListener('touchstart',function(e){e.preventDefault();window.showResetPanel();},{passive:false});
-    fb.addEventListener('click',function(e){e.preventDefault();window.showResetPanel();});
-  }
-  var rb=document.getElementById('resetBackBtn');
-  if(rb){
-    rb.addEventListener('touchstart',function(e){e.preventDefault();window.showLoginPanel();},{passive:false});
-    rb.addEventListener('click',function(e){e.preventDefault();window.showLoginPanel();});
-  }
-});
 </script>
 </body>
 </html>
