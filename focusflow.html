@@ -1176,6 +1176,10 @@ window._doPasswordReset = async (email, btn) => {
   btn.disabled=false; btn.textContent=t('resetSendBtn');
 };
 
+window.showResetPanel=function(){document.getElementById('panel_login').style.display='none';document.getElementById('panel_reset').style.display='block';document.getElementById('reset_success').style.display='none';};
+window.showLoginPanel=function(){document.getElementById('panel_reset').style.display='none';document.getElementById('panel_login').style.display='block';};
+window.doPasswordReset=function(){var email=document.getElementById('reset_email').value.trim();if(!email)return;var btn=document.getElementById('reset_btn');btn.disabled=true;if(window._doPasswordReset){window._doPasswordReset(email,btn);}else{btn.disabled=false;}};
+
 window._doSignOut = async () => {
   if(!confirm(t('signOutConfirm')))return;
   stopGroupSync();await signOut(auth);
@@ -4001,11 +4005,6 @@ function buildFireplace(ctx,master){
 buildRdays();
 // Apply language on initial load (auth screen)
 document.addEventListener('DOMContentLoaded',()=>{applyI18n();});
-</script>
-<script>
-window.showResetPanel=function(){document.getElementById('panel_login').style.display='none';document.getElementById('panel_reset').style.display='block';document.getElementById('reset_success').style.display='none';};
-window.showLoginPanel=function(){document.getElementById('panel_reset').style.display='none';document.getElementById('panel_login').style.display='block';};
-window.doPasswordReset=function(){var email=document.getElementById('reset_email').value.trim();if(!email)return;var btn=document.getElementById('reset_btn');btn.disabled=true;if(window._doPasswordReset){window._doPasswordReset(email,btn);}else{btn.disabled=false;}};
 </script>
 </body>
 </html>
