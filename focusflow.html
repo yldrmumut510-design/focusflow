@@ -2860,6 +2860,13 @@ function doResetSession(){
 }
 function doResetCycle(){
   const m=document.getElementById('resetMenu');if(m)m.remove();
+  // If currently in a break mode, stop timer and switch to focus
+  if(tMode==='short'||tMode==='long'){
+    clearInterval(tIv);tRunning=false;
+    sessP=[];sessTT={};sessTT_days={};lastTickDay=todayKey();cumulPause=0;pauseDispSec=0;pauseCount=0;pauseMs=null;
+    clearPauseRing();
+    setMode('focus');
+  }
   resetDots();toast(t('toastResetCycle'));
 }
 // ── Confirm dialogs for Skip & Cancel ──
@@ -3011,14 +3018,18 @@ function checkTaskReminders(){
 function playBeep(){if(settings.sound===false||!document.getElementById('soundToggle').checked)return;try{const ctx=new(window.AudioContext||window.webkitAudioContext)();[0,.15,.3].forEach((t,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=i===2?880:660;g.gain.setValueAtTime(.25,ctx.currentTime+t);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+t+.25);o.start(ctx.currentTime+t);o.stop(ctx.currentTime+t+.25);});}catch(e){}}
 function sendNotification(title,body){
   if(settings.notifications===false)return;
-  if(!('Notification' in window)||Notification.permission!=='granted')return;
+  if(!isNotifSupported()||Notification.permission!=='granted')return;
   try{new Notification(title,{body,icon:'',tag:'focusflow-timer',requireInteraction:false});}catch(e){}
 }
 async function toggleNotifications(){
   const el=document.getElementById('notifToggle');
   if(!el)return;
   if(el.checked){
-    if(!('Notification' in window)){toast(currentLang==='tr'?'❌ Tarayıcı desteklemiyor':'❌ Browser not supported');el.checked=false;return;}
+    if(!isNotifSupported()){
+      const isIOS=/iP(hone|od|ad)/.test(navigator.userAgent);
+      const msg=isIOS?(currentLang==='tr'?'📲 Ana ekrana ekleyince bildirimler aktif olur':'📲 Add to Home Screen to enable notifications'):(currentLang==='tr'?'❌ Tarayıcı desteklemiyor':'❌ Browser not supported');
+      toast(msg);el.checked=false;return;
+    }
     const perm=await Notification.requestPermission();
     if(perm==='granted'){settings.notifications=true;toast(t('sNotifEnabled'));}
     else{settings.notifications=false;el.checked=false;toast(t('sNotifDenied'));}
@@ -3027,8 +3038,18 @@ async function toggleNotifications(){
   }
   save();
 }
+function isNotifSupported(){
+  // iOS Safari in browser (not PWA) doesn't support Notification API
+  if(!('Notification' in window)) return false;
+  // Detect standalone PWA mode
+  const isPWA=window.navigator.standalone===true||window.matchMedia('(display-mode: standalone)').matches;
+  const isIOS=/iP(hone|od|ad)/.test(navigator.userAgent);
+  if(isIOS && !isPWA) return false;
+  return true;
+}
+
 async function requestNotifPermission(){
-  if(!('Notification' in window)) return;
+  if(!isNotifSupported()) return;
   // Already granted — just sync settings
   if(Notification.permission==='granted'){
     settings.notifications=true;
