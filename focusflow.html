@@ -1882,6 +1882,8 @@ function init(){
   applyDarkMode(settings.dark);
   document.getElementById('soundToggle').checked=settings.sound!==false;
   if(('Notification' in window)&&Notification.permission!=='granted')settings.notifications=false;
+  // Auto-request notification permission on first launch
+  setTimeout(()=>requestNotifPermission(),1200);
   const u=window._currentUser||{name:'?',color:'#c8775a'};
   const ua=document.getElementById('userAvatarHead');ua.textContent=aLetter(u.name);ua.style.background=u.color;
   document.getElementById('guestBadgeHead').style.display=isGuest?'':'none';
@@ -3025,6 +3027,55 @@ async function toggleNotifications(){
   }
   save();
 }
+async function requestNotifPermission(){
+  if(!('Notification' in window)) return;
+  // Already granted — just sync settings
+  if(Notification.permission==='granted'){
+    settings.notifications=true;
+    const el=document.getElementById('notifToggle');if(el)el.checked=true;
+    save();return;
+  }
+  // Denied — don't ask again
+  if(Notification.permission==='denied') return;
+  // Already asked this session
+  if(sessionStorage.getItem('ff6_notif_asked')) return;
+  sessionStorage.setItem('ff6_notif_asked','1');
+
+  // Show a friendly bottom sheet
+  const sheet=document.createElement('div');
+  sheet.id='notifSheet';
+  sheet.style.cssText='position:fixed;inset:0;z-index:450;display:flex;align-items:flex-end;justify-content:center;background:rgba(30,20,10,.5);backdrop-filter:blur(4px);animation:fadeUp .25s ease';
+  sheet.innerHTML=`<div style="width:100%;max-width:500px;background:var(--surface);border-radius:22px 22px 0 0;padding:26px 22px calc(26px + env(safe-area-inset-bottom));box-shadow:var(--shadow-lg)">
+    <div style="width:36px;height:4px;border-radius:99px;background:var(--border);margin:0 auto 20px"></div>
+    <div style="font-size:1.7rem;text-align:center;margin-bottom:10px">🔔</div>
+    <div style="font-size:1rem;font-weight:700;color:var(--text);text-align:center;margin-bottom:8px">${currentLang==='tr'?'Bildirimlere İzin Ver':'Enable Notifications'}</div>
+    <div style="font-size:.82rem;color:var(--text-muted);text-align:center;line-height:1.6;margin-bottom:22px">${currentLang==='tr'?'Pomodoro bitince, mola zamanı gelince ve görev hatırlatıcıları için bildirim gönderelim mi?':'Get notified when your Pomodoro ends, breaks are ready, and task reminders fire.'}</div>
+    <button id="notifSheetYes" style="width:100%;padding:14px;border-radius:13px;border:none;background:var(--accent);color:#fff;font-family:\'Outfit\',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;margin-bottom:10px">${currentLang==='tr'?'✓ Bildirimlere İzin Ver':'✓ Allow Notifications'}</button>
+    <button id="notifSheetNo" style="width:100%;padding:12px;border-radius:13px;border:1.5px solid var(--border);background:transparent;color:var(--text-muted);font-family:\'Outfit\',sans-serif;font-size:.88rem;cursor:pointer">${currentLang==='tr'?'Şimdi Değil':'Not Now'}</button>
+  </div>`;
+  document.body.appendChild(sheet);
+
+  document.getElementById('notifSheetYes').addEventListener('click',async()=>{
+    sheet.remove();
+    const perm=await Notification.requestPermission();
+    if(perm==='granted'){
+      settings.notifications=true;
+      const el=document.getElementById('notifToggle');if(el)el.checked=true;
+      save();
+      toast(currentLang==='tr'?'🔔 Bildirimler açıldı':'🔔 Notifications enabled');
+      // Send a welcome notification
+      setTimeout(()=>{
+        try{new Notification(currentLang==='tr'?'FocusFlow Hazır! 🍅':'FocusFlow Ready! 🍅',{body:currentLang==='tr'?'Bildirimler aktif. Odaklanmaya hazır mısın?':'Notifications active. Ready to focus?',icon:'',tag:'focusflow-welcome',requireInteraction:false});}catch(e){}
+      },500);
+    } else {
+      settings.notifications=false;save();
+      toast(currentLang==='tr'?'❌ Bildirim izni verilmedi':'❌ Notification permission denied');
+    }
+  });
+  document.getElementById('notifSheetNo').addEventListener('click',()=>sheet.remove());
+  sheet.addEventListener('click',e=>{if(e.target===sheet)sheet.remove();});
+}
+
 function updateStats(){renderDailyGoal();}
 
 // ══ HISTORY ══
