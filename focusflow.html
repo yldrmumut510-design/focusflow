@@ -1037,6 +1037,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:max
     <div class="sps"><div class="sps-title">🎨 Görünüm & Ses</div><div class="sblock">
       <div class="srow"><div class="sr-left"><div class="sr-label">Karanlık Mod</div></div><label class="toggle"><input type="checkbox" id="darkToggle" onchange="toggleDarkMode()"><span class="tslider"></span></label></div>
       <div class="srow"><div class="sr-left"><div class="sr-label">Timer Sesi</div><div class="sr-sub">Pomodoro bitişinde bip</div></div><label class="toggle"><input type="checkbox" id="soundToggle" checked><span class="tslider"></span></label></div>
+      <div class="srow"><div class="sr-left"><div class="sr-label">Bildirimler</div><div class="sr-sub">Tab arka plandayken bildirim al</div></div><label class="toggle"><input type="checkbox" id="notifToggle" onchange="toggleNotifications()"><span class="tslider"></span></label></div>
     </div></div>
     <div class="sps"><div class="sps-title">🎵 Ortam Sesi</div><div class="sblock">
       <div style="padding:10px 16px 4px;font-size:.72rem;color:var(--text-muted)">Ses seçince 3 saniyelik önizleme çalar. Timer başlayınca aktif olur.</div>
@@ -1323,6 +1324,16 @@ const I18N={
     sAppearance:'🎨 Görünüm & Ses',
     sDarkMode:'Karanlık Mod',
     sTimerSound:'Timer Sesi', sTimerSoundSub:'Pomodoro bitişinde bip',
+    sNotifications:'Bildirimler', sNotificationsSub:'Tab arka plandayken bildirim al',
+    sNotifEnabled:'🔔 Bildirimler açıldı', sNotifDenied:'🔕 Tarayıcıdan izin gerekiyor',
+    notifPomoTitle:'🍅 Pomodoro Tamamlandı!',
+    notifPomoBody:(name)=>`${name?'"'+name+'" bitti! ':''}Mola zamanı.`,
+    notif4PomoBody:'4 pomodoro! Uzun mola zamanı.',
+    notifShortBreakTitle:'⏰ Kısa Mola Bitti!', notifShortBreakBody:'Odak zamanı.',
+    notifLongBreakTitle:'☀️ Uzun Mola Bitti!', notifLongBreakBody:'Yeni döngü başlıyor.',
+    notifPause3Title:'⏸ 3. Duraklama Dakikası', notifPause3Body:(name)=>`${name?'"'+name+'" görevi bekleniyor — ':''}Devam etmek için timer'a dön.`,
+    notifPause5Title:'❌ Pomodoro İptal Ediliyor', notifPause5Body:'5 dakika durakladın, bu pomodoro iptal edilecek.',
+    notifReminderTitle:(name)=>`🔔 ${name}`, notifReminderBody:'Planlanan görevin zamanı geldi!',
     sAmbient:'🎵 Ortam Sesi',
     sAmbientNote:'Ses seçince 3 saniyelik önizleme çalar. Timer başlayınca aktif olur.',
     sVolume:'🔉 Ses',
@@ -1528,6 +1539,16 @@ const I18N={
     sAppearance:'🎨 Appearance & Sound',
     sDarkMode:'Dark Mode',
     sTimerSound:'Timer Sound', sTimerSoundSub:'Beep when pomodoro ends',
+    sNotifications:'Notifications', sNotificationsSub:'Get notified when tab is in background',
+    sNotifEnabled:'🔔 Notifications enabled', sNotifDenied:'🔕 Allow in browser settings',
+    notifPomoTitle:'🍅 Pomodoro Complete!',
+    notifPomoBody:(name)=>`${name?'"'+name+'" done! ':''}Time for a break.`,
+    notif4PomoBody:'4 pomodoros! Time for a long break.',
+    notifShortBreakTitle:'⏰ Break Over!', notifShortBreakBody:'Back to focus.',
+    notifLongBreakTitle:'☀️ Long Break Over!', notifLongBreakBody:'Starting a new cycle.',
+    notifPause3Title:'⏸ Paused 3 Minutes', notifPause3Body:(name)=>`${name?'"'+name+'" is waiting — ':''}Return to the timer to continue.`,
+    notifPause5Title:'❌ Cancelling Pomodoro', notifPause5Body:"You've been paused for 5 minutes. This pomodoro will be cancelled.",
+    notifReminderTitle:(name)=>`🔔 ${name}`, notifReminderBody:'Your scheduled task is ready!',
     sAmbient:'🎵 Ambient Sound',
     sAmbientNote:'A 3-second preview plays when selecting. Activates when timer starts.',
     sVolume:'🔉 Volume',
@@ -1776,11 +1797,12 @@ function updateLangToggle(){
 // ══ STATE ══
 const LS={tasks:'ff6_t',history:'ff6_h',settings:'ff6_s',stats:'ff6_st',moods:'ff6_m',cycles:'ff6_c',dots:'ff6_d',ttime:'ff6_tt',failed:'ff6_f'};
 const ld=(k,d)=>{try{return JSON.parse(localStorage.getItem(k)??'null')??d;}catch{return d;}};
-let tasks=[],history=[],settings={focus:25,short:5,long:15,goal:5,goalHours:0,dark:false,sound:true};
+let tasks=[],history=[],settings={focus:25,short:5,long:15,goal:5,goalHours:0,dark:false,sound:true,notifications:true};
 let stats={pomo:0,min:0,task:0,cancel:0,date:''};
 let moods={},cycles=[],dots=[{t:'e',c:0},{t:'e',c:0},{t:'e',c:0},{t:'e',c:0}],ttime={},failed=[];
-let tMode='focus',tRunning=false,tSec=25*60,totSec=25*60,tIv=null;
+let tMode='focus',tRunning=false,tSec=25*60,totSec=25*60,tIv=null,timerEndAt=null;
 let selId=null,pauseMs=null,cumulPause=0,pauseDispSec=0,pauseIv=null,pauseCount=0;
+const reminderFired=new Set();
 let segStart=null,sessTT={},sessP=[];
 let weekOff=0,selDay=todayKey(),histP='all',anP='day',activeMoodPop=null;
 let gpOpen=true,currentGroupCode=null,isGuest=false,saveTimer=null,selCat=null;
@@ -1859,6 +1881,7 @@ function init(){
   const today=todayKey();if(stats.date!==today){stats={pomo:0,min:0,task:0,cancel:0,date:today};save();}
   applyDarkMode(settings.dark);
   document.getElementById('soundToggle').checked=settings.sound!==false;
+  if(('Notification' in window)&&Notification.permission!=='granted')settings.notifications=false;
   const u=window._currentUser||{name:'?',color:'#c8775a'};
   const ua=document.getElementById('userAvatarHead');ua.textContent=aLetter(u.name);ua.style.background=u.color;
   document.getElementById('guestBadgeHead').style.display=isGuest?'':'none';
@@ -1878,7 +1901,10 @@ function init(){
       document.getElementById('flowDate').textContent=new Date().toLocaleDateString(currentLang==='tr'?'tr-TR':'en-US',{day:'numeric',month:'long'});
       renderDailyGoal();renderFlow();renderWeek();renderTaskList();updateStreakBtn();
     }
+    checkTaskReminders();
   },60000);
+  // Check reminders on startup too (after a short delay to let tasks load)
+  setTimeout(checkTaskReminders,3000);
 }
 
 // ══ PAGE ══
@@ -1936,6 +1962,7 @@ function openSettings(){
     <div class="sps"><div class="sps-title">${t('sAppearance')}</div><div class="sblock">
       <div class="srow"><div class="sr-left"><div class="sr-label">${t('sDarkMode')}</div></div><label class="toggle"><input type="checkbox" id="darkToggle" onchange="toggleDarkMode()"><span class="tslider"></span></label></div>
       <div class="srow"><div class="sr-left"><div class="sr-label">${t('sTimerSound')}</div><div class="sr-sub">${t('sTimerSoundSub')}</div></div><label class="toggle"><input type="checkbox" id="soundToggle" checked><span class="tslider"></span></label></div>
+      <div class="srow"><div class="sr-left"><div class="sr-label">${t('sNotifications')}</div><div class="sr-sub">${t('sNotificationsSub')}</div></div><label class="toggle"><input type="checkbox" id="notifToggle" onchange="toggleNotifications()"><span class="tslider"></span></label></div>
     </div></div>
     <div class="sps"><div class="sps-title">${t('sAmbient')}</div><div class="sblock">
       <div style="padding:10px 16px 4px;font-size:.72rem;color:var(--text-muted)">${t('sAmbientNote')}</div>
@@ -1980,6 +2007,8 @@ function openSettings(){
   if(sgHour){sgHour.style.background=sgt==='hour'?'var(--accent)':'transparent';sgHour.style.color=sgt==='hour'?'#fff':'var(--text-muted)';}
   document.getElementById('darkToggle').checked=!!settings.dark;
   document.getElementById('soundToggle').checked=settings.sound!==false;
+  const notifEl=document.getElementById('notifToggle');
+  if(notifEl){const granted=('Notification' in window)&&Notification.permission==='granted';notifEl.checked=settings.notifications!==false&&granted;if(settings.notifications!==false&&!granted)settings.notifications=false;}
   if(currentGroupCode){document.getElementById('gs_nogroup').style.display='none';document.getElementById('gs_hasgroup').style.display='block';document.getElementById('agr_code').textContent=currentGroupCode;document.getElementById('sGroupCodeRow').style.display='flex';document.getElementById('sGroupCode').textContent=currentGroupCode;}
   else{document.getElementById('gs_nogroup').style.display='block';document.getElementById('gs_hasgroup').style.display='none';document.getElementById('sGroupCodeRow').style.display='none';}
   if(isGuest){document.getElementById('groupSettingsBox').style.opacity='.4';document.getElementById('groupSettingsBox').style.pointerEvents='none';}
@@ -1993,7 +2022,7 @@ function adjSS(k,d){const min=k==='short'?1:k==='goal'?1:k==='goalHours'?0:5;set
 function doSignOut(){window._doSignOut();}
 function exportData(){const b=new Blob([JSON.stringify({tasks,history,settings,stats,moods,cycles,dots,ttime,failed},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`focusflow-${todayKey()}.json`;a.click();toast(t('toastDownloaded'));}
 function importData(){const i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=e=>{const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(d.tasks)tasks=d.tasks;if(d.history)history=d.history;if(d.settings)settings={...settings,...d.settings};if(d.stats)stats=d.stats;if(d.moods)moods=d.moods;if(d.cycles)cycles=d.cycles;if(d.dots)dots=d.dots;if(d.ttime)ttime=d.ttime;if(d.failed)failed=d.failed;save();init();closeSettings();toast(t('sImport')+' ✓');}catch{toast('❌ '+(currentLang==='tr'?'Hata':'Error'));}};r.readAsText(e.target.files[0]);};i.click();}
-function clearAllData(){if(!confirm(currentLang==='tr'?'Tüm veriler silinecek?':'Delete all data?'))return;tasks=[];history=[];settings={focus:25,short:5,long:15,goal:5,goalHours:0,dark:false,sound:true};stats={pomo:0,min:0,task:0,cancel:0,date:''};moods={};cycles=[];dots=[{t:'e',c:0},{t:'e',c:0},{t:'e',c:0},{t:'e',c:0}];ttime={};failed=[];save();init();closeSettings();toast('🗑 '+(currentLang==='tr'?'Silindi':'Deleted'));}
+function clearAllData(){if(!confirm(currentLang==='tr'?'Tüm veriler silinecek?':'Delete all data?'))return;tasks=[];history=[];settings={focus:25,short:5,long:15,goal:5,goalHours:0,dark:false,sound:true,notifications:true};stats={pomo:0,min:0,task:0,cancel:0,date:''};moods={};cycles=[];dots=[{t:'e',c:0},{t:'e',c:0},{t:'e',c:0},{t:'e',c:0}];ttime={};failed=[];save();init();closeSettings();toast('🗑 '+(currentLang==='tr'?'Silindi':'Deleted'));}
 
 // ══ GROUP SETTINGS ══
 function gs_showJoin(){const f=document.getElementById('gs_join_form');f.style.display=f.style.display==='none'?'block':'none';}
@@ -2635,6 +2664,14 @@ function saveTask(){
       const oldTask=tasks[idx];
       const oldRdStr=JSON.stringify((oldTask.rd||[]).slice().sort());
       const newRdStr=JSON.stringify((rd||[]).slice().sort());
+      // Check if date changed and migrate work records
+      const oldDayKey=tasks[idx].dayKey;
+      const dayKeyChanged=chosenDay&&chosenDay!==oldDayKey;
+      if(dayKeyChanged){
+        const taskId=tasks[idx].id;
+        cycles.forEach(cy=>{if(cy.taskId===taskId&&cy.dayKey===oldDayKey)cy.dayKey=chosenDay;});
+        history.forEach(h=>{if(h.id===taskId&&h.dayKey===oldDayKey)h.dayKey=chosenDay;});
+      }
       if(oldRdStr!==newRdStr){
         // Repeat days changed: remove all future repeat instances of this task group
         const baseId=editingTaskId.split('_s')[0].split('_')[0];
@@ -2642,8 +2679,8 @@ function saveTask(){
         // Remove future repeats (keep today and past)
         const toRemove=tasks.filter((t,i)=>i!==idx&&(t.id.startsWith(baseId+'_')||t.id===baseId+'_s')&&t.dayKey>=today);
         toRemove.forEach(t=>{const ti=tasks.indexOf(t);if(ti!==-1)tasks.splice(ti,1);});
-        // Update the edited task
-        tasks[idx]={...tasks[idx],...base};
+        // Update the edited task (with new dayKey if changed)
+        tasks[idx]={...tasks[idx],...base,...(chosenDay?{dayKey:chosenDay}:{})};
         // Add new repeat instances if rd set
         if(rd.length>0){
           const sd=new Date(tasks[idx].dayKey+'T12:00:00');
@@ -2651,7 +2688,7 @@ function saveTask(){
           for(let d=new Date(nx);d<=en;d.setDate(d.getDate()+1)){const dow=d.getDay(),oi=dow===0?6:dow-1;if(rd.includes(oi))tasks.push({...tasks[idx],...base,id:baseId+'_'+dateKey(d)+'_'+Math.random().toString(36).slice(2),dayKey:dateKey(d),completed:false,pomodoros:0});}
         }
       } else {
-        tasks[idx]={...tasks[idx],...base};
+        tasks[idx]={...tasks[idx],...base,...(chosenDay?{dayKey:chosenDay}:{})};
       }
     }
     toast(t('toastUpdated'));
@@ -2722,43 +2759,36 @@ function toggleTimer(){
     if(!sessTT_days[lastTickDay])sessTT_days[lastTickDay]={};
     const selSound=settings.ambientSound||'none';
     if(selSound!=='none'){ if(!ambientActive){startAmbient(selSound);}else{resumeAmbient();} }
+    timerEndAt=Date.now()+tSec*1000;
     tIv=setInterval(()=>{
       // Midnight detection
       const nowDay=todayKey();
       if(nowDay!==lastTickDay){
-        // Day changed — commit the segment up to midnight boundary
-        // The commitSeg call will split it correctly using segStart timestamp
-        // Record cycles for yesterday's portion then reset daily stats
         const prevDay=lastTickDay;
         lastTickDay=nowDay;
-        // Commit current segment (splits across midnight automatically)
         if(segStart&&selId&&tMode==='focus'){
           commitSegWithSplit(segStart,Date.now(),selId);
-          segStart=Date.now(); // new segment starts now in the new day
+          segStart=Date.now();
         }
-        // Save a "midnight_split" cycle entry for yesterday's work
         const prevDayWork=sessTT_days[prevDay]||{};
         const prevDaySec=Object.values(prevDayWork).reduce((a,v)=>a+v,0);
         if(prevDaySec>0){
-          const prevDayMin=Math.round(prevDaySec/60);
           cycles.push({type:'completed',mode:'focus',split:true,splitDay:prevDay,taskId:selId,taskName:selId?(tasks.find(t=>t.id===selId)?.name||''):'',category:selId?(tasks.find(t=>t.id===selId)?.category||''):(selCat||''),taskTimes:{...prevDayWork},pauseTotal:0,focusDuration:prevDaySec,totalDuration:prevDaySec,pauses:[],dayKey:prevDay,at:new Date().toISOString()});
-          // Add worked minutes to previous day (retroactively won't affect today's stats)
         }
-        // Reset today's daily stats (new day)
         stats={pomo:0,min:0,task:0,cancel:0,date:nowDay};
         sessTT_days[nowDay]=sessTT_days[nowDay]||{};
-        save();
-        renderDailyGoal();
-        renderFlow();
-        // Reset streak shown flag for new day and update UI
-        updateStreakBtn();
-        renderWeek();
+        save();renderDailyGoal();renderFlow();updateStreakBtn();renderWeek();
       }
-      tSec--;updateTDisplay();if(tSec<=0){clearInterval(tIv);tRunning=false;document.getElementById('playBtn').textContent=t('startBtn');commitSeg();onTimerEnd();}},1000);
+      // Use real wall-clock time instead of tick counting — immune to throttling
+      const remaining=Math.max(0,Math.round((timerEndAt-Date.now())/1000));
+      tSec=remaining;
+      updateTDisplay();
+      if(tSec<=0){clearInterval(tIv);tRunning=false;document.getElementById('playBtn').textContent=t('startBtn');commitSeg();onTimerEnd();}
+    },500);
     nudgePresence();
   }
 }
-function startPauseCounter(){const arc=document.getElementById('ringPause'),disp=document.getElementById('pauseDisp');arc.style.opacity='1';arc.style.strokeDasharray=P;disp.style.display='';pauseIv=setInterval(()=>{pauseDispSec=cumulPause+Math.round((Date.now()-pauseMs)/1000);updatePauseVisual();const pl=Math.floor((pauseDispSec-1)/60),cl=Math.floor(pauseDispSec/60);if(cl>pl){pauseCount=cl;toast(t('toastPauseMin',pauseCount));playBeep();if(pauseCount>=3)document.getElementById('cancelBtn').classList.add('blink-warn');if(pauseCount>=5){toast(t('toastLongComplete'));setTimeout(cancelPomodoro,1000);}}},1000);updatePauseVisual();}
+function startPauseCounter(){const arc=document.getElementById('ringPause'),disp=document.getElementById('pauseDisp');arc.style.opacity='1';arc.style.strokeDasharray=P;disp.style.display='';pauseIv=setInterval(()=>{pauseDispSec=cumulPause+Math.round((Date.now()-pauseMs)/1000);updatePauseVisual();const pl=Math.floor((pauseDispSec-1)/60),cl=Math.floor(pauseDispSec/60);if(cl>pl){pauseCount=cl;toast(t('toastPauseMin',pauseCount));playBeep();if(pauseCount>=3)document.getElementById('cancelBtn').classList.add('blink-warn');if(pauseCount===3){const tn=selId?(tasks.find(tk=>tk.id===selId)?.name||''):'';sendNotification(t('notifPause3Title'),t('notifPause3Body')(tn));}if(pauseCount>=5){toast(t('toastLongComplete'));sendNotification(t('notifPause5Title'),t('notifPause5Body'));setTimeout(cancelPomodoro,1000);}}},1000);updatePauseVisual();}
 function freezePauseCounter(){clearInterval(pauseIv);pauseIv=null;pauseDispSec=cumulPause;updatePauseVisual();}
 function clearPauseRing(){clearInterval(pauseIv);pauseIv=null;pauseDispSec=0;cumulPause=0;pauseCount=0;document.getElementById('cancelBtn').classList.remove('blink-warn');document.getElementById('ringPause').style.opacity='0';document.getElementById('pauseDisp').style.display='none';}
 function updatePauseVisual(){const arc=document.getElementById('ringPause'),disp=document.getElementById('pauseDisp');arc.style.strokeDashoffset=P*(1-(pauseDispSec%60)/60);disp.textContent=`⏸ ${fmtT(pauseDispSec)}`;}
@@ -2894,38 +2924,35 @@ function skipForward(){
   commitSeg();
   if(pauseMs!==null){const dur=Math.round((Date.now()-pauseMs)/1000);sessP.push({duration:dur,at:new Date(pauseMs).toISOString()});cumulPause+=dur;pauseMs=null;}
   clearPauseRing();
-  const worked=Object.values(sessTT).reduce((a,v)=>a+v,0);
+  // worked: use sessTT if available, else fall back to elapsed timer seconds
+  let worked=Object.values(sessTT).reduce((a,v)=>a+v,0);
+  if(worked===0&&tSec<totSec) worked=totSec-tSec;
   const totalP=sessP.reduce((a,p)=>a+p.duration,0);
   if(tMode==='focus'){
-    // Only count as a pomo if something was worked
     const workedMin=Math.round(worked/60);
+    // Always advance the dot — skip moves to next slot regardless
+    dotDone();
     if(worked>0){
+      // Record worked minutes but do NOT increment stats.pomo or task.pomodoros
+      // Those only increase when a full pomodoro completes naturally (onTimerEnd)
+      stats.min+=workedMin;
       const allDays=Object.keys(sessTT_days).sort();
       if(allDays.length<=1){
-        stats.pomo++;
-        stats.min+=workedMin;
-        if(selId){const t=tasks.find(t=>t.id===selId);if(t)t.pomodoros=(t.pomodoros||0)+1;}
-        dotDone();
-        cycles.push({type:'completed',mode:'focus',skipped:true,skippedEarly:true,taskId:selId,taskName:selId?(tasks.find(t=>t.id===selId)?.name||''):'',category:selId?(tasks.find(t=>t.id===selId)?.category||''):(selCat||''),taskTimes:{...sessTT},pauseTotal:totalP,focusDuration:worked,totalDuration:worked+totalP,pauses:[...sessP],dayKey:todayKey(),at:new Date().toISOString()});
+        cycles.push({type:'skipped',mode:'focus',skippedEarly:true,taskId:selId,taskName:selId?(tasks.find(t=>t.id===selId)?.name||''):'',category:selId?(tasks.find(t=>t.id===selId)?.category||''):(selCat||''),taskTimes:{...sessTT},pauseTotal:totalP,focusDuration:worked,totalDuration:worked+totalP,pauses:[...sessP],dayKey:todayKey(),at:new Date().toISOString()});
       } else {
-        // Multi-day split
-        if(selId){const t=tasks.find(t=>t.id===selId);if(t)t.pomodoros=(t.pomodoros||0)+1;}
-        dotDone();
         allDays.forEach((dk,idx)=>{
           const dayWork=sessTT_days[dk]||{};
           const daySec=Object.values(dayWork).reduce((a,v)=>a+v,0);
           if(daySec>0){
-            cycles.push({type:'completed',mode:'focus',skipped:true,skippedEarly:true,split:true,taskId:selId,taskName:selId?(tasks.find(t=>t.id===selId)?.name||''):'',category:selId?(tasks.find(t=>t.id===selId)?.category||''):(selCat||''),taskTimes:{...dayWork},pauseTotal:idx===allDays.length-1?totalP:0,focusDuration:daySec,totalDuration:daySec+(idx===allDays.length-1?totalP:0),pauses:idx===allDays.length-1?[...sessP]:[],dayKey:dk,at:new Date().toISOString()});
+            cycles.push({type:'skipped',mode:'focus',skippedEarly:true,split:true,taskId:selId,taskName:selId?(tasks.find(t=>t.id===selId)?.name||''):'',category:selId?(tasks.find(t=>t.id===selId)?.category||''):(selCat||''),taskTimes:{...dayWork},pauseTotal:idx===allDays.length-1?totalP:0,focusDuration:daySec,totalDuration:daySec+(idx===allDays.length-1?totalP:0),pauses:idx===allDays.length-1?[...sessP]:[],dayKey:dk,at:new Date().toISOString()});
           }
         });
         const todaySec=Object.values(sessTT_days[todayKey()]||{}).reduce((a,v)=>a+v,0);
-        stats.pomo++;
         stats.min+=Math.round(todaySec/60);
       }
     } else {
-      // Skipped with 0 work — record as skipped-unworked, don't advance dot
-      dotCancel();
-      cycles.push({type:'cancelled',mode:'focus',skipped:true,skippedNoWork:true,taskId:selId,taskName:selId?(tasks.find(t=>t.id===selId)?.name||''):'',category:selId?(tasks.find(t=>t.id===selId)?.category||''):(selCat||''),taskTimes:{},pauseTotal:totalP,workedSec:0,totalSec:totalP,pauses:[...sessP],dayKey:todayKey(),at:new Date().toISOString()});
+      // Skipped with 0 work — dot advanced, record as pure skip
+      cycles.push({type:'skipped',mode:'focus',skippedNoWork:true,taskId:selId,taskName:selId?(tasks.find(t=>t.id===selId)?.name||''):'',category:selId?(tasks.find(t=>t.id===selId)?.category||''):(selCat||''),taskTimes:{},pauseTotal:totalP,focusDuration:0,totalDuration:totalP,pauses:[...sessP],dayKey:todayKey(),at:new Date().toISOString()});
     }
     sessP=[];sessTT={};sessTT_days={};lastTickDay=todayKey();cumulPause=0;pauseDispSec=0;pauseCount=0;
     save();updateStats();renderDots();renderDailyGoal();renderFlow();nudgePresence();
@@ -2952,11 +2979,52 @@ function onTimerEnd(){const s=getAS();if(tMode==='focus'){
       }
     });
   }
-  sessP=[];sessTT={};sessTT_days={};lastTickDay=todayKey();cumulPause=0;pauseDispSec=0;pauseCount=0;clearPauseRing();save();updateStats();renderDailyGoal();renderFlow();const gc=dots.filter(x=>x.t==='g').length;if(gc>=4){playBeep();toast(t('toast4Pomo'));setTimeout(()=>{setMode('long');toggleTimer();},600);}else{playBeep();toast(t('toastPomoComplete'));setTimeout(()=>setMode('short'),500);}renderDots();nudgePresence();
+  sessP=[];sessTT={};sessTT_days={};lastTickDay=todayKey();cumulPause=0;pauseDispSec=0;pauseCount=0;clearPauseRing();save();updateStats();renderDailyGoal();renderFlow();const gc=dots.filter(x=>x.t==='g').length;if(gc>=4){playBeep();toast(t('toast4Pomo'));sendNotification(t('notifPomoTitle'),t('notif4PomoBody'));setTimeout(()=>{setMode('long');toggleTimer();},600);}else{playBeep();toast(t('toastPomoComplete'));const taskName=selId?(tasks.find(tk=>tk.id===selId)?.name||''):'';sendNotification(t('notifPomoTitle'),t('notifPomoBody')(taskName));setTimeout(()=>setMode('short'),500);}renderDots();nudgePresence();
   // Check hour-based streak goal
   if((settings.streakGoalType||'task')==='hour')checkStreakAutoOpen();
-}else if(tMode==='long'){playBeep();toast(t('toastLongBreakEnd'));resetDots();save();setTimeout(()=>setMode('focus'),500);nudgePresence();}else{playBeep();toast(t('toastShortBreakEnd'));setTimeout(()=>setMode('focus'),500);nudgePresence();}}
+}else if(tMode==='long'){playBeep();toast(t('toastLongBreakEnd'));sendNotification(t('notifLongBreakTitle'),t('notifLongBreakBody'));resetDots();save();setTimeout(()=>setMode('focus'),500);nudgePresence();}else{playBeep();toast(t('toastShortBreakEnd'));sendNotification(t('notifShortBreakTitle'),t('notifShortBreakBody'));setTimeout(()=>setMode('focus'),500);nudgePresence();}}
+function checkTaskReminders(){
+  if(settings.notifications===false)return;
+  if(!('Notification' in window)||Notification.permission!=='granted')return;
+  const now=new Date();
+  const hhmm=`${p2(now.getHours())}:${p2(now.getMinutes())}`;
+  const today=todayKey();
+  tasks.forEach(task=>{
+    if(task.completed)return;
+    if(task.dayKey&&task.dayKey!==today)return;
+    const rt=task.reminderType;
+    if(!rt||rt==='none')return;
+    let remTime='';
+    if(rt==='scheduled'&&task.timeStart)remTime=task.timeStart.slice(0,5);
+    else if(rt==='custom'&&task.reminderTime)remTime=task.reminderTime.slice(0,5);
+    if(!remTime)return;
+    const key=`${task.id}_${today}_${remTime}`;
+    if(reminderFired.has(key))return;
+    if(hhmm>=remTime){
+      reminderFired.add(key);
+      sendNotification(t('notifReminderTitle')(task.name||''),t('notifReminderBody'));
+    }
+  });
+}
 function playBeep(){if(settings.sound===false||!document.getElementById('soundToggle').checked)return;try{const ctx=new(window.AudioContext||window.webkitAudioContext)();[0,.15,.3].forEach((t,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=i===2?880:660;g.gain.setValueAtTime(.25,ctx.currentTime+t);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+t+.25);o.start(ctx.currentTime+t);o.stop(ctx.currentTime+t+.25);});}catch(e){}}
+function sendNotification(title,body){
+  if(settings.notifications===false)return;
+  if(!('Notification' in window)||Notification.permission!=='granted')return;
+  try{new Notification(title,{body,icon:'',tag:'focusflow-timer',requireInteraction:false});}catch(e){}
+}
+async function toggleNotifications(){
+  const el=document.getElementById('notifToggle');
+  if(!el)return;
+  if(el.checked){
+    if(!('Notification' in window)){toast(currentLang==='tr'?'❌ Tarayıcı desteklemiyor':'❌ Browser not supported');el.checked=false;return;}
+    const perm=await Notification.requestPermission();
+    if(perm==='granted'){settings.notifications=true;toast(t('sNotifEnabled'));}
+    else{settings.notifications=false;el.checked=false;toast(t('sNotifDenied'));}
+  }else{
+    settings.notifications=false;
+  }
+  save();
+}
 function updateStats(){renderDailyGoal();}
 
 // ══ HISTORY ══
@@ -2964,11 +3032,11 @@ function setHistP(p,btn){histP=p;document.querySelectorAll('#histTabs .hf-tab').
 function renderHistPage(){
   const c=document.getElementById('histList');c.innerHTML='';
   const now=new Date(),today=todayKey();
-  let entries=[...history.map(h=>({...h,_t:'task'})),...cycles.filter(cy=>cy.type==='completed'||cy.type==='cancelled').map(cy=>({...cy,_t:'pomo'}))];
+  let entries=[...history.map(h=>({...h,_t:'task'})),...cycles.filter(cy=>cy.type==='completed'||cy.type==='cancelled'||cy.type==='skipped').map(cy=>({...cy,_t:'pomo'}))];
   entries=entries.filter(e=>{const dk=e.dayKey||e.completedAt?.slice(0,10)||'';if(histP==='today')return dk===today;if(histP==='week'){const d=new Date(dk+'T12:00:00');return(now-d)/(864e5)<7&&d<=now;}if(histP==='month'){const d=new Date(dk+'T12:00:00');return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();}return true;});
   if(!entries.length){c.innerHTML=`<div class="empty-state"><div class="es-icon">📊</div><p>${t('histEmpty')}</p></div>`;return;}
   const grps={};entries.forEach(e=>{const dk=e.dayKey||e.completedAt?.slice(0,10)||'?';if(!grps[dk])grps[dk]=[];grps[dk].push(e);});
-  Object.keys(grps).sort((a,b)=>b.localeCompare(a)).forEach(dk=>{const group=grps[dk],d=new Date(dk+'T12:00:00'),isToday=dk===today;const label=isToday?t('today'):d.toLocaleDateString(currentLang==='tr'?'tr-TR':'en-US',{weekday:'long',day:'numeric',month:'long'});const td=group.filter(e=>e._t==='task').length,pd=group.filter(e=>e._t==='pomo'&&e.type==='completed').length,pf=group.filter(e=>e._t==='pomo'&&e.type==='cancelled').length;const outer=document.createElement('div');outer.className='hdg-group';const hdr=document.createElement('div');hdr.className='hdg-hdr';hdr.innerHTML=`<span class="hdg-title">${label}</span><span class="hdg-meta">${td} ${t('navTasks').toLowerCase()} · ${pd}🍅${pf?' · '+pf+'✕':''}</span>`;const body=document.createElement('div');body.className='hdg-body';let open=isToday;if(!open)body.style.display='none';hdr.onclick=()=>{open=!open;body.style.display=open?'':'none';};group.sort((a,b)=>{const at=a.completedAt||a.at||'',bt=b.completedAt||b.at||'';return bt.localeCompare(at);}).forEach(e=>{const row=document.createElement('div');row.className='he';if(e._t==='pomo'){const ok=e.type==='completed';row.innerHTML=`<div class="he-dot" style="background:${ok?'var(--accent)':'var(--red)'}"></div><div class="he-name">${ok?'🍅':'✕'} ${e.taskName||t('noTask')}</div><div class="he-chips">${ok?`<span class="he-chip g">⏱ ${fmtS(e.focusDuration||0)}</span>`:`<span class="he-chip r">✕ ${t('histCancelled').replace('✕ ','')}</span>`}${e.pauseTotal>0?`<span class="he-chip r">⏸ ${fmtS(e.pauseTotal)}</span>`:''}${ok&&e.totalDuration?`<span class="he-chip v">∑ ${fmtS(e.totalDuration)}</span>`:''}</div>`;}else{row.innerHTML=`<div class="he-dot" style="background:var(--green)"></div><div class="he-name">${e.name}</div><div class="he-chips"><span class="he-chip g">${t('histCompleted')}</span>${e.pomodoros>0?`<span class="he-chip v">🍅×${e.pomodoros}</span>`:''}${e.timeSpent>0?`<span class="he-chip v">⏱ ${fmtS(e.timeSpent)}</span>`:''}</div>`;}body.appendChild(row);});outer.appendChild(hdr);outer.appendChild(body);c.appendChild(outer);});
+  Object.keys(grps).sort((a,b)=>b.localeCompare(a)).forEach(dk=>{const group=grps[dk],d=new Date(dk+'T12:00:00'),isToday=dk===today;const label=isToday?t('today'):d.toLocaleDateString(currentLang==='tr'?'tr-TR':'en-US',{weekday:'long',day:'numeric',month:'long'});const td=group.filter(e=>e._t==='task').length,pd=group.filter(e=>e._t==='pomo'&&e.type==='completed').length,pf=group.filter(e=>e._t==='pomo'&&e.type==='cancelled').length,ps=group.filter(e=>e._t==='pomo'&&e.type==='skipped').length;const outer=document.createElement('div');outer.className='hdg-group';const hdr=document.createElement('div');hdr.className='hdg-hdr';hdr.innerHTML=`<span class="hdg-title">${label}</span><span class="hdg-meta">${td} ${t('navTasks').toLowerCase()} · ${pd}🍅${ps?' · '+ps+'⏭':''}${pf?' · '+pf+'✕':''}</span>`;const body=document.createElement('div');body.className='hdg-body';let open=isToday;if(!open)body.style.display='none';hdr.onclick=()=>{open=!open;body.style.display=open?'':'none';};group.sort((a,b)=>{const at=a.completedAt||a.at||'',bt=b.completedAt||b.at||'';return bt.localeCompare(at);}).forEach(e=>{const row=document.createElement('div');row.className='he';if(e._t==='pomo'){const ok=e.type==='completed';const sk=e.type==='skipped';const dotColor=ok?'var(--accent)':sk?'var(--orange)':'var(--red)';const icon=ok?'🍅':sk?'⏭':'✕';let chipsHtml='';if(ok){chipsHtml+=`<span class="he-chip g">⏱ ${fmtS(e.focusDuration||0)}</span>`;}else if(sk){if((e.focusDuration||0)>0)chipsHtml+=`<span class="he-chip v">⏱ ${fmtS(e.focusDuration)}</span>`;chipsHtml+=`<span class="he-chip" style="background:var(--orange-bg);color:var(--orange)">${currentLang==='tr'?'atlandı':'skipped'}</span>`;}else{chipsHtml+=`<span class="he-chip r">✕ ${t('histCancelled').replace('✕ ','')}</span>`;}if(e.pauseTotal>0)chipsHtml+=`<span class="he-chip r">⏸ ${fmtS(e.pauseTotal)}</span>`;if(ok&&e.totalDuration)chipsHtml+=`<span class="he-chip v">∑ ${fmtS(e.totalDuration)}</span>`;row.innerHTML=`<div class="he-dot" style="background:${dotColor}"></div><div class="he-name">${icon} ${e.taskName||t('noTask')}</div><div class="he-chips">${chipsHtml}</div>`;}else{row.innerHTML=`<div class="he-dot" style="background:var(--green)"></div><div class="he-name">${e.name}</div><div class="he-chips"><span class="he-chip g">${t('histCompleted')}</span>${e.pomodoros>0?`<span class="he-chip v">🍅×${e.pomodoros}</span>`:''}${e.timeSpent>0?`<span class="he-chip v">⏱ ${fmtS(e.timeSpent)}</span>`:''}</div>`;}body.appendChild(row);});outer.appendChild(hdr);outer.appendChild(body);c.appendChild(outer);});
 }
 
 // ══ ANALYSIS ══
@@ -4131,6 +4199,46 @@ function buildFireplace(ctx,master){
 buildRdays();
 // Apply language on initial load (auth screen)
 document.addEventListener('DOMContentLoaded',()=>{applyI18n();});
+
+// ── Background timer sync ──────────────────────────────────
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden) return;
+
+  // Case 1: Timer running — sync from wall clock
+  if(tRunning && pauseMs===null){
+    const remaining=Math.max(0,Math.round((timerEndAt-Date.now())/1000));
+    if(remaining<=0){
+      clearInterval(tIv);tRunning=false;
+      document.getElementById('playBtn').textContent=t('startBtn');
+      tSec=0;updateTDisplay();
+      commitSeg();
+      onTimerEnd();
+    } else {
+      tSec=remaining;
+      updateTDisplay();
+    }
+    return;
+  }
+
+  // Case 2: Paused — check 5-min auto-cancel
+  if(!tRunning && pauseMs!==null){
+    const totalPauseSec=cumulPause+Math.round((Date.now()-pauseMs)/1000);
+    pauseDispSec=totalPauseSec;
+    updatePauseVisual();
+    const pauseMinutes=Math.floor(totalPauseSec/60);
+    if(pauseMinutes>=5){
+      toast(t('toastLongComplete'));
+      sendNotification(t('notifPause5Title'),t('notifPause5Body'));
+      setTimeout(cancelPomodoro,500);
+    } else if(pauseMinutes>=3){
+      document.getElementById('cancelBtn').classList.add('blink-warn');
+      pauseCount=pauseMinutes;
+      const tn=selId?(tasks.find(tk=>tk.id===selId)?.name||''):'';
+      sendNotification(t('notifPause3Title'),t('notifPause3Body')(tn));
+    }
+    return;
+  }
+});
 </script>
 </body>
 </html>
