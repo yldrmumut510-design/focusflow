@@ -672,6 +672,27 @@ header{display:flex;align-items:center;justify-content:space-between;padding:max
 .vol-slider{flex:1;-webkit-appearance:none;height:4px;border-radius:99px;background:var(--surface3);outline:none;cursor:pointer}
 .vol-slider::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.15)}
 
+/* ══ PAYWALL ══ */
+.paywall-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;display:flex;align-items:flex-end;justify-content:center;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.paywall-sheet{background:var(--surface);border-radius:28px 28px 0 0;padding:28px 24px 40px;width:100%;max-width:500px;animation:slideUp .3s cubic-bezier(.4,0,.2,1)}
+@keyframes slideUp{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}}
+.paywall-handle{width:36px;height:4px;background:var(--border);border-radius:99px;margin:0 auto 20px}
+.paywall-crown{font-size:2.8rem;text-align:center;margin-bottom:6px}
+.paywall-title{font-family:'DM Serif Display',serif;font-size:1.6rem;text-align:center;color:var(--text);margin-bottom:4px}
+.paywall-sub{font-size:.82rem;color:var(--text-muted);text-align:center;margin-bottom:20px}
+.paywall-features{display:flex;flex-direction:column;gap:10px;margin-bottom:24px}
+.pwf-row{display:flex;align-items:center;gap:12px;padding:11px 14px;background:var(--surface2);border-radius:12px;border:1px solid var(--border)}
+.pwf-icon{font-size:1.25rem;flex-shrink:0}
+.pwf-text{font-size:.85rem;color:var(--text);font-weight:500}
+.pwf-text span{font-size:.75rem;color:var(--text-muted);font-weight:400;display:block}
+.paywall-price{text-align:center;margin-bottom:16px}
+.pw-price-main{font-family:'DM Mono',monospace;font-size:1.5rem;font-weight:500;color:var(--accent)}
+.pw-price-sub{font-size:.75rem;color:var(--text-muted);margin-top:2px}
+.paywall-btn{width:100%;padding:16px;border-radius:14px;border:none;background:var(--accent);color:#fff;font-family:'Outfit',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;transition:all .2s;margin-bottom:10px}
+.paywall-btn:hover{filter:brightness(1.07);transform:translateY(-1px)}
+.paywall-dismiss{width:100%;padding:10px;border-radius:12px;border:1.5px solid var(--border);background:transparent;color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:.88rem;cursor:pointer;transition:all .18s}
+.pro-badge{display:inline-flex;align-items:center;gap:3px;font-size:.6rem;background:linear-gradient(135deg,#c8775a,#b5956a);color:#fff;padding:2px 7px;border-radius:99px;font-weight:700;letter-spacing:.5px;vertical-align:middle;margin-left:4px}
 </style>
 </head>
 <body>
@@ -1027,7 +1048,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:max
         </div>
       </div>
     </div></div>
-    <div class="sps"><div class="sps-title">🍅 Pomodoro Süreleri</div><div class="sblock">
+    <div class="sps"><div class="sps-title">🍅 Pomodoro Süreleri <span class="pro-badge">👑 PRO</span></div><div class="sblock">
       <div class="srow"><div class="sr-left"><div class="sr-label">Odak</div><div class="sr-sub">dakika</div></div><div class="num-wrap"><button class="num-btn" onclick="adjSS('focus',-5)">−</button><div class="num-val" id="svf">25</div><button class="num-btn" onclick="adjSS('focus',5)">+</button></div></div>
       <div class="srow"><div class="sr-left"><div class="sr-label">Kısa Mola</div></div><div class="num-wrap"><button class="num-btn" onclick="adjSS('short',-1)">−</button><div class="num-val" id="svs">5</div><button class="num-btn" onclick="adjSS('short',1)">+</button></div></div>
       <div class="srow"><div class="sr-left"><div class="sr-label">Uzun Mola</div></div><div class="num-wrap"><button class="num-btn" onclick="adjSS('long',-5)">−</button><div class="num-val" id="svl">15</div><button class="num-btn" onclick="adjSS('long',5)">+</button></div></div>
@@ -1806,6 +1827,147 @@ const reminderFired=new Set();
 let segStart=null,sessTT={},sessP=[];
 let weekOff=0,selDay=todayKey(),histP='all',anP='day',activeMoodPop=null;
 let gpOpen=true,currentGroupCode=null,isGuest=false,saveTimer=null,selCat=null;
+let isPro=false;
+
+// ══ PRO / PAYWALL ══
+function checkProStatus(){
+  // Capacitor Purchases entegrasyonu için:
+  // window.Capacitor && window.Purchases?.getCustomerInfo()
+  //   .then(i=>{ isPro = i.customerInfo.entitlements.active['pro'] !== undefined; })
+  // Şimdilik localStorage ile test modunu destekle:
+  isPro = localStorage.getItem('ff_pro')==='true';
+}
+
+// ── Fiyatlar: Capacitor Purchases ile dinamik çekilir, yoksa fallback kullanılır ──
+// Product ID'leri App Store Connect'teki ile eşleşmeli
+const PRO_PRODUCTS = {
+  monthly: 'com.focusflow.pro.monthly',  // App Store Connect'teki Product ID
+  yearly:  'com.focusflow.pro.yearly',
+};
+
+// Fallback fiyatlar (Capacitor bağlantısı yokken gösterilir)
+// Capacitor entegre edilince bu değerler otomatik App Store'dan gelir
+const PRO_PRICES_FALLBACK = {
+  tr: { monthly: '₺49,90', yearly: '₺349,90', saving: '%42', period_m: 'ay', period_y: 'yıl' },
+  en: { monthly: '$2.99',  yearly: '$19.99',   saving: '44%', period_m: 'mo', period_y: 'yr'  },
+};
+
+// Capacitor Purchases'tan gelen gerçek fiyatları saklar
+let _proLivePrices = null;
+
+async function fetchLivePrices(){
+  try {
+    // RevenueCat / Capacitor Purchases entegrasyonu:
+    // const offerings = await window.Purchases?.getOfferings();
+    // const current = offerings?.current;
+    // if(current){
+    //   _proLivePrices = {
+    //     monthly: current.monthly?.product?.priceString || null,
+    //     yearly:  current.annual?.product?.priceString  || null,
+    //   };
+    // }
+  } catch(e){ /* cihazda çalışmıyorsa sessizce geç */ }
+}
+
+function getProPrices(){
+  const fb = PRO_PRICES_FALLBACK[currentLang] || PRO_PRICES_FALLBACK.en;
+  if(_proLivePrices) return { ..._proLivePrices, saving: fb.saving, period_m: fb.period_m, period_y: fb.period_y };
+  return fb;
+}
+
+function showPaywall(reason){
+  if(document.getElementById('paywallOverlay'))return;
+  fetchLivePrices(); // arka planda canlı fiyat çekmeyi dene
+  const msgs={
+    tasks:    currentLang==='tr'?'Ücretsiz planda en fazla 5 görev ekleyebilirsin.':'Free plan allows up to 5 tasks.',
+    repeat:   currentLang==='tr'?'Tekrarlayan görevler Pro özelliğidir.':'Recurring tasks are a Pro feature.',
+    pomodoro: currentLang==='tr'?'Özel Pomodoro süreleri Pro özelliğidir.':'Custom Pomodoro durations are a Pro feature.',
+    stats:    currentLang==='tr'?'Detaylı istatistikler Pro özelliğidir.':'Detailed statistics are a Pro feature.',
+  };
+  const subMsg = msgs[reason]||(currentLang==='tr'?'Bu özellik Pro plana özeldir.':'This feature requires Pro.');
+  const p = getProPrices();
+  const tr = currentLang==='tr';
+  const el=document.createElement('div');
+  el.className='paywall-overlay';el.id='paywallOverlay';
+  el.innerHTML=`<div class="paywall-sheet">
+    <div class="paywall-handle"></div>
+    <div class="paywall-crown">👑</div>
+    <div class="paywall-title">FocusFlow Pro</div>
+    <div class="paywall-sub">${subMsg}</div>
+    <div class="paywall-features">
+      <div class="pwf-row"><div class="pwf-icon">📋</div><div class="pwf-text">${tr?'Sınırsız görev':'Unlimited tasks'}<span>${tr?'Ücretsizde 5 görev limiti':'Free plan: 5 task limit'}</span></div></div>
+      <div class="pwf-row"><div class="pwf-icon">🔁</div><div class="pwf-text">${tr?'Tekrarlayan görevler':'Recurring tasks'}<span>${tr?'Günlük & haftalık tekrar':'Daily & weekly repeats'}</span></div></div>
+      <div class="pwf-row"><div class="pwf-icon">⏱</div><div class="pwf-text">${tr?'Özel Pomodoro süreleri':'Custom Pomodoro durations'}<span>${tr?'Odak & mola sürelerini ayarla':'Adjust focus & break lengths'}</span></div></div>
+      <div class="pwf-row"><div class="pwf-icon">📈</div><div class="pwf-text">${tr?'Detaylı istatistikler':'Detailed statistics'}<span>${tr?'Haftalık/aylık grafikler':'Weekly/monthly charts'}</span></div></div>
+    </div>
+    <div class="paywall-price">
+      <div class="pw-price-tabs" style="display:flex;gap:8px;justify-content:center;margin-bottom:12px">
+        <div class="pw-tab active" id="pwTabMonthly" onclick="selectPaywallPlan('monthly')"
+          style="flex:1;padding:10px 8px;border-radius:11px;border:2px solid var(--accent);background:var(--accent-glow);text-align:center;cursor:pointer;position:relative">
+          <div style="position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:99px;white-space:nowrap">${tr?'7 gün ücretsiz':'7 days free'}</div>
+          <div style="font-family:'DM Mono',monospace;font-size:1.1rem;font-weight:600;color:var(--accent)">${p.monthly}</div>
+          <div style="font-size:.7rem;color:var(--text-muted);margin-top:2px">/ ${p.period_m}</div>
+        </div>
+        <div class="pw-tab" id="pwTabYearly" onclick="selectPaywallPlan('yearly')"
+          style="flex:1;padding:10px 8px;border-radius:11px;border:2px solid var(--border);background:var(--surface2);text-align:center;cursor:pointer;position:relative">
+          <div style="position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:99px;white-space:nowrap">${tr?'7 gün ücretsiz · %'+p.saving.replace('%','')+' tasarruf':'7 days free · '+p.saving+' off'}</div>
+          <div style="font-family:'DM Mono',monospace;font-size:1.1rem;font-weight:600;color:var(--text)">${p.yearly}</div>
+          <div style="font-size:.7rem;color:var(--text-muted);margin-top:2px">/ ${p.period_y}</div>
+        </div>
+      </div>
+    </div>
+    <button class="paywall-btn" id="paywallUpgradeBtn" onclick="purchasePro()">
+      🎁 ${tr?'7 Gün Ücretsiz Dene':'Try Free for 7 Days'}
+    </button>
+    <div style="text-align:center;font-size:.72rem;color:var(--text-muted);margin-bottom:10px">
+      ${tr?'Deneme biter → otomatik ücretlendirilirsin. İstediğin zaman iptal edebilirsin.':'Trial ends → billed automatically. Cancel anytime.'}
+    </div>
+    <button class="paywall-dismiss" onclick="closePaywall()">${tr?'Şimdi değil':'Not now'}</button>
+  </div>`;
+  el.addEventListener('click',e=>{if(e.target===el)closePaywall();});
+  document.body.appendChild(el);
+}
+
+let _selectedPlan='monthly';
+function selectPaywallPlan(plan){
+  _selectedPlan=plan;
+  const mEl=document.getElementById('pwTabMonthly');
+  const yEl=document.getElementById('pwTabYearly');
+  if(!mEl||!yEl)return;
+  if(plan==='monthly'){
+    mEl.style.border='2px solid var(--accent)';mEl.style.background='var(--accent-glow)';
+    yEl.style.border='2px solid var(--border)';yEl.style.background='var(--surface2)';
+  } else {
+    yEl.style.border='2px solid var(--accent)';yEl.style.background='var(--accent-glow)';
+    mEl.style.border='2px solid var(--border)';mEl.style.background='var(--surface2)';
+  }
+}
+
+function closePaywall(){const el=document.getElementById('paywallOverlay');if(el)el.remove();}
+
+function purchasePro(){
+  const productId = _selectedPlan==='yearly' ? PRO_PRODUCTS.yearly : PRO_PRODUCTS.monthly;
+  // ── Capacitor Purchases (RevenueCat) entegrasyonu ──
+  // 7 günlük free trial App Store Connect'te tanımlanır.
+  // Kod tarafında ekstra bir şey yapman gerekmez — Apple otomatik uygular.
+  //
+  // window.Purchases?.purchaseProduct(productId)
+  //   .then(({customerInfo})=>{
+  //     if(customerInfo.entitlements.active['pro']){
+  //       isPro=true; localStorage.setItem('ff_pro','true');
+  //       closePaywall();
+  //       toast('🎉 '+(currentLang==='tr'?'7 günlük deneme başladı! Hoş geldin 👑':'7-day trial started! Welcome 👑'));
+  //     }
+  //   })
+  //   .catch(e=>{ if(e.code!=='1')toast((currentLang==='tr'?'Satın alma başarısız: ':'Purchase failed: ')+e.message); });
+  console.log('Satın alma başlatılacak (7 gün trial dahil):', productId);
+  toast(currentLang==='tr'?'Capacitor Purchases ile entegre edilecek':'Will be integrated via Capacitor Purchases');
+  closePaywall();
+}
+
+// TEST: window.activatePro() ile test modunu açabilirsin
+window.activatePro=()=>{isPro=true;localStorage.setItem('ff_pro','true');toast('✅ Pro aktif (test)');};
+window.deactivatePro=()=>{isPro=false;localStorage.removeItem('ff_pro');toast('Pro deaktif (test)');};
 let editingTaskId=null;
 
 const CIRC=2*Math.PI*85,PCIRC=2*Math.PI*93;
@@ -1872,6 +2034,7 @@ window.launchApp=function(){
     if(window._fb_failed)failed=window._fb_failed;currentGroupCode=localStorage.getItem('ff6_grp_'+(u?.uid||''))||null;}
   document.getElementById('authScreen').style.display='none';
   document.getElementById('mainApp').style.display='flex';
+  checkProStatus();
   init();
 };
 
@@ -1948,7 +2111,7 @@ function openSettings(){
         </div>
       </div>
     </div></div>
-    <div class="sps"><div class="sps-title">${t('sPomoDurations')}</div><div class="sblock">
+    <div class="sps"><div class="sps-title">${t('sPomoDurations')} <span class="pro-badge">👑 PRO</span></div><div class="sblock">
       <div class="srow"><div class="sr-left"><div class="sr-label">${t('sFocusMin')}</div><div class="sr-sub">${t('sMinutes')}</div></div><div class="num-wrap"><button class="num-btn" onclick="adjSS('focus',-5)">−</button><div class="num-val" id="svf">25</div><button class="num-btn" onclick="adjSS('focus',5)">+</button></div></div>
       <div class="srow"><div class="sr-left"><div class="sr-label">${t('sShortBreak')}</div></div><div class="num-wrap"><button class="num-btn" onclick="adjSS('short',-1)">−</button><div class="num-val" id="svs">5</div><button class="num-btn" onclick="adjSS('short',1)">+</button></div></div>
       <div class="srow"><div class="sr-left"><div class="sr-label">${t('sLongBreak')}</div></div><div class="num-wrap"><button class="num-btn" onclick="adjSS('long',-5)">−</button><div class="num-val" id="svl">15</div><button class="num-btn" onclick="adjSS('long',5)">+</button></div></div>
@@ -2020,7 +2183,11 @@ function openSettings(){
   document.body.style.overflow='hidden';
 }
 function closeSettings(){document.getElementById('settingsPage').classList.remove('active');document.body.style.overflow='';if(!tRunning)setMode(tMode);}
-function adjSS(k,d){const min=k==='short'?1:k==='goal'?1:k==='goalHours'?0:5;settings[k]=Math.max(min,(settings[k]||0)+d);const m={focus:'svf',short:'svs',long:'svl',goal:'svg_s',goalHours:'svgh'};if(m[k])document.getElementById(m[k]).textContent=settings[k];save();if(['focus','short','long'].includes(k)&&!tRunning)setMode(tMode);renderDailyGoal();renderGoalMini();}
+function adjSS(k,d){
+  // ── PRO CHECK: custom Pomodoro durations ──
+  if(['focus','short','long'].includes(k)&&!isPro){showPaywall('pomodoro');return;}
+  const min=k==='short'?1:k==='goal'?1:k==='goalHours'?0:5;settings[k]=Math.max(min,(settings[k]||0)+d);const m={focus:'svf',short:'svs',long:'svl',goal:'svg_s',goalHours:'svgh'};if(m[k])document.getElementById(m[k]).textContent=settings[k];save();if(['focus','short','long'].includes(k)&&!tRunning)setMode(tMode);renderDailyGoal();renderGoalMini();
+}
 function doSignOut(){window._doSignOut();}
 function exportData(){const b=new Blob([JSON.stringify({tasks,history,settings,stats,moods,cycles,dots,ttime,failed},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`focusflow-${todayKey()}.json`;a.click();toast(t('toastDownloaded'));}
 function importData(){const i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=e=>{const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(d.tasks)tasks=d.tasks;if(d.history)history=d.history;if(d.settings)settings={...settings,...d.settings};if(d.stats)stats=d.stats;if(d.moods)moods=d.moods;if(d.cycles)cycles=d.cycles;if(d.dots)dots=d.dots;if(d.ttime)ttime=d.ttime;if(d.failed)failed=d.failed;save();init();closeSettings();toast(t('sImport')+' ✓');}catch{toast('❌ '+(currentLang==='tr'?'Hata':'Error'));}};r.readAsText(e.target.files[0]);};i.click();}
@@ -2695,6 +2862,13 @@ function saveTask(){
     }
     toast(t('toastUpdated'));
   } else {
+    // ── PRO CHECK: repeat tasks ──
+    if(rd.length>0&&!isPro){closeTaskModal();showPaywall('repeat');return;}
+    // ── PRO CHECK: 5-task free limit ──
+    if(!isPro){
+      const dayTasks=tasks.filter(tk=>tk.dayKey===chosenDay);
+      if(dayTasks.length>=5){closeTaskModal();showPaywall('tasks');return;}
+    }
     const newTask={...base,id:Date.now().toString(),dayKey:chosenDay,completed:false,pomodoros:0};
     if(rd.length>0){
       const sd=new Date(chosenDay+'T12:00:00'),sdow=sd.getDay(),si=sdow===0?6:sdow-1;
@@ -3922,9 +4096,22 @@ function renderAnalysis(){
   page1.appendChild(c4);
   slider.appendChild(page1);
 
-  // PAGE 2: ring charts
+  // PAGE 2: ring charts (PRO only)
   const page2=document.createElement('div');
   page2.style.cssText='min-width:100%;display:flex;flex-direction:column;gap:14px;';
+  if(!isPro){
+    const proCard=document.createElement('div');
+    proCard.className='an-card';
+    proCard.style.cssText='display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:32px 20px;text-align:center;';
+    proCard.innerHTML=`<div style="font-size:2.4rem">📊</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:1.2rem;color:var(--text)">Detaylı Analiz</div>
+      <div style="font-size:.82rem;color:var(--text-muted);line-height:1.6">Görev dağılımı, kategori grafikleri ve haftalık/aylık trendler Pro planında mevcut.</div>
+      <button onclick="showPaywall('stats')" style="padding:12px 28px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-family:'Outfit',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer">👑 Pro'ya Geç</button>`;
+    page2.appendChild(proCard);
+    slider.appendChild(page2);
+    swipeWrap.appendChild(slider);layout.appendChild(swipeWrap);
+    return;
+  }
 
   // Ring colors for categories
   const RING_COLORS=['#c8775a','#b5956a','#5a9a6a','#5a78b8','#8a5ab8','#b85a78','#5a9898','#c8a05a','#7a8a5a','#c85a8a'];
