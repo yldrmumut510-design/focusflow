@@ -237,9 +237,9 @@ header{display:flex;align-items:center;justify-content:space-between;padding:max
 .wday{flex-shrink:0;width:46px;border-radius:12px;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;transition:all .18s;border:1.5px solid transparent}
 .wday:hover{background:var(--surface2)}
 .wday.active{background:var(--accent);border-color:var(--accent)}
-.wday-name{font-size:.65rem;font-weight:600;color:var(--text-muted);text-transform:uppercase}
-.wday.active .wday-name{color:rgba(255,255,255,.8)}
-.wday-num{font-family:'DM Mono',monospace;font-size:.95rem;font-weight:500;color:var(--text)}
+.wday-name{font-size:.65rem;font-weight:700;color:var(--text);text-transform:uppercase;opacity:.7}
+.wday.active .wday-name{color:rgba(255,255,255,.9);opacity:1}
+.wday-num{font-family:'DM Mono',monospace;font-size:.95rem;font-weight:600;color:var(--text)}
 .wday.active .wday-num{color:#fff}
 .wday-dot{width:4px;height:4px;border-radius:50%;background:var(--accent);opacity:0;transition:.18s}
 .wday.has-tasks .wday-dot{opacity:1}
@@ -2488,7 +2488,7 @@ function mkTaskEl(task){
   div.onclick=()=>openTaskModal(task.id);
   return div;
 }
-function toggleTask(id){const task=tasks.find(tk=>tk.id===id);if(!task)return;task.completed=!task.completed;if(task.completed){if(!history.find(h=>h.id===id))history.unshift({id,name:task.name,category:task.category||'',dayKey:task.dayKey,completedAt:new Date().toISOString(),pomodoros:task.pomodoros||0,timeSpent:ttime[id]||0});if(task.dayKey===todayKey())stats.task++;toast(t('toastCompleted'));}else{history=history.filter(h=>h.id!==id);if(task.dayKey===todayKey())stats.task=Math.max(0,stats.task-1);}save();renderTaskList();renderTaskPicker();renderSelBox();renderDailyGoal();renderFlow();updateStats();updateStreakBtn();renderWeek();
+function toggleTask(id){const task=tasks.find(tk=>tk.id===id);if(!task)return;task.completed=!task.completed;if(task.completed){if(!history.find(h=>h.id===id))history.unshift({id,name:task.name,category:task.category||'',dayKey:task.dayKey,completedAt:new Date().toISOString(),pomodoros:task.pomodoros||0,timeSpent:ttime[id]||0});if(task.dayKey===todayKey())stats.task++;toast(t('toastCompleted'));}else{history=history.filter(h=>h.id!==id);if(task.dayKey===todayKey())stats.task=Math.max(0,stats.task-1);}save();validateSelCat();renderTaskList();renderTaskPicker();renderSelBox();renderDailyGoal();renderFlow();updateStats();updateStreakBtn();renderWeek();
   // Check if today's goal just met
   if(task.completed&&task.dayKey===todayKey())checkStreakAutoOpen();
 }
@@ -2508,6 +2508,7 @@ function delTask(id){
     // Extra safety: clear selId if it still points to a missing task
     if(selId&&!tasks.find(t=>t.id===selId)){selId=null;}
     save();
+    validateSelCat();
     renderTaskList();renderTaskPicker();renderSelBox();renderWeek();renderFlow();renderDailyGoal();renderCatFilter();
     // Always fully close and clear dropdown — deleted tasks must not linger
     const dd=document.getElementById('taskDrop');
@@ -2785,7 +2786,7 @@ function saveTask(){
 
 // ══ SELECTOR ══
 // renderSelBox - see new version above
-function updateTimerLabel(){const lbl=document.getElementById('timerSub');if(tMode==='short'){lbl.textContent=t('timerSubShort');return;}if(tMode==='long'){lbl.textContent=t('timerSubLong');return;}const task=selId?tasks.find(t2=>t2.id===selId):null;lbl.textContent=task?.category?task.category.toUpperCase():t('timerSubFocus');}
+function updateTimerLabel(){const lbl=document.getElementById('timerSub');if(tMode==='short'){lbl.textContent=t('timerSubShort');return;}if(tMode==='long'){lbl.textContent=t('timerSubLong');return;}const task=selId?tasks.find(t2=>t2.id===selId):null;if(task?.category){lbl.textContent=task.category.toUpperCase();}else if(selCat){lbl.textContent=selCat.toUpperCase();}else{lbl.textContent=t('timerSubFocus');}}
 function toggleTaskDrop(e){e.stopPropagation();const dd=document.getElementById('taskDrop');if(dd.style.display==='flex'){dd.style.display='none';return;}renderDropContent();dd.style.display='flex';dd.style.flexDirection='column';setTimeout(()=>{const f=(ev)=>{if(!dd.contains(ev.target)&&!document.getElementById('taskSelBox').contains(ev.target)){dd.style.display='none';}document.removeEventListener('click',f);};document.addEventListener('click',f);},20);}
 // renderDropContent - see new version above
 function switchActive(id){
@@ -3193,7 +3194,7 @@ function inRange(dk){if(!dk)return false;const now=new Date(),today=todayKey();i
 
 function getAllCats(){
   const cats = new Set();
-  tasks.forEach(t=>{if(t.category)cats.add(t.category);});
+  tasks.forEach(t=>{if(t.category&&!t.completed)cats.add(t.category);});
   return [...cats].sort();
 }
 
@@ -3261,6 +3262,13 @@ function setCatFilter(cat){
   if(dd&&dd.style.display==='flex')renderDropContent();
   // Auto-update timer
   if(!tRunning){const s=getAS();const mins={focus:s.focus,short:s.short,long:s.long}[tMode];tSec=mins*60;totSec=mins*60;updateTDisplay();}
+}
+
+// Auto-clear selCat if the category no longer has any incomplete tasks
+function validateSelCat(){
+  if(!selCat)return;
+  const stillExists=tasks.some(t=>t.category===selCat&&!t.completed);
+  if(!stillExists){selCat=null;selId=null;renderCatFilter();renderSelBox();}
 }
 
 // ══ CLEAR SELECTION ══
