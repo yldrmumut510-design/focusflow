@@ -1902,6 +1902,8 @@ function aColor(n){let h=0;for(const c of(n||''))h=(h*31+c.charCodeAt(0))%ACOLOR
 function getAS(){const t=selId?tasks.find(t=>t.id===selId):null;const cp=t?.cp;return{focus:cp?.f??settings.focus,short:cp?.s??settings.short,long:cp?.l??settings.long};}
 function myTotalFocus(){return cycles.filter(c=>c.type==='completed'&&c.mode==='focus').reduce((a,c)=>a+(c.focusDuration||0),0)+cycles.filter(c=>c.type==='cancelled'&&c.mode==='focus').reduce((a,c)=>a+(c.workedSec||0),0);}
 function myTodayPomos(){return cycles.filter(c=>c.type==='completed'&&c.mode==='focus'&&c.dayKey===todayKey()).length;}
+function myTodayFocus(){const today=todayKey();return cycles.filter(c=>c.mode==="focus"&&c.dayKey===today).reduce((a,c)=>a+(c.focusDuration||c.workedSec||0),0);}
+function myWeekFocus(){const now=new Date(),cutoff=new Date(now);cutoff.setDate(now.getDate()-6);cutoff.setHours(0,0,0,0);const cutKey=dateKey(cutoff);return cycles.filter(c=>c.mode==="focus"&&c.dayKey>=cutKey).reduce((a,c)=>a+(c.focusDuration||c.workedSec||0),0);}
 
 function save(){
   if(isGuest)return;
@@ -2116,7 +2118,7 @@ window.myPresencePayload=function(){const u=window._currentUser||{};
   if(tRunning && tMode==='focus') s='working';
   else if(tMode==='short'||tMode==='long'||(pauseMs!==null)) s='break';
   else s='idle';
-  const tn=selId?(tasks.find(t=>t.id===selId)?.name||''):'';return{id:u.uid||'g',name:u.name||'?',color:u.color||'#c8775a',status:s,taskName:tn,mood:u.mood||'',totalFocusSec:myTotalFocus(),todayPomos:myTodayPomos(),lastSeen:Date.now()};};
+  const tn=selId?(tasks.find(t=>t.id===selId)?.name||''):'';return{id:u.uid||'g',name:u.name||'?',color:u.color||'#c8775a',status:s,taskName:tn,mood:u.mood||'',totalFocusSec:myTotalFocus(),todayFocusSec:myTodayFocus(),weekFocusSec:myWeekFocus(),todayPomos:myTodayPomos(),lastSeen:Date.now()};};
 window._lastGroupMembers=[];
 window.renderGroupPanel=function(members){
   window._lastGroupMembers=members;
@@ -2127,7 +2129,7 @@ window.renderGroupPanel=function(members){
   document.getElementById('gphOnline').textContent=`${online} ${t('online')}`;
   document.getElementById('agr_members').textContent=`${online} ${t('online')}`;
   const ord={working:0,break:1,idle:2,offline:3};
-  members.sort((a,b)=>(ord[a.status]??3)-(ord[b.status]??3)||(b.totalFocusSec||0)-(a.totalFocusSec||0));
+  members.sort((a,b)=>(ord[a.status]??3)-(ord[b.status]??3)||(b.todayFocusSec||0)-(a.todayFocusSec||0));
   // Show max 3 (top workers) on home panel
   const toShow=members.slice(0,3);
   const SI={
@@ -2136,7 +2138,7 @@ window.renderGroupPanel=function(members){
     idle:{cls:'si',text:`⚫ ${currentLang==='tr'?'Boşta':'Idle'}`},
     offline:{cls:'so',text:`○ ${currentLang==='tr'?'Çevrimdışı':'Offline'}`}
   };
-  toShow.forEach(m=>{const si=SI[m.status]||SI.offline,isMe=m.id===u.uid;const row=document.createElement('div');row.className=`member-row ${si.cls}`;row.innerHTML=`<div class="mavatar" style="background:${m.color||'#c8775a'}">${aLetter(m.name)}<div class="msd"></div></div><div class="minfo"><div class="mname">${m.name}${isMe?`<span class="me-tag">${currentLang==='tr'?'sen':'you'}</span>`:''}</div><div class="mstxt">${si.text}</div>${m.taskName&&m.status==='working'?`<div class="mtask">📌 ${m.taskName}</div>`:''}</div><div class="mstats"><div class="mstat"><div class="mstat-val" style="color:var(--accent)">${m.todayPomos||0}🍅</div><div class="mstat-lbl">${currentLang==='tr'?'bugün':'today'}</div></div><div class="mstat"><div class="mstat-val">${fmtH(m.totalFocusSec||0)}</div><div class="mstat-lbl">${currentLang==='tr'?'toplam':'total'}</div></div></div>`;body.appendChild(row);});
+  toShow.forEach(m=>{const si=SI[m.status]||SI.offline,isMe=m.id===u.uid;const row=document.createElement('div');row.className=`member-row ${si.cls}`;row.innerHTML=`<div class="mavatar" style="background:${m.color||'#c8775a'}">${aLetter(m.name)}<div class="msd"></div></div><div class="minfo"><div class="mname">${m.name}${isMe?`<span class="me-tag">${currentLang==='tr'?'sen':'you'}</span>`:''}</div><div class="mstxt">${si.text}</div>${m.taskName&&m.status==='working'?`<div class="mtask">📌 ${m.taskName}</div>`:''}</div><div class="mstats"><div class="mstat"><div class="mstat-val" style="color:var(--accent)">${m.todayPomos||0}🍅</div><div class="mstat-lbl">${currentLang==='tr'?'bugün':'today'}</div></div><div class="mstat"><div class="mstat-val">${fmtH(m.todayFocusSec||0)}</div><div class="mstat-lbl">${currentLang==='tr'?'bugün':'today'}</div></div></div>`;body.appendChild(row);});
   if(members.length>3){const more=document.createElement('div');more.style.cssText='text-align:center;font-size:.7rem;color:var(--text-muted);padding:6px 0 10px';more.textContent=`+${members.length-3} kişi daha → Tümünü gör`;body.appendChild(more);}
   // Also refresh desk if group page is open
   if(document.getElementById('groupFullPage').classList.contains('active'))renderDeskView();
@@ -2305,7 +2307,7 @@ function renderDeskView(){
       <div class="desk-name">${m.name}${isMe?' 👤':''}</div>
       ${m.taskName&&m.status==='working'?`<div class="desk-task">📌 ${m.taskName.slice(0,20)}</div>`:''}
       ${moodRow?`<div style="margin-top:4px">${moodRow}</div>`:''}
-      <div class="desk-stat" style="margin-top:4px">${m.todayPomos||0}🍅 <span class="desk-time">${fmtH(m.totalFocusSec||0)}</span></div>
+      <div class="desk-stat" style="margin-top:4px">${m.todayPomos||0}🍅 <span class="desk-time">${fmtH(m.todayFocusSec||0)}</span></div>
     `;
     grid.appendChild(card);
   });
@@ -2377,13 +2379,10 @@ function renderRanking(){
   if(!allMembers.find(m=>m.id===u.uid))allMembers.unshift(window.myPresencePayload());
   
   // Get focus seconds per member based on period
-  // For now use totalFocusSec (all time) for year, todayPomos proxy for day
-  // Firebase stores totalFocusSec as cumulative, todayPomos as today
-  const now=new Date();
   const ranked=allMembers.map(m=>{
     let sec=0;
-    if(rankPeriod==='day'){sec=(m.todayPomos||0)*(settings.focus||25)*60;}
-    else if(rankPeriod==='week'){sec=m.weekFocusSec||m.totalFocusSec||0;}
+    if(rankPeriod==='day'){sec=m.todayFocusSec||0;}
+    else if(rankPeriod==='week'){sec=m.weekFocusSec||0;}
     else{sec=m.totalFocusSec||0;}
     return{...m,rankSec:sec};
   }).sort((a,b)=>b.rankSec-a.rankSec);
@@ -2408,7 +2407,7 @@ function renderRanking(){
       </div>
       <div>
         <div class="rank-time">${fmtH(m.rankSec)}</div>
-        <div style="font-size:.65rem;color:var(--text-muted);text-align:right">${rankPeriod==='day'?m.todayPomos||0:Math.round(m.rankSec/((settings.focus||25)*60))}🍅</div>
+        <div style="font-size:.65rem;color:var(--text-muted);text-align:right">${rankPeriod==='day'?(m.todayPomos||0):Math.round(m.rankSec/((settings.focus||25)*60))}🍅</div>
       </div>
     `;
     list.appendChild(row);
@@ -3066,7 +3065,7 @@ function onTimerEnd(){const s=getAS();if(tMode==='focus'){
       }
     });
   }
-  sessP=[];sessTT={};sessTT_days={};lastTickDay=todayKey();cumulPause=0;pauseDispSec=0;pauseCount=0;clearPauseRing();save();updateStats();renderDailyGoal();renderFlow();const gc=dots.filter(x=>x.t==='g').length;if(gc>=4){playBeep();toast(t('toast4Pomo'));sendNotification(t('notifPomoTitle'),t('notif4PomoBody'));setTimeout(()=>{setMode('long');toggleTimer();},600);}else{playBeep();toast(t('toastPomoComplete'));const taskName=selId?(tasks.find(tk=>tk.id===selId)?.name||''):'';sendNotification(t('notifPomoTitle'),t('notifPomoBody')(taskName));setTimeout(()=>setMode('short'),500);}renderDots();nudgePresence();
+  sessP=[];sessTT={};sessTT_days={};lastTickDay=todayKey();cumulPause=0;pauseDispSec=0;pauseCount=0;clearPauseRing();save();updateStats();renderDailyGoal();renderFlow();const gc=dots.filter(x=>x.t==='g').length;if(gc>=4){playBeep();toast(t('toast4Pomo'));sendNotification(t('notifPomoTitle'),t('notif4PomoBody'));setMode('long');setTimeout(()=>{toggleTimer();},600);}else{playBeep();toast(t('toastPomoComplete'));const taskName=selId?(tasks.find(tk=>tk.id===selId)?.name||''):'';sendNotification(t('notifPomoTitle'),t('notifPomoBody')(taskName));setMode('short');}renderDots();nudgePresence();
   // Check hour-based streak goal
   if((settings.streakGoalType||'task')==='hour')checkStreakAutoOpen();
 }else if(tMode==='long'){playBeep();toast(t('toastLongBreakEnd'));sendNotification(t('notifLongBreakTitle'),t('notifLongBreakBody'));resetDots();save();setTimeout(()=>setMode('focus'),500);nudgePresence();}else{playBeep();toast(t('toastShortBreakEnd'));sendNotification(t('notifShortBreakTitle'),t('notifShortBreakBody'));setTimeout(()=>setMode('focus'),500);nudgePresence();}}
