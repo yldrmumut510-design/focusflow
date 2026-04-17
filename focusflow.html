@@ -1829,6 +1829,45 @@ let weekOff=0,selDay=todayKey(),histP='all',anP='day',activeMoodPop=null;
 let gpOpen=true,currentGroupCode=null,isGuest=false,saveTimer=null,selCat=null;
 let isPro=true;
 
+// ══ CAPACITOR / NATIVE BRIDGE ══
+function _capPlugin(n){return (window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins[n])||null;}
+function isNative(){return !!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());}
+function capLN(){return _capPlugin('LocalNotifications');}
+const NOTIF_END_ID=1001;
+let _nativeNotifGranted=false;
+async function capCheckPerm(){const LN=capLN();if(!LN)return'default';try{const r=await LN.checkPermissions();return (r&&r.display)||'default';}catch(e){return'default';}}
+async function capRequestPerm(){const LN=capLN();if(!LN)return false;try{const r=await LN.requestPermissions();const g=r&&r.display==='granted';_nativeNotifGranted=g;return g;}catch(e){return false;}}
+async function capRefreshPerm(){if(!capLN())return false;const s=await capCheckPerm();_nativeNotifGranted=(s==='granted');return _nativeNotifGranted;}
+async function capSchedulePomoEnd(endAt,mode,taskName){
+  const LN=capLN();if(!LN)return;
+  try{await LN.cancel({notifications:[{id:NOTIF_END_ID}]});}catch(e){}
+  if(settings.notifications===false)return;
+  if(!_nativeNotifGranted){const g=await capRefreshPerm();if(!g)return;}
+  let title='FocusFlow',body='';
+  try{
+    if(mode==='focus'){title=t('notifPomoTitle');body=t('notifPomoBody')(taskName||'');}
+    else if(mode==='long'){title=t('notifLongBreakTitle');body=t('notifLongBreakBody');}
+    else{title=t('notifShortBreakTitle');body=t('notifShortBreakBody');}
+  }catch(e){}
+  const at=new Date(endAt);
+  if(at.getTime()<=Date.now()+500)return;
+  try{await LN.schedule({notifications:[{id:NOTIF_END_ID,title,body,schedule:{at},sound:null}]});}catch(e){}
+}
+async function capCancelPomoEnd(){const LN=capLN();if(!LN)return;try{await LN.cancel({notifications:[{id:NOTIF_END_ID}]});}catch(e){}}
+async function capSendImmediate(title,body){
+  const LN=capLN();if(!LN)return false;
+  if(settings.notifications===false)return false;
+  if(!_nativeNotifGranted){const g=await capRefreshPerm();if(!g)return false;}
+  try{await LN.schedule({notifications:[{id:Math.floor(Math.random()*1e6)+2000,title,body,schedule:{at:new Date(Date.now()+100)},sound:null}]});return true;}catch(e){return false;}
+}
+function isNotifGrantedSync(){if(capLN())return _nativeNotifGranted;return ('Notification' in window)&&Notification.permission==='granted';}
+
+// ══ TIMER STATE PERSISTENCE ══
+const ATIMER_KEY='ff_activeTimer';
+function saveActiveTimer(){try{if(tRunning&&timerEndAt){localStorage.setItem(ATIMER_KEY,JSON.stringify({endAt:timerEndAt,mode:tMode,taskId:selId,totSec,savedAt:Date.now()}));}}catch(e){}}
+function clearActiveTimer(){try{localStorage.removeItem(ATIMER_KEY);}catch(e){}}
+function getActiveTimer(){try{const s=localStorage.getItem(ATIMER_KEY);return s?JSON.parse(s):null;}catch(e){return null;}}
+
 // ══ PRO / PAYWALL ══
 function checkProStatus(){ isPro=true; }
 
@@ -1957,7 +1996,8 @@ function init(){
   const today=todayKey();if(stats.date!==today){stats={pomo:0,min:0,task:0,cancel:0,date:today};save();}
   applyDarkMode(settings.dark);
   document.getElementById('soundToggle').checked=settings.sound!==false;
-  if(('Notification' in window)&&Notification.permission!=='granted')settings.notifications=false;
+  if(capLN()){capRefreshPerm().then(g=>{if(!g)settings.notifications=false;});}
+  else if(('Notification' in window)&&Notification.permission!=='granted')settings.notifications=false;
   // Auto-request notification permission on first launch
   setTimeout(()=>requestNotifPermission(),1200);
   const u=window._currentUser||{name:'?',color:'#c8775a'};
@@ -1966,6 +2006,8 @@ function init(){
   if(!isGuest&&currentGroupCode){document.getElementById('groupPanel').style.display='block';document.getElementById('gphBadge').textContent=currentGroupCode;window._startGroupSync(currentGroupCode);}
   buildRdays();renderWeek();renderTaskList();renderCatFilter();renderSelBox();renderDots();renderDailyGoal();renderFlow();updateTDisplay();updateRing(1);updateStats();updateStreakBtn();
   tSec=getAS().focus*60;totSec=tSec;updateTDisplay();
+  // Reconcile any pending background timer AFTER init state is set up
+  setTimeout(()=>{try{handleTimerResume();}catch(e){console.warn('resume err',e);}},50);
   applyI18n();
   // Midnight auto-update: check every minute if day changed
   if(window._midnightChecker)clearInterval(window._midnightChecker);
@@ -2086,7 +2128,7 @@ function openSettings(){
   document.getElementById('darkToggle').checked=!!settings.dark;
   document.getElementById('soundToggle').checked=settings.sound!==false;
   const notifEl=document.getElementById('notifToggle');
-  if(notifEl){const granted=('Notification' in window)&&Notification.permission==='granted';notifEl.checked=settings.notifications!==false&&granted;if(settings.notifications!==false&&!granted)settings.notifications=false;}
+  if(notifEl){const granted=isNotifGrantedSync();notifEl.checked=settings.notifications!==false&&granted;if(settings.notifications!==false&&!granted)settings.notifications=false;}
   if(currentGroupCode){document.getElementById('gs_nogroup').style.display='none';document.getElementById('gs_hasgroup').style.display='block';document.getElementById('agr_code').textContent=currentGroupCode;document.getElementById('sGroupCodeRow').style.display='flex';document.getElementById('sGroupCode').textContent=currentGroupCode;}
   else{document.getElementById('gs_nogroup').style.display='block';document.getElementById('gs_hasgroup').style.display='none';document.getElementById('sGroupCodeRow').style.display='none';}
   if(isGuest){document.getElementById('groupSettingsBox').style.opacity='.4';document.getElementById('groupSettingsBox').style.pointerEvents='none';}
@@ -2828,8 +2870,23 @@ function toggleTimer(){
     clearInterval(tIv);tRunning=false;document.getElementById('playBtn').textContent=t('startBtn');
     commitSeg();pauseMs=Date.now();startPauseCounter();
     pauseAmbient();
+    clearActiveTimer();capCancelPomoEnd();
     nudgePresence();
   }else{
+    // Guard: timer already completed but state wasn't transitioned — finish pending transition first
+    if(tSec<=0){
+      const at=getActiveTimer();
+      if(at&&at.endAt<=Date.now()){
+        // Pending background completion — finalize
+        tMode=at.mode;
+        commitSeg();
+        onTimerEnd();
+        return;
+      }
+      // Stale 0 state with no pending timer — reset duration for current mode
+      setMode(tMode);
+      return;
+    }
     if(pauseMs!==null){const dur=Math.round((Date.now()-pauseMs)/1000);sessP.push({duration:dur,at:new Date(pauseMs).toISOString()});cumulPause+=dur;pauseMs=null;freezePauseCounter();}
     tRunning=true;document.getElementById('playBtn').textContent=t('stopBtn');
     segStart=Date.now();
@@ -2838,6 +2895,9 @@ function toggleTimer(){
     const selSound=settings.ambientSound||'none';
     if(selSound!=='none'){ if(!ambientActive){startAmbient(selSound);}else{resumeAmbient();} }
     timerEndAt=Date.now()+tSec*1000;
+    saveActiveTimer();
+    const _tn=selId?(tasks.find(tk=>tk.id===selId)?.name||''):'';
+    capSchedulePomoEnd(timerEndAt,tMode,_tn);
     tIv=setInterval(()=>{
       // Midnight detection
       const nowDay=todayKey();
@@ -2930,6 +2990,7 @@ function resetTimer(){
 function doResetSession(){
   const m=document.getElementById('resetMenu');if(m)m.remove();
   clearInterval(tIv);tRunning=false;document.getElementById('playBtn').textContent='BAŞLAT';
+  clearActiveTimer();capCancelPomoEnd();
   clearPauseRing();pauseMs=null;segStart=null;sessP=[];sessTT={};sessTT_days={};lastTickDay=todayKey();cumulPause=0;pauseDispSec=0;pauseCount=0;
   const s=getAS();const mins={focus:s.focus,short:s.short,long:s.long}[tMode];
   tSec=mins*60;totSec=mins*60;updateTDisplay();nudgePresence();
@@ -2940,6 +3001,7 @@ function doResetCycle(){
   // If currently in a break mode, stop timer and switch to focus
   if(tMode==='short'||tMode==='long'){
     clearInterval(tIv);tRunning=false;
+    clearActiveTimer();capCancelPomoEnd();
     sessP=[];sessTT={};sessTT_days={};lastTickDay=todayKey();cumulPause=0;pauseDispSec=0;pauseCount=0;pauseMs=null;
     clearPauseRing();
     setMode('focus');
@@ -2984,7 +3046,7 @@ function confirmSkip(){
   showConfirmSheet(t('confirmSkipTitle'),subtitle,t('confirmSkipBtn'),'',skipForward);
 }
 
-function cancelPomodoro(){if(!tRunning&&tSec===totSec&&pauseMs===null&&cumulPause===0)return;clearInterval(tIv);tRunning=false;document.getElementById('playBtn').textContent='BAŞLAT';commitSeg();if(pauseMs!==null){const dur=Math.round((Date.now()-pauseMs)/1000);sessP.push({duration:dur,at:new Date(pauseMs).toISOString()});cumulPause+=dur;pauseMs=null;}clearPauseRing();const totalP=sessP.reduce((a,p)=>a+p.duration,0),worked=Object.values(sessTT).reduce((a,v)=>a+v,0);dotCancel();stats.cancel++;
+function cancelPomodoro(){if(!tRunning&&tSec===totSec&&pauseMs===null&&cumulPause===0)return;clearInterval(tIv);tRunning=false;document.getElementById('playBtn').textContent='BAŞLAT';clearActiveTimer();capCancelPomoEnd();commitSeg();if(pauseMs!==null){const dur=Math.round((Date.now()-pauseMs)/1000);sessP.push({duration:dur,at:new Date(pauseMs).toISOString()});cumulPause+=dur;pauseMs=null;}clearPauseRing();const totalP=sessP.reduce((a,p)=>a+p.duration,0),worked=Object.values(sessTT).reduce((a,v)=>a+v,0);dotCancel();stats.cancel++;
 // Split cycles across days if midnight was crossed
 const allDays=Object.keys(sessTT_days).sort();
 if(allDays.length<=1){
@@ -3007,6 +3069,7 @@ stats.min+=Math.round(todaySec/60);
 sessP=[];sessTT={};sessTT_days={};lastTickDay=todayKey();cumulPause=0;pauseDispSec=0;pauseCount=0;save();renderDots();updateStats();renderDailyGoal();nudgePresence();const s=getAS();const mins={focus:s.focus,short:s.short,long:s.long}[tMode];tSec=mins*60;totSec=mins*60;updateTDisplay();pauseAmbient();toast(t('toastCancelled'));}
 function skipForward(){
   clearInterval(tIv);tRunning=false;document.getElementById('playBtn').textContent='BAŞLAT';
+  clearActiveTimer();capCancelPomoEnd();
   commitSeg();
   if(pauseMs!==null){const dur=Math.round((Date.now()-pauseMs)/1000);sessP.push({duration:dur,at:new Date(pauseMs).toISOString()});cumulPause+=dur;pauseMs=null;}
   clearPauseRing();
@@ -3048,7 +3111,32 @@ function skipForward(){
   else{sessP=[];sessTT={};sessTT_days={};lastTickDay=todayKey();cumulPause=0;pauseDispSec=0;pauseCount=0;save();toast(t('toastFocus'));setMode('focus');nudgePresence();}
   pauseAmbient();
 }
-function onTimerEnd(){const s=getAS();if(tMode==='focus'){
+let _endingInProgress=false;
+function onTimerEnd(){
+  // Idempotency guard: prevent double-processing when both tIv tick & visibilitychange fire
+  if(_endingInProgress)return;
+  const _at=getActiveTimer();
+  if(!_at)return; // Already consumed (processed once)
+  clearActiveTimer();capCancelPomoEnd();
+  _endingInProgress=true;
+  const _prevMode=tMode;
+  try{_onTimerEndCore();}
+  catch(e){try{console.warn('onTimerEnd err',e);}catch(_){}}
+  finally{_endingInProgress=false;}
+  // Safety: if the transition failed (mode unchanged or tSec still 0), force-advance
+  try{
+    if(tMode===_prevMode || tSec<=0){
+      tRunning=false;
+      if(_prevMode==='focus'){
+        const gc=dots.filter(x=>x.t==='g').length;
+        setMode(gc>=4?'long':'short');
+      } else if(_prevMode==='short'||_prevMode==='long'){
+        setMode('focus');
+      }
+    }
+  }catch(e){try{console.warn('onTimerEnd safety err',e);}catch(_){}}
+}
+function _onTimerEndCore(){const s=getAS();if(tMode==='focus'){
   const allDays=Object.keys(sessTT_days).sort();
   const todaySec=Object.values(sessTT_days[todayKey()]||{}).reduce((a,v)=>a+v,0);
   stats.pomo++;stats.min+=Math.round(todaySec/60);
@@ -3071,7 +3159,7 @@ function onTimerEnd(){const s=getAS();if(tMode==='focus'){
 }else if(tMode==='long'){playBeep();toast(t('toastLongBreakEnd'));sendNotification(t('notifLongBreakTitle'),t('notifLongBreakBody'));resetDots();save();setTimeout(()=>setMode('focus'),500);nudgePresence();}else{playBeep();toast(t('toastShortBreakEnd'));sendNotification(t('notifShortBreakTitle'),t('notifShortBreakBody'));setTimeout(()=>setMode('focus'),500);nudgePresence();}}
 function checkTaskReminders(){
   if(settings.notifications===false)return;
-  if(!('Notification' in window)||Notification.permission!=='granted')return;
+  if(!isNotifGrantedSync())return;
   const now=new Date();
   const hhmm=`${p2(now.getHours())}:${p2(now.getMinutes())}`;
   const today=todayKey();
@@ -3095,7 +3183,8 @@ function checkTaskReminders(){
 function playBeep(){if(settings.sound===false||!document.getElementById('soundToggle').checked)return;try{const ctx=new(window.AudioContext||window.webkitAudioContext)();[0,.15,.3].forEach((t,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=i===2?880:660;g.gain.setValueAtTime(.25,ctx.currentTime+t);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+t+.25);o.start(ctx.currentTime+t);o.stop(ctx.currentTime+t+.25);});}catch(e){}}
 function sendNotification(title,body){
   if(settings.notifications===false)return;
-  if(!isNotifSupported()||Notification.permission!=='granted')return;
+  if(capLN()){capSendImmediate(title,body);return;}
+  if(!('Notification' in window)||Notification.permission!=='granted')return;
   try{new Notification(title,{body,icon:'',tag:'focusflow-timer',requireInteraction:false});}catch(e){}
 }
 async function toggleNotifications(){
@@ -3107,8 +3196,10 @@ async function toggleNotifications(){
       const msg=isIOS?(currentLang==='tr'?'📲 Ana ekrana ekleyince bildirimler aktif olur':'📲 Add to Home Screen to enable notifications'):(currentLang==='tr'?'❌ Tarayıcı desteklemiyor':'❌ Browser not supported');
       toast(msg);el.checked=false;return;
     }
-    const perm=await Notification.requestPermission();
-    if(perm==='granted'){settings.notifications=true;toast(t('sNotifEnabled'));}
+    let granted=false;
+    if(capLN()){granted=await capRequestPerm();}
+    else{const perm=await Notification.requestPermission();granted=perm==='granted';}
+    if(granted){settings.notifications=true;toast(t('sNotifEnabled'));}
     else{settings.notifications=false;el.checked=false;toast(t('sNotifDenied'));}
   }else{
     settings.notifications=false;
@@ -3116,9 +3207,9 @@ async function toggleNotifications(){
   save();
 }
 function isNotifSupported(){
-  // iOS Safari in browser (not PWA) doesn't support Notification API
+  // Native (Capacitor LocalNotifications) is always supported when available
+  if(capLN()) return true;
   if(!('Notification' in window)) return false;
-  // Detect standalone PWA mode
   const isPWA=window.navigator.standalone===true||window.matchMedia('(display-mode: standalone)').matches;
   const isIOS=/iP(hone|od|ad)/.test(navigator.userAgent);
   if(isIOS && !isPWA) return false;
@@ -3127,6 +3218,30 @@ function isNotifSupported(){
 
 async function requestNotifPermission(){
   if(!isNotifSupported()) return;
+  // Native (Capacitor) branch — request directly, no custom sheet needed
+  if(capLN()){
+    const curr=await capCheckPerm();
+    _nativeNotifGranted=(curr==='granted');
+    if(curr==='granted'){
+      settings.notifications=true;
+      const el=document.getElementById('notifToggle');if(el)el.checked=true;
+      save();return;
+    }
+    if(curr==='denied'){settings.notifications=false;save();return;}
+    if(sessionStorage.getItem('ff6_notif_asked')) return;
+    sessionStorage.setItem('ff6_notif_asked','1');
+    const granted=await capRequestPerm();
+    if(granted){
+      settings.notifications=true;
+      const el=document.getElementById('notifToggle');if(el)el.checked=true;
+      save();
+      toast(currentLang==='tr'?'🔔 Bildirimler açıldı':'🔔 Notifications enabled');
+      setTimeout(()=>capSendImmediate(currentLang==='tr'?'FocusFlow Hazır! 🍅':'FocusFlow Ready! 🍅',currentLang==='tr'?'Bildirimler aktif. Odaklanmaya hazır mısın?':'Notifications active. Ready to focus?'),500);
+    } else {
+      settings.notifications=false;save();
+    }
+    return;
+  }
   // Already granted — just sync settings
   if(Notification.permission==='granted'){
     settings.notifications=true;
@@ -4363,12 +4478,54 @@ buildRdays();
 document.addEventListener('DOMContentLoaded',()=>{applyI18n();});
 
 // ── Background timer sync ──────────────────────────────────
-document.addEventListener('visibilitychange',()=>{
-  if(document.hidden) return;
+function handleTimerResume(){
+  // First, check persisted active timer — survives suspension + partial tIv runs
+  const at=getActiveTimer();
+  const now=Date.now();
 
-  // Case 1: Timer running — sync from wall clock
-  if(tRunning && pauseMs===null){
-    const remaining=Math.max(0,Math.round((timerEndAt-Date.now())/1000));
+  // Case A: Persisted timer ended while backgrounded (or during partial execution)
+  if(at && at.endAt<=now){
+    clearInterval(tIv);tIv=null;
+    // Restore runtime state so onTimerEnd transitions correctly
+    timerEndAt=at.endAt;
+    if(at.totSec) totSec=at.totSec;
+    tMode=at.mode;
+    tRunning=false;
+    tSec=0;
+    document.getElementById('playBtn').textContent=t('startBtn');
+    updateTDisplay();
+    commitSeg();
+    onTimerEnd();
+    return;
+  }
+
+  // Case B: Persisted timer still counting — sync display
+  if(at && at.endAt>now){
+    timerEndAt=at.endAt;
+    if(at.totSec) totSec=at.totSec;
+    tMode=at.mode;
+    if(!tRunning){
+      // State was lost (rare) — rebuild
+      tRunning=true;
+      document.getElementById('playBtn').textContent=t('stopBtn');
+      if(!tIv){
+        tIv=setInterval(()=>{
+          const nowDay=todayKey();
+          if(nowDay!==lastTickDay){lastTickDay=nowDay;}
+          const remaining=Math.max(0,Math.round((timerEndAt-Date.now())/1000));
+          tSec=remaining;updateTDisplay();
+          if(tSec<=0){clearInterval(tIv);tRunning=false;document.getElementById('playBtn').textContent=t('startBtn');commitSeg();onTimerEnd();}
+        },500);
+      }
+    }
+    const remaining=Math.max(0,Math.round((timerEndAt-now)/1000));
+    tSec=remaining;updateTDisplay();
+    return;
+  }
+
+  // Case C: Running in-memory but no persisted state (e.g. older session) — legacy sync
+  if(tRunning && pauseMs===null && timerEndAt){
+    const remaining=Math.max(0,Math.round((timerEndAt-now)/1000));
     if(remaining<=0){
       clearInterval(tIv);tRunning=false;
       document.getElementById('playBtn').textContent=t('startBtn');
@@ -4382,9 +4539,9 @@ document.addEventListener('visibilitychange',()=>{
     return;
   }
 
-  // Case 2: Paused — check 5-min auto-cancel
+  // Case D: Paused — check 5-min auto-cancel
   if(!tRunning && pauseMs!==null){
-    const totalPauseSec=cumulPause+Math.round((Date.now()-pauseMs)/1000);
+    const totalPauseSec=cumulPause+Math.round((now-pauseMs)/1000);
     pauseDispSec=totalPauseSec;
     updatePauseVisual();
     const pauseMinutes=Math.floor(totalPauseSec/60);
@@ -4398,9 +4555,14 @@ document.addEventListener('visibilitychange',()=>{
       const tn=selId?(tasks.find(tk=>tk.id===selId)?.name||''):'';
       sendNotification(t('notifPause3Title'),t('notifPause3Body')(tn));
     }
-    return;
   }
-});
+}
+
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)handleTimerResume();});
+window.addEventListener('pageshow',()=>{handleTimerResume();});
+window.addEventListener('focus',()=>{handleTimerResume();});
+// Initial reconcile after boot — in case timer finished while app was killed
+setTimeout(handleTimerResume,800);
 </script>
 </body>
 </html>
