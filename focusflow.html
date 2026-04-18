@@ -1230,6 +1230,9 @@ window._listenGroup = (gc,cb) => {
     // ignoring heartbeat freshness. Otherwise fall back to stored status + offline timeout.
     if(x.timerEndAt && x.timerEndAt>now){
       x.status = x.tMode==='focus' ? 'working' : 'break';
+    } else if(x.nextBreakEndAt && x.nextBreakEndAt>now){
+      // Focus ended while backgrounded — user is in the implied break window.
+      x.status='break';
     } else if(now-x.lastSeen>90000){
       x.status='offline';
     }
@@ -2173,7 +2176,19 @@ window.myPresencePayload=function(){const u=window._currentUser||{};
   const tn=selId?(tasks.find(t=>t.id===selId)?.name||''):'';
   const schedEnd=(tRunning&&timerEndAt)?timerEndAt:null;
   const schedMode=tRunning?tMode:null;
-  return{id:u.uid||'g',name:u.name||'?',color:u.color||'#c8775a',status:s,taskName:tn,mood:u.mood||'',totalFocusSec:myTotalFocus(),todayFocusSec:myTodayFocus(),weekFocusSec:myWeekFocus(),todayPomos:myTodayPomos(),timerEndAt:schedEnd,tMode:schedMode,lastSeen:Date.now()};};
+  // Grace: while a focus session is running, also advertise when the following break would end.
+  // Peers use this so that after timerEndAt passes (app backgrounded, auto-transition didn't fire)
+  // the user still appears on 'break' for the break duration, instead of immediately offline.
+  let nextBreakEndAt=null;
+  if(tRunning && tMode==='focus' && timerEndAt){
+    try{
+      const as=getAS();
+      const curG=dots.filter(x=>x.t==='g').length;
+      const breakMin=(curG>=3)?as.long:as.short;
+      nextBreakEndAt=timerEndAt+breakMin*60*1000;
+    }catch(e){}
+  }
+  return{id:u.uid||'g',name:u.name||'?',color:u.color||'#c8775a',status:s,taskName:tn,mood:u.mood||'',totalFocusSec:myTotalFocus(),todayFocusSec:myTodayFocus(),weekFocusSec:myWeekFocus(),todayPomos:myTodayPomos(),timerEndAt:schedEnd,tMode:schedMode,nextBreakEndAt,lastSeen:Date.now()};};
 window._lastGroupMembers=[];
 window.renderGroupPanel=function(members){
   window._lastGroupMembers=members;
