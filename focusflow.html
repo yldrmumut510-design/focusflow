@@ -1224,7 +1224,17 @@ window._pushPresence = async (gc,uid,payload) => {
 window._listenGroup = (gc,cb) => {
   if(groupListener)off(groupListener);
   const r=ref(db,`groups/${gc}/members`);groupListener=r;
-  onValue(r,snap=>{const now=Date.now();const m=Object.values(snap.val()||{}).map(x=>{if(now-x.lastSeen>90000)x.status='offline';return x;});cb(m);});
+  onValue(r,snap=>{const now=Date.now();const m=Object.values(snap.val()||{}).map(x=>{
+    // Derive status from timer schedule so backgrounded clients still show correctly.
+    // If an active timer is scheduled and not yet expired, presence follows the timer,
+    // ignoring heartbeat freshness. Otherwise fall back to stored status + offline timeout.
+    if(x.timerEndAt && x.timerEndAt>now){
+      x.status = x.tMode==='focus' ? 'working' : 'break';
+    } else if(now-x.lastSeen>90000){
+      x.status='offline';
+    }
+    return x;
+  });cb(m);});
 };
 window._stopGroupListener = () => {if(groupListener){off(groupListener);groupListener=null;}};
 window._startGroupSync = (gc) => {
@@ -2160,7 +2170,10 @@ window.myPresencePayload=function(){const u=window._currentUser||{};
   if(tRunning && tMode==='focus') s='working';
   else if(tMode==='short'||tMode==='long'||(pauseMs!==null)) s='break';
   else s='idle';
-  const tn=selId?(tasks.find(t=>t.id===selId)?.name||''):'';return{id:u.uid||'g',name:u.name||'?',color:u.color||'#c8775a',status:s,taskName:tn,mood:u.mood||'',totalFocusSec:myTotalFocus(),todayFocusSec:myTodayFocus(),weekFocusSec:myWeekFocus(),todayPomos:myTodayPomos(),lastSeen:Date.now()};};
+  const tn=selId?(tasks.find(t=>t.id===selId)?.name||''):'';
+  const schedEnd=(tRunning&&timerEndAt)?timerEndAt:null;
+  const schedMode=tRunning?tMode:null;
+  return{id:u.uid||'g',name:u.name||'?',color:u.color||'#c8775a',status:s,taskName:tn,mood:u.mood||'',totalFocusSec:myTotalFocus(),todayFocusSec:myTodayFocus(),weekFocusSec:myWeekFocus(),todayPomos:myTodayPomos(),timerEndAt:schedEnd,tMode:schedMode,lastSeen:Date.now()};};
 window._lastGroupMembers=[];
 window.renderGroupPanel=function(members){
   window._lastGroupMembers=members;
