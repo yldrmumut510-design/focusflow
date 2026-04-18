@@ -2508,9 +2508,18 @@ function renderTaskList(){
   if(timed.length){const g=document.createElement('div');g.innerHTML=`<div class="task-group-lbl">${t('timedTasks')}</div>`;timed.forEach(t=>g.appendChild(mkTaskEl(t)));c.appendChild(g);}
   if(any.length){const g=document.createElement('div');if(timed.length)g.innerHTML=`<div class="task-group-lbl">${t('flexTasks')}</div>`;any.forEach(t=>g.appendChild(mkTaskEl(t)));c.appendChild(g);}
 }
+function taskDayTime(taskId,dayKey){
+  let sum=0;
+  cycles.forEach(c=>{
+    if(c.dayKey!==dayKey||c.mode!=='focus')return;
+    if(c.taskTimes){if(c.taskTimes[taskId])sum+=c.taskTimes[taskId];}
+    else if(c.taskId===taskId)sum+=(c.focusDuration||c.workedSec||0);
+  });
+  if(typeof sessTT_days!=='undefined'&&sessTT_days[dayKey]&&sessTT_days[dayKey][taskId])sum+=sessTT_days[dayKey][taskId];
+  return sum;
+}
 function calcTaskPomos(task){
-  // Calculate how many pomodoros worth of time has been spent on this task
-  const spentSec=ttime[task.id]||0;
+  const spentSec=taskDayTime(task.id,task.dayKey);
   const pomoSec=(task.cp?.f||settings.focus||25)*60;
   return Math.floor(spentSec/pomoSec);
 }
@@ -2522,7 +2531,8 @@ function mkTaskEl(task){
   const earnedPomos=calcTaskPomos(task);
   const pom=earnedPomos>0?`<span class="tc">🍅×${earnedPomos}</span>`:'';
   const pc=task.pomoCount>0?`<span class="tc pomo-goal-badge">🎯 ${task.pomoCount}🍅</span>`:'';
-  const sp=ttime[task.id]?`<span class="tc">⏱${fmtS(ttime[task.id])}</span>`:'';
+  const daySec=taskDayTime(task.id,task.dayKey);
+  const sp=daySec?`<span class="tc">⏱${fmtS(daySec)}</span>`:'';
   const rep=task.rd?.length?'<span class="tc">🔁</span>':'';
   const pb={high:`<span class="pb pb-h">${t('prioHigh')}</span>`,mid:`<span class="pb pb-m">${t('prioMid')||'Orta'}</span>`,low:''}[task.priority];
   div.innerHTML=`<div class="tchk${task.completed?' chk':''}" onclick="event.stopPropagation();toggleTask('${task.id}')">${task.completed?'✓':''}</div><div class="tinfo"><div class="tname">${task.name}</div><div class="tmeta">${ts}${cat}${pb}${pom}${pc}${sp}${rep}</div></div><button class="t-start" onclick="event.stopPropagation();startPomo('${task.id}')">▶</button><button class="t-del" onclick="event.stopPropagation();delTask('${task.id}')" title="Sil">🗑</button>`;
@@ -2784,14 +2794,9 @@ function saveTask(){
       const oldTask=tasks[idx];
       const oldRdStr=JSON.stringify((oldTask.rd||[]).slice().sort());
       const newRdStr=JSON.stringify((rd||[]).slice().sort());
-      // Check if date changed and migrate work records
-      const oldDayKey=tasks[idx].dayKey;
-      const dayKeyChanged=chosenDay&&chosenDay!==oldDayKey;
-      if(dayKeyChanged){
-        const taskId=tasks[idx].id;
-        cycles.forEach(cy=>{if(cy.taskId===taskId&&cy.dayKey===oldDayKey)cy.dayKey=chosenDay;});
-        history.forEach(h=>{if(h.id===taskId&&h.dayKey===oldDayKey)h.dayKey=chosenDay;});
-      }
+      // Date change: do NOT migrate cycles/history — work stays on the day it happened.
+      // Task display now reads per-day time from cycles (see taskDayTime), so moving
+      // the task forward will correctly show 0 time on the new day until work is done.
       if(oldRdStr!==newRdStr){
         // Repeat days changed: remove all future repeat instances of this task group
         const baseId=editingTaskId.split('_s')[0].split('_')[0];
@@ -3957,8 +3962,8 @@ function renderFlow(){
     }
     // For untimed tasks with no pomoCount: no target bars
 
-    // Earned pomos = floor(total spent sec / pomoSec)
-    const spentSec=ttime[task.id]||0;
+    // Earned pomos = floor(per-day spent sec / pomoSec)
+    const spentSec=taskDayTime(task.id,task.dayKey);
     const pomoSec=pomoMin*60;
     const earnedPomos=Math.floor(spentSec/pomoSec);
     const partialFrac=(spentSec%(pomoSec))/pomoSec;
@@ -4034,13 +4039,20 @@ function renderFlow(){
 function renderDropContent(){
   const dd=document.getElementById('taskDrop');dd.innerHTML='';
   const today=todayKey();
-  // Only show today's and future tasks — past-date tasks are irrelevant for timer selection
-  let pending=tasks.filter(t=>!t.completed && t.dayKey>=today);
+  // Show all unfinished tasks — including past-date ones the user hasn't completed yet
+  let pending=tasks.filter(t=>!t.completed);
   if(selCat)pending=pending.filter(t=>t.category===selCat);
   if(!pending.length){dd.innerHTML=`<div style="padding:10px;font-size:.8rem;color:var(--text-muted)">${selCat?t('catNoTask',selCat):t('noTask')}</div>`;return;}
   const grps={},pw={high:0,mid:1,low:2};
   pending.forEach(t=>{if(!grps[t.dayKey])grps[t.dayKey]=[];grps[t.dayKey].push(t);});
-  Object.keys(grps).sort((a,b)=>{if(a===today)return -1;if(b===today)return 1;return a.localeCompare(b);}).forEach(dk=>{
+  Object.keys(grps).sort((a,b)=>{
+    if(a===today)return -1;if(b===today)return 1;
+    const aPast=a<today,bPast=b<today;
+    if(aPast&&!bPast)return -1;
+    if(!aPast&&bPast)return 1;
+    if(aPast)return b.localeCompare(a); // past: newest first (yesterday before older)
+    return a.localeCompare(b); // future: ascending
+  }).forEach(dk=>{
     const d=new Date(dk+'T12:00:00'),lbl=dk===today?`📅 ${t('today')}`:d.toLocaleDateString(currentLang==='tr'?'tr-TR':'en-US',{weekday:'short',day:'numeric',month:'short'});
     const hdr=document.createElement('div');hdr.className='td-hdr';hdr.textContent=lbl;dd.appendChild(hdr);
     grps[dk].sort((a,b)=>pw[a.priority]-pw[b.priority]).forEach(task=>{
@@ -4054,11 +4066,10 @@ function renderDropContent(){
 
 // ══ RENDER SEL BOX (with clear button) ══
 function renderSelBox(){
-  const today=todayKey();
-  // Clear selId if it points to a deleted task OR a past-date task
+  // Clear selId only if it points to a deleted task — unfinished past-date tasks stay selectable
   if(selId){
     const t2=tasks.find(t=>t.id===selId);
-    if(!t2||t2.dayKey<today){selId=null;}
+    if(!t2){selId=null;}
   }
   const task=selId?tasks.find(t2=>t2.id===selId):null;
   const box=document.getElementById('tsbText');
