@@ -693,6 +693,22 @@ header{display:flex;align-items:center;justify-content:space-between;padding:max
 .paywall-btn:hover{filter:brightness(1.07);transform:translateY(-1px)}
 .paywall-dismiss{width:100%;padding:10px;border-radius:12px;border:1.5px solid var(--border);background:transparent;color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:.88rem;cursor:pointer;transition:all .18s}
 .pro-badge{display:inline-flex;align-items:center;gap:3px;font-size:.6rem;background:linear-gradient(135deg,#c8775a,#b5956a);color:#fff;padding:2px 7px;border-radius:99px;font-weight:700;letter-spacing:.5px;vertical-align:middle;margin-left:4px}
+.planopus-btn{background:linear-gradient(135deg,#c8775a,#9b6bb5);color:#fff;border:none;border-radius:10px;padding:7px 12px;font-family:'Outfit',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:4px}
+.planopus-btn:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.planopus-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:999;display:flex;align-items:flex-end;justify-content:center;animation:fadeIn .2s ease}
+.planopus-sheet{background:var(--surface);border-radius:28px 28px 0 0;padding:24px 20px 40px;width:100%;max-width:500px;max-height:82vh;overflow-y:auto;animation:slideUp .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;gap:16px}
+.planopus-header{display:flex;align-items:center;justify-content:space-between}
+.planopus-title{font-size:1.1rem;font-weight:700;background:linear-gradient(135deg,#c8775a,#9b6bb5);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.planopus-close{background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--text-muted);line-height:1;padding:4px}
+.planopus-key-row{display:flex;gap:8px;align-items:center}
+.planopus-key-input{flex:1;padding:10px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;font-size:.82rem}
+.planopus-key-save{padding:10px 14px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-family:'Outfit',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;white-space:nowrap}
+.planopus-run-btn{width:100%;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,#c8775a,#9b6bb5);color:#fff;font-family:'Outfit',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;transition:all .2s}
+.planopus-run-btn:hover{filter:brightness(1.07);transform:translateY(-1px)}
+.planopus-run-btn:disabled{opacity:.6;transform:none;cursor:not-allowed}
+.planopus-result{background:var(--bg);border-radius:14px;padding:16px;font-size:.9rem;line-height:1.65;color:var(--text);white-space:pre-wrap;min-height:80px;border:1px solid var(--border)}
+.planopus-thinking{font-size:.85rem;color:var(--text-muted);font-style:italic;animation:plPulse 1.5s infinite}
+@keyframes plPulse{0%,100%{opacity:.5}50%{opacity:1}}
 </style>
 </head>
 <body>
@@ -836,7 +852,10 @@ header{display:flex;align-items:center;justify-content:space-between;padding:max
           <div class="tasks-title" id="tasksTitle">Görevler</div>
           <button class="today-streak-btn" id="streakAccessBtn" onclick="openStreakPage()" title="Streak">🔥</button>
         </div>
-        <button class="add-btn" onclick="openTaskModal(null)">+ Ekle</button>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="planopus-btn" onclick="openPlanopus()" title="Planopus AI">🤖</button>
+          <button class="add-btn" onclick="openTaskModal(null)">+ Ekle</button>
+        </div>
       </div>
       <div style="padding:0 12px 8px;display:flex;align-items:center;gap:6px">
         <button class="wday-nav-btn" onclick="changeWeek(-1)">‹</button>
@@ -1091,6 +1110,16 @@ header{display:flex;align-items:center;justify-content:space-between;padding:max
           <button data-lang="tr" onclick="setLang('tr')" style="padding:7px 16px;border-radius:8px;border:1.5px solid var(--border);background:transparent;color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:.85rem;cursor:pointer;transition:all .18s" class="active">TR</button>
           <button data-lang="en" onclick="setLang('en')" style="padding:7px 16px;border-radius:8px;border:1.5px solid var(--border);background:transparent;color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:.85rem;cursor:pointer;transition:all .18s">EN</button>
         </div>
+      </div>
+    </div></div>
+    <div class="sps"><div class="sps-title">🤖 Planopus AI</div><div class="sblock">
+      <div class="srow" style="flex-direction:column;align-items:flex-start;gap:10px;cursor:default">
+        <div class="sr-left"><div class="sr-label">Anthropic API Anahtarı</div><div class="sr-sub">Planopus için gerekli · yerel kaydedilir</div></div>
+        <div class="planopus-key-row" style="width:100%">
+          <input class="planopus-key-input" type="password" id="settingsKeyInput" placeholder="sk-ant-..." style="flex:1" />
+          <button class="planopus-key-save" onclick="saveSettingsKey()">Kaydet</button>
+        </div>
+        <button style="padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:.8rem;cursor:pointer" onclick="clearPlanopusKey()">Anahtarı Temizle</button>
       </div>
     </div></div>
   </div>
@@ -4563,6 +4592,154 @@ window.addEventListener('pageshow',()=>{handleTimerResume();});
 window.addEventListener('focus',()=>{handleTimerResume();});
 // Initial reconcile after boot — in case timer finished while app was killed
 setTimeout(handleTimerResume,800);
+
+// ── Planopus AI ──────────────────────────────────────────
+function openPlanopus(){
+  const overlay=document.getElementById('planopusOverlay');
+  const keySection=document.getElementById('planopusKeySection');
+  const keyStatus=document.getElementById('planopusKeyStatus');
+  const result=document.getElementById('planopusResult');
+  const key=localStorage.getItem('ff_planopus_key');
+  keySection.style.display=key?'none':'block';
+  keyStatus.textContent=key?'✓ API anahtarı kayıtlı':'';
+  result.style.display='none';
+  result.textContent='';
+  document.getElementById('planopusRunBtn').textContent='✨ Günü Planla';
+  document.getElementById('planopusRunBtn').disabled=false;
+  overlay.style.display='flex';
+}
+
+function closePlanopus(){
+  document.getElementById('planopusOverlay').style.display='none';
+}
+
+function savePlanopusKey(){
+  const val=document.getElementById('planopusKeyInput').value.trim();
+  if(!val.startsWith('sk-ant-')){toast('Geçersiz API anahtarı');return;}
+  localStorage.setItem('ff_planopus_key',val);
+  document.getElementById('planopusKeySection').style.display='none';
+  document.getElementById('planopusKeyStatus').textContent='✓ API anahtarı kayıtlı';
+  toast('API anahtarı kaydedildi');
+}
+
+function saveSettingsKey(){
+  const val=document.getElementById('settingsKeyInput').value.trim();
+  if(!val.startsWith('sk-ant-')){toast('Geçersiz API anahtarı');return;}
+  localStorage.setItem('ff_planopus_key',val);
+  toast('API anahtarı kaydedildi');
+}
+
+function clearPlanopusKey(){
+  localStorage.removeItem('ff_planopus_key');
+  const inp=document.getElementById('settingsKeyInput');
+  if(inp)inp.value='';
+  toast('API anahtarı temizlendi');
+}
+
+async function runPlanopus(){
+  const apiKey=localStorage.getItem('ff_planopus_key');
+  if(!apiKey){
+    document.getElementById('planopusKeySection').style.display='block';
+    toast('Önce API anahtarını girin');
+    return;
+  }
+  const todayTasks=tasks.filter(t=>t.dayKey===selDay);
+  if(!todayTasks.length){toast('Bugün görev yok');return;}
+
+  const taskDesc=todayTasks.map(t=>{
+    const prio=t.priority==='high'?'Yüksek':t.priority==='mid'?'Orta':'Düşük';
+    const done=t.completed?'[✓ Tamamlandı]':'';
+    const pomos=t.pomoCount?` [${t.pomoCount} pomodoro]`:'';
+    const cat=t.category?` (${t.category})`:'';
+    return `• ${t.name}${cat} — Öncelik: ${prio}${pomos} ${done}`;
+  }).join('\n');
+
+  const lang=currentLang==='en'?'English':'Türkçe';
+  const prompt=`Sen bir verimlilik koçusun. Aşağıdaki görev listesini analiz et ve ${lang} dilinde günlük plan öner.\n\nBugünün görevleri:\n${taskDesc}\n\nLütfen şunları öner:\n1. Hangi görevden başlanmalı ve neden\n2. Görevler için önerilen çalışma sırası\n3. Odak zamanı ve mola önerileri (Pomodoro tekniği)\n4. Genel verimlilik tavsiyesi\n\nKısa ve pratik tut.`;
+
+  const resultEl=document.getElementById('planopusResult');
+  const runBtn=document.getElementById('planopusRunBtn');
+  resultEl.style.display='block';
+  resultEl.innerHTML='<span class="planopus-thinking">🧠 Düşünüyor...</span>';
+  runBtn.disabled=true;
+  runBtn.textContent='⏳ Analiz ediliyor...';
+
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'x-api-key':apiKey,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true',
+        'content-type':'application/json'
+      },
+      body:JSON.stringify({
+        model:'claude-opus-4-7',
+        max_tokens:1024,
+        thinking:{type:'adaptive'},
+        stream:true,
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+
+    if(!resp.ok){
+      const err=await resp.json().catch(()=>({}));
+      throw new Error(err.error?.message||`HTTP ${resp.status}`);
+    }
+
+    const reader=resp.body.getReader();
+    const dec=new TextDecoder();
+    let text='';
+    let buf='';
+    resultEl.textContent='';
+    while(true){
+      const{done,value}=await reader.read();
+      if(done)break;
+      buf+=dec.decode(value,{stream:true});
+      const lines=buf.split('\n');
+      buf=lines.pop();
+      for(const line of lines){
+        if(!line.startsWith('data: '))continue;
+        const data=line.slice(6).trim();
+        if(data==='[DONE]')continue;
+        try{
+          const ev=JSON.parse(data);
+          if(ev.type==='content_block_delta'&&ev.delta?.type==='text_delta'){
+            text+=ev.delta.text;
+            resultEl.textContent=text;
+          }
+        }catch{}
+      }
+    }
+    if(!text)resultEl.textContent='Yanıt alınamadı.';
+  }catch(e){
+    resultEl.textContent='Hata: '+e.message;
+    toast('Planopus hatası: '+e.message);
+  }finally{
+    runBtn.disabled=false;
+    runBtn.textContent='✨ Günü Planla';
+  }
+}
 </script>
+
+<!-- ══ PLANOPUS OVERLAY ══ -->
+<div class="planopus-overlay" id="planopusOverlay" style="display:none" onclick="if(event.target===this)closePlanopus()">
+  <div class="planopus-sheet">
+    <div class="planopus-header">
+      <div class="planopus-title">🤖 Planopus AI</div>
+      <button class="planopus-close" onclick="closePlanopus()">✕</button>
+    </div>
+    <div id="planopusKeySection" style="display:none">
+      <div style="font-size:.82rem;color:var(--text-muted);margin-bottom:8px">Anthropic API anahtarınızı girin (yerel kaydedilir):</div>
+      <div class="planopus-key-row">
+        <input class="planopus-key-input" type="password" id="planopusKeyInput" placeholder="sk-ant-..." />
+        <button class="planopus-key-save" onclick="savePlanopusKey()">Kaydet</button>
+      </div>
+    </div>
+    <div id="planopusKeyStatus" style="font-size:.82rem;color:var(--text-muted)"></div>
+    <div id="planopusResult" class="planopus-result" style="display:none"></div>
+    <button class="planopus-run-btn" id="planopusRunBtn" onclick="runPlanopus()">✨ Günü Planla</button>
+  </div>
+</div>
 </body>
 </html>
